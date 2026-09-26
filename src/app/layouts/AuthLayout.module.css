@@ -1,0 +1,30 @@
+.split { display: flex; min-height: 100dvh; }
+.brand {
+  position: relative; flex: 1 1 0; min-width: 0; background: var(--brand-panel); color: var(--brand-panel-text);
+  padding: 56px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px;
+}
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.logo em { font-style: normal; color: var(--brand-panel-accent); font-weight: 500; }
+.pitch { display: flex; flex-direction: column; gap: 20px; max-width: 460px; }
+.pitch h1 { font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.02em; }
+.pitch p { font-size: 17px; line-height: 27px; color: var(--brand-panel-muted); }
+.points { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.point { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--brand-panel-soft); }
+.pointIcon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-panel-chip); color: var(--brand-panel-text); flex: none; }
+.foot { font-size: 14px; line-height: 22px; color: var(--brand-panel-faint); max-width: 460px; }
+.foot a { color: var(--brand-panel-text); text-decoration: underline; text-underline-offset: 3px; }
+.formSide { position: relative; flex: 1 1 0; min-width: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 40px; }
+.theme { position: absolute; top: 20px; right: 20px; }
+.panel { width: min(420px, 100%); padding: 32px; border-radius: var(--radius-xl); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--sh-md); display: flex; flex-direction: column; gap: 20px; }
+
+@media (max-width: 991px) {
+  .split { flex-direction: column; }
+  .brand { flex: none; padding: 24px 20px; gap: 16px; }
+  .pitch h1 { font-size: 28px; line-height: 36px; }
+  .pitch p { font-size: 15px; line-height: 23px; }
+  .points, .foot { display: none; }
+  .formSide { flex: 1; align-items: flex-start; padding: 24px 16px 40px; }
+  .theme { top: 18px; right: 16px; }
+  .themeOnBrand { color: var(--brand-panel-text); }
+}
+@media (max-width: 480px) { .panel { padding: 24px 20px; } }

@@ -1,0 +1,164 @@
+.tableHead {
+  padding: 20px 20px 4px;
+}
+
+.role {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.roleTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 650;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-xs);
+  background: var(--sunken);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.applicants {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.applicants span {
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.reviewNote {
+  max-width: 260px;
+  font-size: 12.5px;
+  color: var(--text3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusEdit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.deptList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.deptList li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+}
+
+.deptList span {
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.flow {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flow li {
+  padding-left: 4px;
+}
+
+.flow strong {
+  display: block;
+  font-size: 14px;
+}
+
+.flow span {
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.jobHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.jobHead h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.jobHead p {
+  margin: 0;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.section p,
+.section ul {
+  margin: 0;
+  color: var(--text2);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.section ul {
+  padding-left: 18px;
+}

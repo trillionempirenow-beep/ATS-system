@@ -1,0 +1,14 @@
+.wrap { display: flex; justify-content: center; padding: 32px 0 48px; }
+.card {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+  width: min(560px, 100%); padding: 40px 32px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); box-shadow: var(--sh-md);
+}
+.code { font-size: 64px; line-height: 68px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.code403, .code500 { color: var(--danger-fg); }
+.code404 { color: var(--primary); }
+.title { font-size: 26px; line-height: 34px; font-weight: 700; letter-spacing: -0.015em; }
+.text { max-width: 420px; font-size: 15px; line-height: 23px; color: var(--text2); }
+.note { max-width: 420px; font-size: 13px; line-height: 20px; color: var(--text3); }
+.actions { display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
+@media (max-width: 767px) { .card { padding: 32px 20px; } .code { font-size: 48px; line-height: 52px; } }

@@ -1,0 +1,102 @@
+.tableHead {
+  padding: 20px 20px 4px;
+}
+
+.checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.checklist li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.today {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+}
+
+.todayDate,
+.todayStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.todayDate strong,
+.todayStat strong {
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.todayDate span,
+.todayStat span {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.todayControls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
+}
+
+.todayAction {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@container workspace (max-width: 900px) {
+  .today {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .todayControls {
+    grid-column: 1 / -1;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .todayAction {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+.saver {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 190px;
+}
+
+.rangeBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

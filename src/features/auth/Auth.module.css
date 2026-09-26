@@ -1,0 +1,14 @@
+.head { display: flex; flex-direction: column; gap: 6px; }
+.title { font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: -0.01em; }
+.sub { color: var(--text2); }
+.form { display: flex; flex-direction: column; gap: 16px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.link { color: var(--primary); font-weight: 600; font-size: 14px; }
+.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.foot { font-size: 13px; line-height: 20px; color: var(--text3); text-align: center; }
+.stateIcon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }
+.iconOk { background: var(--success-bg); color: var(--success-fg); }
+.iconWarn { background: var(--danger-bg); color: var(--danger-fg); }
+.iconInfo { background: var(--primary-subtle); color: var(--primary); }
+.back { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text2); font-size: 14px; }
+.back:hover { color: var(--text); }

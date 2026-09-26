@@ -1,0 +1,82 @@
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.identity h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.identity span {
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.complete {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.perms {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.perms ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perms li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--success-fg);
+}
+
+.perms li[data-off] {
+  color: var(--text3);
+}
+
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.photoText {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.photoText strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.err {
+  color: var(--danger-fg);
+}

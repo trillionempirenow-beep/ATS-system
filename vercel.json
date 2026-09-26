@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": { "api/index.ts": { "maxDuration": 30 } },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "crons": [{ "path": "/api/v1/cron/interview-reminders", "schedule": "0 7 * * *" }],
+  "headers": [
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+      { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), display-capture=(self)" }
+    ] }
+  ]
+}

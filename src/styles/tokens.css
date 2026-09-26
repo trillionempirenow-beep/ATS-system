@@ -1,0 +1,180 @@
+/* Acme People design tokens. Values come straight from the redesign blueprint
+   (Foundations → Color, Status system, Type, Spacing). Components read only
+   these semantic variables; nothing else in the app hard-codes a colour. */
+
+:root {
+  color-scheme: light;
+  --bg:#F5F7FA;
+  --surface:#FFFFFF;
+  --surface2:#F0F3F8;
+  --sunken:#EEF1F6;
+  --border:#E2E7EF;
+  --border-strong:#CBD3DF;
+  --border-input:#8791A3;
+  --text:#0E1626;
+  --text2:#435068;
+  --text3:#596680;
+  --placeholder:#6A7489;
+  --primary:#2563EB;
+  --primary-hover:#1D4ED8;
+  --primary-fg:#FFFFFF;
+  --primary-subtle:#EAF1FF;
+  --primary-subtle-fg:#1E40AF;
+  --primary-ring:rgba(37,99,235,.32);
+  --success-bg:#DCFCE7;
+  --success-fg:#166534;
+  --success-border:#86EFAC;
+  --success-solid:#16A34A;
+  --warning-bg:#FEF3C7;
+  --warning-fg:#92400E;
+  --warning-border:#FCD34D;
+  --warning-solid:#D97706;
+  --danger-bg:#FEE2E2;
+  --danger-fg:#991B1B;
+  --danger-border:#FCA5A5;
+  --danger-solid:#DC2626;
+  --danger-solid-fg:#FFFFFF;
+  --info-bg:#DBEAFE;
+  --info-fg:#1E40AF;
+  --info-border:#93C5FD;
+  --info-solid:#2563EB;
+  --teal-bg:#CCFBF1;
+  --teal-fg:#115E59;
+  --teal-border:#5EEAD4;
+  --teal-solid:#0D9488;
+  --purple-bg:#F3E8FF;
+  --purple-fg:#6B21A8;
+  --purple-border:#D8B4FE;
+  --purple-solid:#9333EA;
+  --neutral-bg:#EEF1F6;
+  --neutral-fg:#3B465C;
+  --neutral-border:#CBD3DF;
+  --neutral-solid:#64748B;
+  --scrim:rgba(15,23,42,.46);
+  --sh-sm:0 1px 2px rgba(16,24,40,.06);
+  --sh-md:0 4px 12px -2px rgba(16,24,40,.08), 0 2px 4px -2px rgba(16,24,40,.06);
+  --sh-lg:0 18px 44px -10px rgba(16,24,40,.20), 0 6px 14px -6px rgba(16,24,40,.10);
+  --video:#1B2333;
+  --video-tile:#26314A;
+  --call-bar:#0F1524;
+
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --space-9: 64px;
+
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-tile: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  --sidebar-w: 256px;
+  --sidebar-w-collapsed: 72px;
+  --header-h: 56px;
+  --content-max: 1120px;
+  --page-pad: 32px;
+
+  /* Chart marks: stage order Applied, Screening, Interview, Offer, Hired.
+     Validated for lightness, chroma, CVD separation and contrast (light + dark). */
+  --chart-1: #2563EB;
+  --chart-2: #D97706;
+  --chart-3: #0D9488;
+  --chart-4: #9333EA;
+  --chart-5: #16A34A;
+  --chart-grid: #E2E7EF;
+  --chart-axis: #596680;
+
+  /* Brand panel on the sign-in screens: fixed navy in both themes. */
+  --brand-panel: #0F1E4A;
+  --brand-panel-text: #FFFFFF;
+  --brand-panel-muted: #C7D5F5;
+  --brand-panel-soft: #DCE6FB;
+  --brand-panel-faint: #AFC1EA;
+  --brand-panel-accent: #9DB4E8;
+  --brand-panel-chip: rgba(255, 255, 255, 0.12);
+
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+  --ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --chart-1: #3B82F6;
+  --chart-2: #D97706;
+  --chart-3: #0D9488;
+  --chart-4: #8B5CF6;
+  --chart-5: #16A34A;
+  --chart-grid: #232F44;
+  --chart-axis: #8C98AD;
+  --bg:#0A0F18;
+  --surface:#111826;
+  --surface2:#172033;
+  --sunken:#0D131F;
+  --border:#232F44;
+  --border-strong:#36455F;
+  --border-input:#5B6B86;
+  --text:#EDF1F7;
+  --text2:#AEB9CB;
+  --text3:#8C98AD;
+  --placeholder:#7A879D;
+  --primary:#6F9BFF;
+  --primary-hover:#8DB0FF;
+  --primary-fg:#0A0F18;
+  --primary-subtle:#1B2A4A;
+  --primary-subtle-fg:#A9C4FF;
+  --primary-ring:rgba(111,155,255,.40);
+  --success-bg:#12301F;
+  --success-fg:#4ADE80;
+  --success-border:#1F5C38;
+  --success-solid:#22C55E;
+  --warning-bg:#3A2E10;
+  --warning-fg:#FBBF24;
+  --warning-border:#6B5418;
+  --warning-solid:#F59E0B;
+  --danger-bg:#3A1A1F;
+  --danger-fg:#F87171;
+  --danger-border:#6B2A31;
+  --danger-solid:#F87171;
+  --danger-solid-fg:#1A0A0A;
+  --info-bg:#132A4A;
+  --info-fg:#60A5FA;
+  --info-border:#24508A;
+  --info-solid:#60A5FA;
+  --teal-bg:#0F3532;
+  --teal-fg:#2DD4BF;
+  --teal-border:#1B6660;
+  --teal-solid:#2DD4BF;
+  --purple-bg:#2A2148;
+  --purple-fg:#C4B5FD;
+  --purple-border:#4B3D82;
+  --purple-solid:#A78BFA;
+  --neutral-bg:#1E283A;
+  --neutral-fg:#AEB9CB;
+  --neutral-border:#36455F;
+  --neutral-solid:#8C98AD;
+  --scrim:rgba(3,6,12,.70);
+  --sh-sm:0 1px 2px rgba(0,0,0,.40);
+  --sh-md:0 6px 16px -4px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.35);
+  --sh-lg:0 22px 50px -10px rgba(0,0,0,.65), 0 8px 16px -8px rgba(0,0,0,.5);
+  --video:#0B111C;
+  --video-tile:#182235;
+  --call-bar:#070B12;
+}
+
+@media (max-width: 1023px) {
+  :root { --page-pad: 24px; }
+}
+@media (max-width: 767px) {
+  :root { --page-pad: 16px; }
+}

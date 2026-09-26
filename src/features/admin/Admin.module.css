@@ -1,0 +1,260 @@
+.tableHead {
+  padding: 20px 20px 4px;
+}
+
+.adminCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.adminHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adminStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.permGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 20px;
+}
+
+.seatRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 16px;
+  align-items: start;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+}
+
+@container workspace (max-width: 640px) {
+  .seatRow { grid-template-columns: 1fr; }
+}
+
+.seatInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.seatInfo strong {
+  font-size: 20px;
+}
+
+.adminFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.confirmList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fieldset legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.jobStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container workspace (max-width: 720px) {
+  .jobStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.jobStats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+}
+
+.jobStats strong {
+  font-size: 20px;
+}
+
+.jobStats span {
+  font-size: 12.5px;
+  color: var(--text3);
+}
+
+.seats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.full {
+  color: var(--danger-fg);
+  font-size: 13px;
+}
+
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.permChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.dangerZone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.dangerZone p {
+  margin: 0;
+}
+
+.resetCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.quote {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.resetActions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.resetActions > :first-child {
+  flex: 1;
+  min-width: 200px;
+}
+
+.link {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.inlineEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.filterButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.when {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.actionCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail {
+  display: inline-block;
+  max-width: 320px;
+  color: var(--text2);
+  overflow-wrap: anywhere;
+}
+
+.pager {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.logoPreview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--sunken);
+}
+
+.logoPreview img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}

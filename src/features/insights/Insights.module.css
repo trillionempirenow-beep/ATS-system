@@ -1,0 +1,33 @@
+.rangeBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rangeActions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.tableHead {
+  padding: 20px 20px 4px;
+}
+
+.outcomes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.outcomes b {
+  color: var(--text);
+  font-size: 15px;
+  margin-right: 4px;
+}
