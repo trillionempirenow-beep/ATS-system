@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { CandidateProfileDto } from '@shared/api/candidates';
 import { UPLOAD_RULES, formatBytes } from '@shared/api/uploads';
 import { Icon } from '@/components/icon/Icon';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Display';
 import { Dropzone, FileRow } from '@/components/ui/Form';
 import { EmptyState, Notice } from '@/components/ui/Feedback';
@@ -21,6 +21,8 @@ export function ResumeTab({ c }: { c: CandidateProfileDto }) {
   const toast = useToast();
   const [progress, setProgress] = useState<{ name: string; pct: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Id of the document shown inline; keyed by id so a newly uploaded version starts closed. */
+  const [previewId, setPreviewId] = useState<number | null>(null);
   const attach = useCandidateAction(c.applicationId, (uploadId: string) => api.post(`/candidates/${c.applicationId}/documents`, { uploadId }));
   const primary = c.documents.find((d) => d.isPrimary) ?? c.documents[0];
 
@@ -56,20 +58,29 @@ export function ResumeTab({ c }: { c: CandidateProfileDto }) {
       </Card>
     );
   }
+  const isPdf = primary.extension === 'pdf';
+  const previewing = isPdf && previewId === primary.id;
   return (
     <div className={w.aside340}>
       <Card>
         <div className={s.docHead}>
           <div className={w.row}><strong className={w.truncate}>{primary.originalName}</strong><Badge tone="success" size="sm">Current</Badge></div>
           <div className={w.row}>
-            {primary.extension === 'pdf' ? <ButtonLink to={docUrl(primary.id, true)} target="_blank" rel="noopener noreferrer" size="sm" variant="secondary" icon="external">View (PDF)</ButtonLink> : null}
+            {isPdf ? (
+              <Button size="sm" variant="secondary" icon={previewing ? 'close' : 'eye'} aria-expanded={previewing} aria-controls="resume-preview"
+                onClick={() => setPreviewId(previewing ? null : primary.id)}>
+                {previewing ? 'Close preview' : 'View (PDF)'}
+              </Button>
+            ) : null}
             <ButtonLink to={docUrl(primary.id)} size="sm" variant="secondary" icon="download" reloadDocument>Download</ButtonLink>
           </div>
         </div>
-        <div style={{ marginTop: 16 }}>
-          {primary.extension === 'pdf'
-            ? <iframe className={s.viewer} src={docUrl(primary.id, true)} title={`Resume: ${primary.originalName}`} sandbox="allow-same-origin allow-scripts allow-downloads" />
-            : <EmptyState compact icon="doc" title="Preview is available for PDF files" text="Download this Word document to read it." />}
+        <div id="resume-preview" className={s.preview}>
+          {previewing
+            ? <iframe className={s.previewFrame} src={`${docUrl(primary.id, true)}#toolbar=0`} title={`Resume: ${primary.originalName}`} sandbox="allow-same-origin allow-scripts allow-downloads" />
+            : isPdf
+              ? <EmptyState compact icon="doc" title="Preview this resume here" text="Select View (PDF) to read it without leaving the profile." />
+              : <EmptyState compact icon="doc" title="Preview is available for PDF files" text="Download this Word document to read it." />}
         </div>
       </Card>
       <div className={w.stack}>

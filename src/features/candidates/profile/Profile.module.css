@@ -24,7 +24,12 @@
 .stageHistory li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
 
 
-.viewer { width: 100%; height: 640px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface2); }
+/* Fixed-height stage: the empty state centres in it, and the PDF iframe fills it edge to edge with no second scrollbar. */
+.preview {
+  position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 75vh; min-height: 560px; margin-top: 16px;
+  overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface2);
+}
+.previewFrame { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; background: var(--surface2); }
 .docHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 .scoreBig { display: flex; align-items: center; gap: 16px; }
@@ -39,6 +44,6 @@
 @container workspace (max-width: 767px) {
   .track { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .name { font-size: 22px; line-height: 30px; }
-  .viewer { height: 460px; }
+  .preview { height: 70vh; min-height: 420px; }
   .catRow { grid-template-columns: 110px minmax(0, 1fr) 32px; }
 }
