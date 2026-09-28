@@ -1,37 +1,71 @@
 .shell { display: flex; min-height: 100dvh; background: var(--bg); }
 
 .sidebar {
-  position: sticky; top: 0; height: 100dvh; flex: none; width: var(--sidebar-w); display: flex; flex-direction: column;
-  background: var(--surface); border-right: 1px solid var(--border); transition: width 0.18s var(--ease); z-index: 40;
+  position: sticky; top: 0; height: 100dvh; flex: none; width: var(--sidebar-w); display: flex; flex-direction: column; overflow: hidden;
+  background: var(--surface); border-right: 1px solid var(--border); transition: width 0.3s ease; z-index: 40;
 }
-.brand { display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 16px; border-bottom: 1px solid var(--border); flex: none; }
-.brandText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.brand { display: flex; align-items: center; height: 64px; padding: 0 12px; border-bottom: 1px solid var(--border); flex: none; }
+/* The logo is the expand/collapse control. Its padding is identical in both states so the mark never shifts. */
+.brandBtn {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; padding: 0 8px; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: inherit; text-align: left; cursor: pointer;
+}
+.brandBtn:hover { background: var(--surface2); }
+.brandText { display: flex; flex-direction: column; min-width: 0; flex: 1; transition: opacity 0.2s ease 0.1s; }
 .brandName { font-weight: 700; font-size: 15px; line-height: 20px; letter-spacing: -0.01em; white-space: nowrap; }
 .brandName em { font-style: normal; color: var(--text3); font-weight: 500; }
 .brandRole { font-size: 12px; color: var(--text3); white-space: nowrap; }
-.nav { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 2px; }
-.groupLabel { height: 28px; padding: 0 12px; margin-top: 8px; display: flex; align-items: flex-end; font-size: 12px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text3); }
+.nav {
+  flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 2px;
+  scrollbar-width: none; -ms-overflow-style: none; /* Scrollable, but no visible scrollbar */
+}
+.nav::-webkit-scrollbar { display: none; }
+.groupLabel {
+  height: 28px; padding: 0 14px; margin-top: 8px; display: flex; align-items: flex-end; overflow: hidden; white-space: nowrap;
+  font-size: 12px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text3);
+  transition: height 0.3s ease, margin 0.3s ease, opacity 0.2s ease;
+}
 .item {
-  position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: var(--radius-sm);
+  position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px; border-radius: var(--radius-sm);
   color: var(--text2); font-size: 14px; font-weight: 500; white-space: nowrap; border: 0; background: transparent; width: 100%; text-align: left;
 }
 .item:hover { background: var(--surface2); color: var(--text); }
 .itemActive, .itemActive:hover { background: var(--primary-subtle); color: var(--primary-subtle-fg); font-weight: 650; }
-.itemLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.itemLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.2s ease 0.1s; }
 .count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger-solid); color: var(--danger-solid-fg); font-size: 11px; line-height: 20px; font-weight: 700; text-align: center; }
-.caret { display: flex; transition: transform 0.15s var(--ease); }
+.caret { display: flex; transition: transform 0.3s ease, opacity 0.2s ease; }
 .caretOpen { transform: rotate(180deg); }
-.sub { display: flex; flex-direction: column; gap: 2px; padding-left: 12px; }
+
+/* Accordion: animates to the content's natural height without measuring it. */
+.subPanel { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.3s ease, visibility 0s linear 0.3s; }
+.subPanelOpen { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.3s ease, visibility 0s; }
+.sub { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; padding-left: 12px; }
+.sub .item:focus-visible { box-shadow: inset 0 0 0 2px var(--primary); } /* the outer ring would be clipped */
 .bottom { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; flex: none; }
 
+/* Collapsed rail: labels fade out in place; sub-items open in the flyout instead. */
 .collapsed { width: var(--sidebar-w-collapsed); }
-.collapsed .brandText, .collapsed .itemLabel, .collapsed .groupLabel, .collapsed .caret, .collapsed .collapseBtn { display: none; }
-.collapsed .brand { justify-content: center; padding: 0; }
-.collapsed .item { justify-content: center; padding: 0; }
-.collapsed .sub { padding-left: 0; }
+.collapsed .brandText, .collapsed .itemLabel, .collapsed .caret { opacity: 0; transition-delay: 0s; }
+.collapsed .groupLabel { height: 0; margin-top: 0; opacity: 0; }
+.collapsed .item[aria-expanded='true']:not(.itemActive) { background: var(--surface2); color: var(--text); }
 .collapsed .count { position: absolute; top: 2px; right: 4px; min-width: 16px; height: 16px; line-height: 16px; font-size: 10px; padding: 0 4px; }
-.collapsed .groupDivider { display: block; }
-.groupDivider { display: none; height: 1px; background: var(--border); margin: 8px 6px; }
+
+/* Rail popovers are portaled to <body>, so the sidebar's overflow never clips them. Below modals (60). */
+.flyout {
+  position: fixed; z-index: 55; min-width: 208px; max-width: 280px; max-height: calc(100dvh - 16px); overflow-y: auto; padding: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--sh-lg); visibility: hidden;
+}
+.flyoutOpen { visibility: visible; animation: flyoutIn 0.14s var(--ease); }
+.flyoutTitle { padding: 8px 10px 6px; font-size: 12px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text3); }
+.flyoutList { display: flex; flex-direction: column; gap: 2px; }
+@keyframes flyoutIn { from { opacity: 0; transform: translateX(-4px); } }
+.tooltip {
+  position: fixed; z-index: 56; transform: translateY(-50%); padding: 6px 10px; border-radius: var(--radius-xs); pointer-events: none;
+  background: var(--text); color: var(--surface); font-size: 12px; font-weight: 600; line-height: 16px; white-space: nowrap;
+  animation: tooltipIn 0.12s var(--ease) 0.1s both;
+}
+@keyframes tooltipIn { from { opacity: 0; } }
+
 
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .header {
@@ -64,24 +98,8 @@
 
 .scrim { display: none; }
 
-@media (max-width: 1023px) {
-  .sidebar:not(.expandedTablet) { width: var(--sidebar-w-collapsed); }
-  .sidebar:not(.expandedTablet) .brandText, .sidebar:not(.expandedTablet) .itemLabel, .sidebar:not(.expandedTablet) .groupLabel,
-  .sidebar:not(.expandedTablet) .caret, .sidebar:not(.expandedTablet) .collapseBtn { display: none; }
-  .sidebar:not(.expandedTablet) .brand { justify-content: center; padding: 0; }
-  .sidebar:not(.expandedTablet) .item { justify-content: center; padding: 0; }
-  .sidebar:not(.expandedTablet) .sub { padding-left: 0; }
-  .sidebar:not(.expandedTablet) .groupDivider { display: block; }
-  .sidebar:not(.expandedTablet) .count { position: absolute; top: 2px; right: 4px; min-width: 16px; height: 16px; line-height: 16px; font-size: 10px; padding: 0 4px; }
-}
 @media (max-width: 767px) {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(300px, 86vw) !important; transform: translateX(-100%); transition: transform 0.2s var(--ease); box-shadow: var(--sh-lg); }
-  .sidebar .brandText, .sidebar .itemLabel, .sidebar .groupLabel, .sidebar .caret { display: flex !important; }
-  .sidebar .brand { justify-content: flex-start !important; padding: 0 16px !important; }
-  .sidebar .item { justify-content: flex-start !important; padding: 0 12px !important; }
-  .sidebar .groupDivider { display: none !important; }
-  .sidebar .count { position: static !important; }
-  .sidebar .collapseBtn { display: none !important; }
   .drawerOpen { transform: translateX(0); }
   .scrim { display: block; position: fixed; inset: 0; z-index: 39; background: var(--scrim); }
   .mobileMenu { display: inline-flex; }

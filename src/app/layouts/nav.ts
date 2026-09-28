@@ -28,12 +28,12 @@ export function navFor(user: MeDto): NavGroup[] {
 
   if (user.role === 'super_admin') {
     return [{
-      key: 'administration', label: 'Administration', collapsible: false, items: [
-        { to: '/app/admin/admins', label: 'Admins', icon: 'users' },
+      key: 'administration', label: 'Administration', icon: 'settings', collapsible: true, items: [
         { to: '/app/admin/users', label: 'HR / Recruiters', icon: 'candidates', badge: 'accounts' },
         { to: '/app/admin/password-resets', label: 'Password resets', icon: 'key', badge: 'resets' },
         { to: '/app/admin/applicant-portal', label: 'Applicant portal', icon: 'public' },
         { to: '/app/admin/audit', label: 'Audit trail', icon: 'layers' },
+        { to: '/app/admin/admins', label: 'Admins', icon: 'users' },
         { to: '/app/admin/settings', label: 'Settings', icon: 'settings' },
       ],
     }];
