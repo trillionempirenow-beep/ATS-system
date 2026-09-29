@@ -144,6 +144,7 @@ describe('careers site rules', () => {
     const res = await (await anon()).post('/api/v1/public/status').send({ email: 'pedro.alves@example.com', applicationId: 11 });
     expect(res.body.data.application.rejected).toBe(true);
     expect(res.body.data.application.feedback.fit).toBe('not-a-fit');
-    expect(res.body.data.application.suggestion.title).toBe('Content Marketer');
+    expect(res.body.data.application.suggestions[0].title).toBe('Content Marketer');
+    expect(res.body.data.application.submission).toHaveProperty('coverLetter');
   });
 });

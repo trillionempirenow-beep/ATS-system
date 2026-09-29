@@ -4,14 +4,16 @@
   position: sticky; top: 0; height: 100dvh; flex: none; width: var(--sidebar-w); display: flex; flex-direction: column; overflow: hidden;
   background: var(--surface); border-right: 1px solid var(--border); transition: width 0.3s ease; z-index: 40;
 }
-.brand { display: flex; align-items: center; height: 64px; padding: 0 12px; border-bottom: 1px solid var(--border); flex: none; }
-/* The logo is the expand/collapse control. Its padding is identical in both states so the mark never shifts. */
-.brandBtn {
-  display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; padding: 0 8px; border: 0; border-radius: var(--radius-md);
-  background: transparent; color: inherit; text-align: left; cursor: pointer;
+/* Logo left, toggle right. The toggle stays pinned to the right edge, so as the width animates it slides into
+   the rail and lands centred over the nav icons (15px + 40px + 16px = the 71px rail inside its border). */
+.brand { display: flex; align-items: center; justify-content: space-between; height: 64px; padding: 0 16px 0 15px; border-bottom: 1px solid var(--border); flex: none; }
+.brandLogo { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; overflow: hidden; transition: opacity 0.2s ease 0.1s; }
+.brandText { display: flex; flex-direction: column; min-width: 0; }
+.toggleBtn {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: var(--radius-full);
+  background: transparent; color: var(--text2); cursor: pointer;
 }
-.brandBtn:hover { background: var(--surface2); }
-.brandText { display: flex; flex-direction: column; min-width: 0; flex: 1; transition: opacity 0.2s ease 0.1s; }
+.toggleBtn:hover { background: var(--surface2); color: var(--text); }
 .brandName { font-weight: 700; font-size: 15px; line-height: 20px; letter-spacing: -0.01em; white-space: nowrap; }
 .brandName em { font-style: normal; color: var(--text3); font-weight: 500; }
 .brandRole { font-size: 12px; color: var(--text3); white-space: nowrap; }
@@ -45,7 +47,8 @@
 
 /* Collapsed rail: labels fade out in place; sub-items open in the flyout instead. */
 .collapsed { width: var(--sidebar-w-collapsed); }
-.collapsed .brandText, .collapsed .itemLabel, .collapsed .caret { opacity: 0; transition-delay: 0s; }
+.collapsed .itemLabel, .collapsed .caret { opacity: 0; transition-delay: 0s; }
+.collapsed .brandLogo { opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0s linear 0.15s; }
 .collapsed .groupLabel { height: 0; margin-top: 0; opacity: 0; }
 .collapsed .item[aria-expanded='true']:not(.itemActive) { background: var(--surface2); color: var(--text); }
 .collapsed .count { position: absolute; top: 2px; right: 4px; min-width: 16px; height: 16px; line-height: 16px; font-size: 10px; padding: 0 4px; }
@@ -60,8 +63,8 @@
 .flyoutList { display: flex; flex-direction: column; gap: 2px; }
 @keyframes flyoutIn { from { opacity: 0; transform: translateX(-4px); } }
 .tooltip {
-  position: fixed; z-index: 56; transform: translateY(-50%); padding: 6px 10px; border-radius: var(--radius-xs); pointer-events: none;
-  background: var(--text); color: var(--surface); font-size: 12px; font-weight: 600; line-height: 16px; white-space: nowrap;
+  position: fixed; z-index: 56; transform: translateY(-50%); padding: 8px 14px; border-radius: var(--radius-full); pointer-events: none;
+  background: var(--tooltip-bg); color: var(--tooltip-fg); box-shadow: var(--sh-md); font-size: 13px; font-weight: 500; line-height: 18px; white-space: nowrap;
   animation: tooltipIn 0.12s var(--ease) 0.1s both;
 }
 @keyframes tooltipIn { from { opacity: 0; } }

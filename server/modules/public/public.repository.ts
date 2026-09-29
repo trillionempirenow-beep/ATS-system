@@ -66,12 +66,16 @@ export interface StatusRow {
   candidate_id: number;
   department: string | null;
   location: string | null;
+  cover_letter: string | null;
+  why_us: string | null;
+  portfolio_url: string | null;
+  source: string | null;
 }
 
 export async function applicationForEmail(id: number, email: string): Promise<StatusRow | null> {
   const [row] = await sql<StatusRow[]>`
     select a.id, a.stage, a.status, a.applied_at, a.updated_at, j.title, c.first_name, c.last_name, c.id as candidate_id,
-           d.name as department, j.location
+           d.name as department, j.location, a.cover_letter, a.why_us, c.portfolio_url, c.source
     from applications a join candidates c on c.id = a.candidate_id join jobs j on j.id = a.job_id left join departments d on d.id = j.department_id
     where a.id = ${id} and c.email = ${email} limit 1`;
   return row ?? null;
@@ -90,11 +94,22 @@ export async function latestFeedback(applicationId: number) {
   return row ?? null;
 }
 
-export async function latestSuggestion(applicationId: number) {
-  const [row] = await sql<{ title: string; slug: string; status: string; note: string | null }[]>`
-    select j.title, j.slug, j.status, s.note from candidate_role_suggestions s join jobs j on j.id = s.suggested_job_id
-    where s.application_id = ${applicationId} order by s.created_at desc limit 1`;
-  return row ?? null;
+/** One row per suggested role (the newest note wins), newest first. */
+export async function suggestionsFor(applicationId: number, candidateId: number) {
+  return sql<{ title: string; slug: string; status: string; note: string | null; already_applied: boolean }[]>`
+    select title, slug, status, note, already_applied from (
+      select distinct on (s.suggested_job_id) j.title, j.slug, j.status, s.note, s.created_at,
+             exists (select 1 from applications a where a.candidate_id = ${candidateId} and a.job_id = s.suggested_job_id) as already_applied
+      from candidate_role_suggestions s join jobs j on j.id = s.suggested_job_id
+      where s.application_id = ${applicationId}
+      order by s.suggested_job_id, s.created_at desc
+    ) latest order by created_at desc`;
+}
+
+export async function primaryResumeName(candidateId: number): Promise<string | null> {
+  const [row] = await sql<{ original_name: string }[]>`
+    select original_name from candidate_documents where candidate_id = ${candidateId} order by is_primary desc, created_at desc limit 1`;
+  return row?.original_name ?? null;
 }
 
 export interface CandidateInterviewRow {

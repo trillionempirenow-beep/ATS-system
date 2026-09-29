@@ -56,6 +56,8 @@ export const ICONS = {
   more: "<circle cx=\"5\" cy=\"12\" r=\"1.6\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/><circle cx=\"19\" cy=\"12\" r=\"1.6\"/>",
   overview: "<rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"2\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"2\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"2\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"2\"/>",
   panel: "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4v16\"/>",
+  panelclose: "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4v16M16 10l-2 2 2 2\"/>",
+  panelopen: "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4v16M14 10l2 2-2 2\"/>",
   phone: "<path d=\"M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z\"/>",
   pin: "<path d=\"M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.5\" r=\"2.5\"/>",
   pipeline: "<circle cx=\"5\" cy=\"6\" r=\"2.5\"/><circle cx=\"5\" cy=\"18\" r=\"2.5\"/><circle cx=\"19\" cy=\"12\" r=\"2.5\"/><path d=\"M5 8.5v7M7.3 6.9 16.7 11M7.3 17.1 16.7 13\"/>",

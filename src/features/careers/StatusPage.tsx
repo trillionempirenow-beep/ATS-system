@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -62,6 +62,62 @@ function InterviewCard({ iv }: { iv: CandidateInterviewDto }) {
   );
 }
 
+function SuggestionsCard({ app }: { app: ApplicationStatusDto }) {
+  const many = app.suggestions.length > 1;
+  return (
+    <Card>
+      <CardHeader
+        title={app.rejected ? (many ? 'Roles that might suit you' : 'A role that might suit you') : (many ? 'Other roles that could fit you' : 'Another role that could fit you')}
+        subtitle="Suggested by the hiring team based on your application."
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {app.suggestions.map((sg) => (
+          <div key={`${sg.title}-${sg.slug ?? ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <p style={{ fontWeight: 650 }}>{sg.title}</p>
+            {sg.note ? <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line' }}>{sg.note}</p> : null}
+            <div style={{ marginTop: 8 }}>
+              {sg.alreadyApplied ? <Badge tone="success" icon="checkcircle">You applied for this role</Badge>
+                : sg.slug ? <ButtonLink to={`/jobs/${sg.slug}`} size="sm" iconRight="arrowr">View role</ButtonLink>
+                  : <span style={{ color: 'var(--text3)', fontSize: 13 }}>This role is no longer open.</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function SubmissionCard({ app }: { app: ApplicationStatusDto }) {
+  const { coverLetter, whyUs, portfolio, source, resumeName } = app.submission;
+  const details: Array<[string, ReactNode]> = [
+    ['Role', app.jobTitle],
+    ['Applied', formatDate(app.appliedAt)],
+    ...(resumeName ? [['Resume', resumeName] as [string, ReactNode]] : []),
+    ...(portfolio ? [['Portfolio', /^https?:\/\//i.test(portfolio)
+      ? <a href={portfolio} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, overflowWrap: 'anywhere' }}>{portfolio}</a>
+      : portfolio] as [string, ReactNode]] : []),
+    ...(source ? [['How you heard about us', source] as [string, ReactNode]] : []),
+  ];
+  return (
+    <Card>
+      <CardHeader title="Your application" subtitle="What you sent us. Contact your recruiter if something needs to change." />
+      <DescriptionList items={details} />
+      {coverLetter ? (
+        <div style={{ marginTop: 16 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 650, marginBottom: 6 }}>About you</h3>
+          <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>{coverLetter}</p>
+        </div>
+      ) : null}
+      {whyUs ? (
+        <div style={{ marginTop: 16 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 650, marginBottom: 6 }}>Why you want to work here</h3>
+          <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>{whyUs}</p>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
 function ApplicationView({ app, email }: { app: ApplicationStatusDto; email: string }) {
   const [confirm, setConfirm] = useState(false);
   const qc = useQueryClient();
@@ -102,18 +158,12 @@ function ApplicationView({ app, email }: { app: ApplicationStatusDto; email: str
             <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line' }}>{app.feedback.notes || 'The team did not add further notes.'}</p>
           </Card>
         ) : null}
-        {app.rejected && app.suggestion ? (
-          <Card>
-            <CardHeader title="A role that might suit you" />
-            <p style={{ fontWeight: 650 }}>{app.suggestion.title}</p>
-            {app.suggestion.note ? <p style={{ color: 'var(--text2)', marginTop: 4 }}>{app.suggestion.note}</p> : null}
-            {app.suggestion.slug ? <div style={{ marginTop: 12 }}><ButtonLink to={`/jobs/${app.suggestion.slug}`} size="sm" iconRight="arrowr">View role</ButtonLink></div> : null}
-          </Card>
-        ) : null}
+        {app.suggestions.length ? <SuggestionsCard app={app} /> : null}
         <Card>
           <CardHeader title="Progress" />
           <Timeline items={app.events.map((e, i) => ({ key: e.key, title: e.title, sub: `${formatDate(e.at)}${e.note ? ` · ${e.note}` : ''}`, done: i > 0 || e.title === 'Application received' }))} />
         </Card>
+        <SubmissionCard app={app} />
       </div>
       <aside style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {app.interviews.length ? app.interviews.map((iv) => <InterviewCard key={iv.id} iv={iv} />) : (

@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { APPLY_SOURCES, STAGE_LABELS, STAGE_ORDER, stageRank } from '../../../shared/domain/pipeline.js';
+import { APPLY_SOURCES, STAGE_LABELS, STAGE_ORDER, sourceLabel, stageRank } from '../../../shared/domain/pipeline.js';
 import { jobTags, spotsRemaining, splitLines } from '../../../shared/domain/jobs.js';
 import { candidateJoinState, interviewDisplayState } from '../../../shared/domain/interviews.js';
 import { dialCodeFor } from '../../../shared/domain/phone.js';
@@ -296,9 +296,11 @@ export async function statusLookup(email: string, applicationId?: number): Promi
   if (!row) throw notFound('We could not find an application matching that ID and email.');
   const current = stageRank(row.stage);
   const rejected = row.stage === 'rejected';
-  const [feedback, suggestion] = rejected
-    ? await Promise.all([repo.latestFeedback(row.id), repo.latestSuggestion(row.id)])
-    : [null, null];
+  const [feedback, suggestions, resumeName] = await Promise.all([
+    rejected ? repo.latestFeedback(row.id) : null,
+    row.stage === 'hired' ? [] : repo.suggestionsFor(row.id, row.candidate_id),
+    repo.primaryResumeName(row.candidate_id),
+  ]);
   const application: ApplicationStatusDto = {
     id: row.id,
     stage: row.stage,
@@ -314,7 +316,14 @@ export async function statusLookup(email: string, applicationId?: number): Promi
     updatedAt: isoOrThrow(row.updated_at),
     timeline: STAGE_ORDER.map((key) => ({ key, label: STAGE_LABELS[key], reached: stageRank(key) <= current, current: key === row.stage })),
     feedback,
-    suggestion: suggestion ? { title: suggestion.title, slug: suggestion.status === 'open' ? suggestion.slug : null, note: suggestion.note } : null,
+    suggestions: suggestions.map((sg) => ({ title: sg.title, slug: sg.status === 'open' ? sg.slug : null, note: sg.note, alreadyApplied: sg.already_applied })),
+    submission: {
+      coverLetter: row.cover_letter,
+      whyUs: row.why_us,
+      portfolio: row.portfolio_url,
+      source: row.source ? sourceLabel(row.source) : null,
+      resumeName,
+    },
     interviews: row.status === 'withdrawn' || rejected ? [] : await candidateInterviews(row.id),
     events: await statusEvents(row.id, row.applied_at),
   };

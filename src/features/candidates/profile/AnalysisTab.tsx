@@ -99,7 +99,7 @@ export function AnalysisTab({ c }: { c: CandidateProfileDto }) {
         </Card>
       </div>
       <Card>
-        <CardHeader title="Suggest another role" subtitle="Other open role that could suit this candidate." />
+        <CardHeader title="Suggest another role" subtitle="Shown to the applicant, with your note, on their application status page." />
         <div className={formStyles.stack}>
           <Field label="Other open role"><Select value={jobId} onChange={(e) => setJobId(e.target.value)} placeholder="Select a role" options={c.openRoles.map((r) => ({ value: r.id, label: r.title }))} /></Field>
           <Field label="Why this role?" optional><Textarea rows={3} value={why} onChange={(e) => setWhy(e.target.value)} maxLength={2000} /></Field>

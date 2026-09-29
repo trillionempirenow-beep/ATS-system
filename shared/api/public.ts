@@ -141,7 +141,10 @@ export interface ApplicationStatusDto {
   updatedAt: string;
   timeline: Array<{ key: Stage; label: string; reached: boolean; current: boolean }>;
   feedback: { fit: string; notes: string | null } | null;
-  suggestion: { title: string; slug: string | null; note: string | null } | null;
+  /** Other roles the hiring team suggested, newest first. `slug` is null once the role closes. */
+  suggestions: Array<{ title: string; slug: string | null; note: string | null; alreadyApplied: boolean }>;
+  /** What the applicant sent. Cover letter and answer belong to this application; the rest is their current record. */
+  submission: { coverLetter: string | null; whyUs: string | null; portfolio: string | null; source: string | null; resumeName: string | null };
   interviews: CandidateInterviewDto[];
   events: Array<{ key: string; title: string; note: string | null; at: string }>;
 }

@@ -204,7 +204,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
     setTip({ text, left: sidebar.right + POP_GAP, top: r.top + r.height / 2 });
   };
 
-  const tipFor = (text: string): TipProps | undefined => rail ? {
+  const tipBind = (text: string): TipProps => ({
     onPointerEnter: (e) => {
       if (e.pointerType === 'touch') return;
       if (!flyout?.pinned) closeFlyout();
@@ -213,7 +213,9 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
     onPointerLeave: () => setTip(null),
     onFocus: (e) => { if (e.currentTarget.matches(':focus-visible')) showTip(e.currentTarget, text); },
     onBlur: () => setTip(null),
-  } : undefined;
+  });
+  /** Nav items only need a tooltip when their label is hidden. */
+  const tipFor = (text: string): TipProps | undefined => (rail ? tipBind(text) : undefined);
 
   // Pinned flyouts close on outside press or Escape.
   useEffect(() => {
@@ -237,7 +239,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
 
   // Popovers are anchored to viewport coordinates; dismiss rather than chase them.
   useEffect(() => {
-    if (!rail) return;
+    if (mobile) return;
     const nav = navRef.current;
     const timer = closeTimer;
     const dismiss = () => { window.clearTimeout(timer.current); setFlyout(null); setTip(null); };
@@ -248,28 +250,31 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
       window.removeEventListener('resize', dismiss);
       window.clearTimeout(timer.current);
     };
-  }, [rail]);
+  }, [mobile]);
 
   const flyoutGroup = rail && flyout ? groups.find((g) => g.key === flyout.key) : undefined;
-  const toggleLabel = mobile ? 'Close navigation' : collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  const toggleLabel = mobile ? 'Close navigation' : collapsed ? 'Open sidebar' : 'Close sidebar';
 
   return (
     <aside id={SIDEBAR_ID} ref={asideRef} className={cx(s.sidebar, rail && s.collapsed, drawerOpen && s.drawerOpen)} aria-label="Main navigation">
       <div className={s.brand}>
-        <button
-          type="button"
-          className={s.brandBtn}
-          aria-label={toggleLabel}
-          aria-controls={SIDEBAR_ID}
-          aria-expanded={mobile ? drawerOpen : !collapsed}
-          onClick={() => { window.clearTimeout(closeTimer.current); setFlyout(null); setTip(null); onToggle(); }}
-          {...tipFor(toggleLabel)}
-        >
+        <div className={s.brandLogo} aria-hidden={rail || undefined}>
           <BrandMark size={32} />
           <span className={s.brandText}>
             <span className={s.brandName}>Acme<em>/</em>people</span>
             <span className={s.brandRole}>{me.roleLabel}</span>
           </span>
+        </div>
+        <button
+          type="button"
+          className={s.toggleBtn}
+          aria-label={toggleLabel}
+          aria-controls={SIDEBAR_ID}
+          aria-expanded={mobile ? drawerOpen : !collapsed}
+          onClick={() => { window.clearTimeout(closeTimer.current); setFlyout(null); setTip(null); onToggle(); }}
+          {...(mobile ? undefined : tipBind(toggleLabel))}
+        >
+          <Icon name={collapsed && !mobile ? 'panelopen' : 'panelclose'} size={20} />
         </button>
       </div>
       <nav ref={navRef} className={s.nav}>
@@ -355,7 +360,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
           {flyoutGroup.items.map((i) => <NavEntry key={i.to} item={i} summary={summary} onNavigate={() => { closeFlyout(); onNavigate(); }} />)}
         </Flyout>
       ) : null}
-      {rail && tip ? createPortal(
+      {tip && !mobile ? createPortal(
         <div className={s.tooltip} style={{ left: tip.left, top: tip.top }} aria-hidden="true">{tip.text}</div>,
         document.body,
       ) : null}
