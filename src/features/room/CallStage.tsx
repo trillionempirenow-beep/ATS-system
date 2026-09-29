@@ -30,7 +30,13 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const el = ref.current;
-    if (el && el.srcObject !== stream) el.srcObject = stream;
+    if (!el) return undefined;
+    if (el.srcObject !== stream) el.srcObject = stream;
+    // autoPlay alone can stall when tracks arrive after the stream is attached.
+    const play = () => { if (el.srcObject) void el.play().catch(() => undefined); };
+    play();
+    stream?.addEventListener('addtrack', play);
+    return () => stream?.removeEventListener('addtrack', play);
   }, [stream]);
   return (
     <div className={cx(s.tile, small && s.tileSmall, highlight && s.tileSpeaking)}>

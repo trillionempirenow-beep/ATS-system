@@ -100,6 +100,13 @@ export function useCall(opts: CallOptions): Call {
   media.current = { stream: opts.stream, screen: opts.screen };
   callbacks.current = { onEnded: opts.onEnded, onFirstConnection: opts.onFirstConnection };
 
+  // Every status poll hands us a fresh rtc object with the same servers. Keying on
+  // its content keeps the channel and every peer connection alive across polls
+  // instead of tearing the call down and starting over each time.
+  const rtcKey = opts.rtc ? JSON.stringify(opts.rtc.iceServers) : null;
+  const iceServers = useRef<RTCIceServer[]>([]);
+  iceServers.current = opts.rtc?.iceServers ?? [];
+
   const signal = useCallback((entry: PeerEntry, body: Omit<Signal, 'from' | 'to' | 'sid'>) => {
     channelRef.current?.send(EV_SIGNAL, { ...body, from: selfId, to: entry.id, sid: entry.sid } satisfies Signal);
   }, [selfId]);
@@ -127,7 +134,7 @@ export function useCall(opts: CallOptions): Call {
   }, []);
 
   const createPeer = useCallback((id: string): PeerEntry => {
-    const pc = new RTCPeerConnection({ iceServers: opts.rtc?.iceServers ?? [] });
+    const pc = new RTCPeerConnection({ iceServers: iceServers.current });
     const entry: PeerEntry = { id, sid: nonce(), remoteSid: null, pc, polite: selfId > id, makingOffer: false, ignoreOffer: false, remote: new MediaStream(), senders: {} };
     pc.onnegotiationneeded = async () => {
       try {
@@ -142,8 +149,10 @@ export function useCall(opts: CallOptions): Call {
     };
     pc.onicecandidate = ({ candidate }) => signal(entry, { candidate: candidate ? candidate.toJSON() : null });
     pc.ontrack = ({ track }) => {
-      entry.remote.getTracks().filter((t) => t.kind === track.kind && t !== track).forEach((t) => entry.remote.removeTrack(t));
-      if (!entry.remote.getTracks().includes(track)) entry.remote.addTrack(track);
+      // A new stream object (rather than adding to the old one) makes the <video>
+      // element re-bind and start playing the new audio or video track.
+      const kept = entry.remote.getTracks().filter((t) => t.kind !== track.kind);
+      entry.remote = new MediaStream([...kept, track]);
       track.onmute = bump;
       track.onunmute = bump;
       track.onended = bump;
@@ -161,7 +170,7 @@ export function useCall(opts: CallOptions): Call {
     syncTracks(entry);
     bump();
     return entry;
-  }, [opts.rtc, selfId, signal, syncTracks]);
+  }, [selfId, signal, syncTracks]);
 
   const ensurePeer = useCallback((id: string) => peers.current.get(id) ?? createPeer(id), [createPeer]);
 
@@ -200,7 +209,7 @@ export function useCall(opts: CallOptions): Call {
 
   // Join the room channel once it is granted.
   useEffect(() => {
-    if (!opts.channel || !opts.rtc) return undefined;
+    if (!opts.channel || !rtcKey) return undefined;
     const ch = joinChannel<ParticipantMeta>(opts.driver, opts.channel, selfId);
     channelRef.current = ch;
     const offs = [
@@ -230,7 +239,7 @@ export function useCall(opts: CallOptions): Call {
         current.delete(id);
       }
     };
-  }, [opts.channel, opts.driver, opts.rtc, selfId, onSignal]);
+  }, [opts.channel, opts.driver, rtcKey, selfId, onSignal]);
 
   // Presence decides who we connect to. A short grace period rides out reconnects.
   useEffect(() => {
