@@ -5,6 +5,7 @@ import {
   profileUpdateSchema, ratingSchema, requiredFieldsSchema, stageReviewSchema, suggestionSchema,
 } from '../../../shared/api/candidates.js';
 import { body, idParam, parse, query } from '../../http/validate.js';
+import { REVIEW_STAGES } from '../../../shared/domain/pipeline.js';
 import { requireStaff } from '../../middleware/guards.js';
 import { rateLimit } from '../../middleware/security.js';
 import * as service from './candidates.service.js';
@@ -67,7 +68,7 @@ candidatesRouter.post('/candidates/:id/suggestions', async (req, res) => {
 });
 
 candidatesRouter.put('/candidates/:id/stage-reviews/:stageType', async (req, res) => {
-  const stageType = parse(z.enum(['screening', 'interview']), req.params.stageType);
+  const stageType = parse(z.enum(REVIEW_STAGES), req.params.stageType);
   await service.saveStageReview(idParam(req), stageType, body(req, stageReviewSchema), ctx(req));
   res.json(ok);
 });

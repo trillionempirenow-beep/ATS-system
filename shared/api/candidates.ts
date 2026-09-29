@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   CONFIGURABLE_CANDIDATE_FIELDS, EXPERIENCE_LEVELS, FEEDBACK_FITS, MANUAL_SOURCES, STAGES,
-  type ExperienceLevel, type FeedbackFit, type Stage,
+  type ExperienceLevel, type FeedbackFit, type ReviewStage, type Stage,
 } from '../domain/pipeline.js';
 import type { DisplayInterviewState, InterviewType, MeetingType, Recommendation } from '../domain/interviews.js';
 import type { EmploymentType } from '../domain/jobs.js';
@@ -59,7 +59,7 @@ export interface DocumentDto {
 export interface NoteDto { id: number; note: string; author: string | null; createdAt: string }
 export interface FeedbackDto { id: number; fit: FeedbackFit; notes: string | null; author: string | null; createdAt: string }
 export interface SuggestionDto { id: number; jobId: number; jobTitle: string; note: string | null; author: string | null; createdAt: string }
-export interface StageReviewDto { stageType: 'screening' | 'interview'; rating: number | null; feedback: string | null; notes: string | null; reviewer: string | null; updatedAt: string }
+export interface StageReviewDto { stageType: ReviewStage; rating: number | null; feedback: string | null; notes: string | null; reviewer: string | null; updatedAt: string }
 export interface AiAnalysisDto {
   overallScore: number;
   categoryScores: Record<string, number>;
@@ -126,6 +126,7 @@ export interface CandidateProfileDto {
   openRoles: Array<{ id: number; title: string }>;
   screeningReview: StageReviewDto | null;
   interviewReview: StageReviewDto | null;
+  finalInterviewReview: StageReviewDto | null;
   aiAnalysis: AiAnalysisDto | null;
   interviews: CandidateInterviewRowDto[];
   activity: ActivityDto[];

@@ -1,5 +1,5 @@
 import { sql, type Db } from '../../db/client.js';
-import type { ExperienceLevel, FeedbackFit, Stage } from '../../../shared/domain/pipeline.js';
+import type { ExperienceLevel, FeedbackFit, ReviewStage, Stage } from '../../../shared/domain/pipeline.js';
 import type { EmploymentType } from '../../../shared/domain/jobs.js';
 import type { EmployeeStatus } from '../../../shared/domain/people.js';
 import type { InterviewStatus, InterviewType, MeetingState, MeetingType, Recommendation } from '../../../shared/domain/interviews.js';
@@ -163,7 +163,7 @@ export const openRolesExcept = (jobId: number) =>
   sql<{ id: number; title: string }[]>`select id, title from jobs where status = 'open' and id <> ${jobId} order by title`;
 
 export const stageReviews = (applicationId: number) =>
-  sql<{ stage_type: 'screening' | 'interview'; rating: number | null; feedback: string | null; notes: string | null; reviewer: string | null; updated_at: Date }[]>`
+  sql<{ stage_type: ReviewStage; rating: number | null; feedback: string | null; notes: string | null; reviewer: string | null; updated_at: Date }[]>`
     select r.stage_type, r.rating, r.feedback, r.notes, u.name as reviewer, r.updated_at
     from stage_reviews r left join users u on u.id = r.reviewer_id where r.application_id = ${applicationId}`;
 

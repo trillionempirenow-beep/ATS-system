@@ -65,13 +65,10 @@ export const scheduleInterviewSchema = z
     location: z.string().trim().max(255).optional().default(''),
     notes: z.string().trim().max(2000).optional().default(''),
     sendInvite: z.boolean().optional().default(true),
-    /** Final interview: issues a guest link so outside stakeholders can ask to join the built-in room. */
+    /** Final interview: moves the candidate to the Final interview stage; in the built-in room it also issues a guest link. */
     finalInterview: z.boolean().optional().default(false),
   })
   .superRefine((v, ctx) => {
-    if (v.finalInterview && (v.meetingMode !== 'builtin' || v.interviewType === 'onsite')) {
-      ctx.addIssue({ code: 'custom', path: ['finalInterview'], message: 'A final interview with guests needs the built-in Acme Room.' });
-    }
     if (v.finalInterview && v.meetingType !== 'interview') {
       ctx.addIssue({ code: 'custom', path: ['finalInterview'], message: 'Screenings cannot be final interviews.' });
     }

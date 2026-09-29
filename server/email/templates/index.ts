@@ -7,11 +7,11 @@ export interface WhenInfo {
 }
 
 export function interviewInvitation(brand: Brand, v: {
-  candidateName: string; jobTitle: string; meetingType: 'screening' | 'interview'; interviewType: string;
+  candidateName: string; jobTitle: string; meetingType: 'screening' | 'interview'; final?: boolean; interviewType: string;
   when: WhenInfo; duration: string | null; interviewerName: string | null; joinUrl: string | null;
   location: string | null; roomCode: string | null; builtIn: boolean; statusUrl: string;
 }): RenderedEmail {
-  const kind = v.meetingType === 'screening' ? 'screening call' : 'interview';
+  const kind = v.meetingType === 'screening' ? 'screening call' : v.final ? 'final interview' : 'interview';
   const rows: Array<[string, string, 'mono'?]> = [
     ['Role', v.jobTitle],
     ['Date', v.when.date],
@@ -93,6 +93,7 @@ export function applicationStatus(brand: Brand, v: {
   const copy: Record<string, { heading: string; body: string }> = {
     screening: { heading: 'Your application is moving forward', body: `Your application for ${v.jobTitle} has moved to screening. We will reach out to schedule a short call.` },
     interview: { heading: 'You have been invited to interview', body: `Your application for ${v.jobTitle} has moved to the interview stage. Watch for an email with your interview time.` },
+    final_interview: { heading: 'You have been invited to a final interview', body: `Your application for ${v.jobTitle} has moved to the final interview stage. Watch for an email with your interview time.` },
     offer: { heading: 'Good news about your application', body: `Your application for ${v.jobTitle} has reached the offer stage. The team will contact you with the details.` },
     hired: { heading: `Welcome to ${brand.company}`, body: `Congratulations, you have been hired for ${v.jobTitle}. The People team will be in touch about onboarding.` },
     rejected: { heading: 'An update on your application', body: `Thank you for applying for ${v.jobTitle}. After careful consideration we will not be moving forward with your application at this time.` },

@@ -109,6 +109,7 @@ export async function invitationEmail(r: InterviewRow) {
     candidateName: r.first_name,
     jobTitle: r.job_title,
     meetingType: r.meeting_type,
+    final: r.is_final,
     interviewType: r.room_code ? `${TYPE_LABELS[r.interview_type]} in ${b.company} Room` : TYPE_LABELS[r.interview_type],
     when: whenInfo(r.starts_at),
     duration: minutes && minutes > 0 ? `${minutes} minutes` : null,

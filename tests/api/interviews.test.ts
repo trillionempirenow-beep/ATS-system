@@ -75,6 +75,9 @@ describe('interview scheduling, waiting room and review', () => {
     const t = new URL(candidateLink).searchParams.get('t')!;
     const guestApi = `/api/v1/room/${code}/guest`;
 
+    // Scheduling a final interview moves the candidate into the Final interview stage.
+    expect((await hr.agent.get('/api/v1/candidates/5')).body.data.stage).toBe('final_interview');
+
     // The two links never stand in for each other.
     expect((await (await anon()).get(guestApi).query({ g: t })).status).toBe(403);
     expect((await (await anon()).get(`/api/v1/room/${code}`).query({ t: g })).status).toBe(403);
@@ -127,9 +130,40 @@ describe('interview scheduling, waiting room and review', () => {
     expect(ended.body.data.ended).toBe(true);
     expect(ended.body.data.realtime.room).toBeNull();
     expect((await (await anon()).post(`${guestApi}/join`).send({ g, name: 'Late', position: 'Director' })).status).toBe(409);
+
+    // Its review is kept as the final interview review, apart from the first interview's.
+    await hr.agent.post(`/api/v1/interviews/${interviewId}/review`).set('X-CSRF-Token', hr.csrf)
+      .send({ score: 90, review: 'Panel agreed', recommendation: 'offer' }).expect(200);
+    const profile = await hr.agent.get('/api/v1/candidates/5');
+    expect(profile.body.data.finalInterviewReview.rating).toBe(90);
+    expect(profile.body.data.interviewReview?.rating ?? null).not.toBe(90);
   });
 
-  it('only issues guest links for final interviews', async () => {
+  it('treats the final interview as an optional stage between Interview and Offer', async () => {
+    const hr = await signInRecruiter();
+    const move = (stage: string) => hr.agent.post('/api/v1/applications/5/stage').set('X-CSRF-Token', hr.csrf).send({ stage });
+    // Booking a regular interview never pulls a candidate back out of the final round.
+    await hr.agent.post('/api/v1/interviews').set('X-CSRF-Token', hr.csrf).send({
+      applicationId: 5, startsAt: new Date(Date.now() + 2 * 86_400_000).toISOString(), interviewType: 'video', meetingType: 'interview', meetingMode: 'builtin', sendInvite: false,
+    }).expect(201);
+    expect((await hr.agent.get('/api/v1/candidates/5')).body.data.stage).toBe('final_interview');
+
+    expect((await move('interview')).status).toBe(200);
+    // Roles without a final round go straight to Offer: that is not a skip.
+    const toOffer = await move('offer');
+    expect(toOffer.status).toBe(200);
+    expect(toOffer.body.data.override).toBe(false);
+    expect((await move('final_interview')).status).toBe(200);
+
+    // Applicants only see the final round on their timeline when their process has one.
+    const timeline = async (email: string, applicationId: number) =>
+      ((await (await anon()).post('/api/v1/public/status').send({ email, applicationId: String(applicationId) })).body.data.application.timeline as Array<{ key: string }>)
+        .map((t) => t.key);
+    expect(await timeline('luis.fernandez@example.com', 5)).toContain('final_interview');
+    expect(await timeline('ravi.menon@example.com', 9)).not.toContain('final_interview');
+  });
+
+  it('only issues guest links for final interviews in the built-in room', async () => {
     const hr = await signInRecruiter();
     const plain = await hr.agent.post('/api/v1/interviews').set('X-CSRF-Token', hr.csrf).send({
       applicationId: 5, startsAt: new Date(Date.now() + 3 * 86_400_000).toISOString(), interviewType: 'video', meetingType: 'interview', meetingMode: 'builtin', sendInvite: false,
@@ -138,9 +172,15 @@ describe('interview scheduling, waiting room and review', () => {
     expect(plain.body.data.guestLink).toBeNull();
     const external = await hr.agent.post('/api/v1/interviews').set('X-CSRF-Token', hr.csrf).send({
       applicationId: 5, startsAt: new Date(Date.now() + 4 * 86_400_000).toISOString(), interviewType: 'video', meetingType: 'interview',
-      meetingMode: 'external', meetingUrl: 'https://meet.example.com/x', finalInterview: true,
+      meetingMode: 'external', meetingUrl: 'https://meet.example.com/x', finalInterview: true, sendInvite: false,
     });
-    expect(external.status).toBe(422);
+    expect(external.status).toBe(201);
+    expect(external.body.data.guestLink).toBeNull();
+    const screening = await hr.agent.post('/api/v1/interviews').set('X-CSRF-Token', hr.csrf).send({
+      applicationId: 5, startsAt: new Date(Date.now() + 5 * 86_400_000).toISOString(), interviewType: 'video', meetingType: 'screening',
+      meetingMode: 'builtin', finalInterview: true, sendInvite: false,
+    });
+    expect(screening.status).toBe(422);
   });
 
   it('keeps employees out of recruiting endpoints', async () => {

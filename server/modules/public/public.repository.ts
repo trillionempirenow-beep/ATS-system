@@ -148,3 +148,12 @@ export async function applicationEvents(applicationId: number) {
        or (l.entity_type = 'interview' and l.action = 'interview_create' and l.entity_id in (select id from interviews where application_id = ${applicationId}))
     order by l.created_at desc, l.id desc`;
 }
+
+/** Whether this application has (or had) a final interview, reached through the stage or a scheduled final round. */
+export async function hasFinalRound(applicationId: number): Promise<boolean> {
+  const [row] = await sql<{ yes: boolean }[]>`
+    select exists (select 1 from interviews where application_id = ${applicationId} and is_final and status <> 'cancelled')
+        or exists (select 1 from audit_logs where entity_type = 'application' and entity_id = ${applicationId}
+                   and action = 'pipeline_stage_move' and details->>'to' = 'final_interview') as yes`;
+  return Boolean(row?.yes);
+}

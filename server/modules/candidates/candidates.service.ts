@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import {
-  CONFIGURABLE_CANDIDATE_FIELDS, MANUAL_SOURCES, STAGE_LABELS, sourceLabel, type ConfigurableCandidateField,
+  CONFIGURABLE_CANDIDATE_FIELDS, MANUAL_SOURCES, STAGE_LABELS, sourceLabel, type ConfigurableCandidateField, type ReviewStage,
 } from '../../../shared/domain/pipeline.js';
 import { isAdminLevel } from '../../../shared/domain/access.js';
 import { jobTags } from '../../../shared/domain/jobs.js';
@@ -63,6 +63,7 @@ const ACTION_LABELS: Record<string, string> = {
   candidate_role_suggestion: 'Role suggestion saved',
   screening_review: 'Screening review saved',
   interview_review: 'Interview review saved',
+  final_interview_review: 'Final interview review saved',
   meeting_review: 'Meeting review saved',
   ai_analysis_generated: 'Application analysis generated',
   candidate_converted_to_employee: 'Added to Employees',
@@ -102,7 +103,7 @@ export async function profile(applicationId: number): Promise<CandidateProfileDt
     repo.employeeForApplication(applicationId),
     repo.departments(),
   ]);
-  const review = (t: 'screening' | 'interview') => {
+  const review = (t: ReviewStage) => {
     const r = reviews.find((x) => x.stage_type === t);
     return r ? { stageType: t, rating: r.rating, feedback: r.feedback, notes: r.notes, reviewer: r.reviewer, updatedAt: isoOrThrow(r.updated_at) } : null;
   };
@@ -145,6 +146,7 @@ export async function profile(applicationId: number): Promise<CandidateProfileDt
     openRoles,
     screeningReview: review('screening'),
     interviewReview: review('interview'),
+    finalInterviewReview: review('final_interview'),
     aiAnalysis: ai
       ? { overallScore: ai.overall_score, categoryScores: ai.category_scores, summary: ai.summary, strengths: ai.strengths, concerns: ai.concerns, recommendation: ai.recommendation, notes: ai.ai_notes, generatedAt: isoOrThrow(ai.generated_at) }
       : null,
@@ -200,7 +202,7 @@ export async function addSuggestion(applicationId: number, input: z.infer<typeof
   });
 }
 
-export async function saveStageReview(applicationId: number, stageType: 'screening' | 'interview', input: z.infer<typeof stageReviewSchema>, ctx: Ctx): Promise<void> {
+export async function saveStageReview(applicationId: number, stageType: ReviewStage, input: z.infer<typeof stageReviewSchema>, ctx: Ctx): Promise<void> {
   await basics(applicationId);
   await transaction(async (tx) => {
     await tx`insert into stage_reviews (application_id, stage_type, rating, feedback, notes, reviewer_id)

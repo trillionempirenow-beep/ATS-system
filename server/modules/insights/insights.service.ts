@@ -112,7 +112,7 @@ async function candidateMetrics(userId: number, from: string | null, to: string 
     m.assigned += r.n;
     if (r.status === 'withdrawn') { m.withdrawn += r.n; continue; }
     if (r.stage === 'screening') { m.shortlisted += r.n; m.contacted += r.n; m.processing += r.n; }
-    else if (r.stage === 'interview') { m.inInterview += r.n; m.contacted += r.n; m.processing += r.n; }
+    else if (r.stage === 'interview' || r.stage === 'final_interview') { m.inInterview += r.n; m.contacted += r.n; m.processing += r.n; }
     else if (r.stage === 'offer') { m.offer += r.n; m.contacted += r.n; m.processing += r.n; }
     else if (r.stage === 'hired') m.hired += r.n;
     else if (r.stage === 'rejected') m.rejected += r.n;
@@ -122,7 +122,7 @@ async function candidateMetrics(userId: number, from: string | null, to: string 
 }
 
 async function funnel(userId: number, from: string | null, to: string | null) {
-  const labels: Record<string, string> = { new: 'Applied', screening: 'Shortlisted', interview: 'Interview', offer: 'Offer', hired: 'Hired' };
+  const labels: Record<string, string> = { new: 'Applied', screening: 'Shortlisted', interview: 'Interview', final_interview: 'Final interview', offer: 'Offer', hired: 'Hired' };
   const rows = await sql<{ stage: Stage; n: number }[]>`
     select a.stage, count(*)::int as n from applications a join jobs j on j.id = a.job_id
     where a.status = 'active' ${ownedSql(userId)} ${rangeSql(from, to, sql`a.applied_at`)} group by a.stage`;

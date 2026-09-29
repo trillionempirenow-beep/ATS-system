@@ -6,7 +6,7 @@ import { z } from 'zod';
 import type { CandidateProfileDto, StageReviewDto } from '@shared/api/candidates';
 import { profileUpdateSchema } from '@shared/api/candidates';
 import { EMPLOYMENT_TYPE_LABELS } from '@shared/domain/jobs';
-import { EXPERIENCE_LEVEL_LABELS, EXPERIENCE_LEVELS, STAGE_LABELS, STAGE_ORDER, stageRank } from '@shared/domain/pipeline';
+import { EXPERIENCE_LEVEL_LABELS, EXPERIENCE_LEVELS, REVIEW_STAGE_LABELS, STAGE_LABELS, STAGE_ORDER, stageRank, type ReviewStage } from '@shared/domain/pipeline';
 import { Button } from '@/components/ui/Button';
 import { Avatar, Badge, Chip } from '@/components/ui/Display';
 import { Field, Select, TextInput, Textarea, formStyles } from '@/components/ui/Form';
@@ -23,13 +23,13 @@ import { ConvertEmployeeCard } from './ConvertEmployeeCard';
 import w from '../../workspace.module.css';
 import s from './Profile.module.css';
 
-function StageReviewCard({ c, type, review, locked }: { c: CandidateProfileDto; type: 'screening' | 'interview'; review: StageReviewDto | null; locked: boolean }) {
+function StageReviewCard({ c, type, review, locked }: { c: CandidateProfileDto; type: ReviewStage; review: StageReviewDto | null; locked: boolean }) {
   const toast = useToast();
   const [rating, setRating] = useState<number | null>(review?.rating ?? null);
   const [feedback, setFeedback] = useState(review?.feedback ?? '');
   const save = useCandidateAction(c.applicationId, () => api.put(`/candidates/${c.applicationId}/stage-reviews/${type}`, { rating, feedback, notes: review?.notes ?? '' }));
-  const label = type === 'screening' ? 'Screening' : 'Interview';
-  const status = review ? <Badge tone="success" icon="checkcircle">Saved</Badge> : locked ? <Badge tone="neutral" icon="lock">Locked until {type}</Badge> : <Badge tone="warning" dot>In progress</Badge>;
+  const label = REVIEW_STAGE_LABELS[type];
+  const status = review ? <Badge tone="success" icon="checkcircle">Saved</Badge> : locked ? <Badge tone="neutral" icon="lock">Locked until {label.toLowerCase()}</Badge> : <Badge tone="warning" dot>In progress</Badge>;
   return (
     <Card>
       <CardHeader title={`${label} review`} actions={status} />
@@ -48,7 +48,7 @@ function StageReviewCard({ c, type, review, locked }: { c: CandidateProfileDto; 
         <div className={w.formActions}>
           <Button variant="secondary" loading={save.isPending} disabled={locked}
             onClick={() => save.mutate(undefined, { onSuccess: () => toast.success(`${label} review saved.`), onError: (e) => toast.error(errorMessage(e)) })}>
-            Save {type} review
+            Save {label.toLowerCase()} review
           </Button>
         </div>
       </div>
@@ -156,6 +156,10 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
         ) : null}
         <StageReviewCard key={`s-${c.screeningReview?.updatedAt ?? 'none'}`} c={c} type="screening" review={c.screeningReview} locked={false} />
         <StageReviewCard key={`i-${c.interviewReview?.updatedAt ?? 'none'}`} c={c} type="interview" review={c.interviewReview} locked={!c.interviewReview && (c.stage === 'rejected' || rank < stageRank('interview'))} />
+        {/* The final round is optional: its card appears once the candidate reaches it or it has a review. */}
+        {c.finalInterviewReview || rank >= stageRank('final_interview') ? (
+          <StageReviewCard key={`f-${c.finalInterviewReview?.updatedAt ?? 'none'}`} c={c} type="final_interview" review={c.finalInterviewReview} locked={false} />
+        ) : null}
         <NotesCard c={c} />
       </div>
       <div className={w.stack}>

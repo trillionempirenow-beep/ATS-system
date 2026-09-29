@@ -1,7 +1,8 @@
 import { Area, AreaChart as RArea, Bar, BarChart as RBar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipProps } from 'recharts';
 import s from './Charts.module.css';
 
-export const STAGE_CHART_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'] as const;
+/** One color per board stage, in STAGE_ORDER: Applied, Screening, Interview, Final interview, Offer, Hired. */
+export const STAGE_CHART_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-6)', 'var(--chart-4)', 'var(--chart-5)'] as const;
 
 function ChartTooltip({ active, payload, label, unit, color }: TooltipProps<number, string> & { unit: string; color: string }) {
   if (!active || !payload?.length) return null;

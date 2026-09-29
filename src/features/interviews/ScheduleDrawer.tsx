@@ -17,9 +17,11 @@ import { useScheduleInterview, useScheduleOptions } from './api';
 export const FORMAT_LABELS: Record<InterviewType, string> = { video: 'Video', phone: 'Phone', panel: 'Panel', onsite: 'On-site' };
 const PROVIDERS = ['Zoom', 'Google Meet', 'Microsoft Teams', 'Other'];
 
+type FormMeetingType = MeetingType | 'final';
+
 interface Values {
   applicationId: string;
-  meetingType: MeetingType;
+  meetingType: FormMeetingType;
   interviewType: InterviewType;
   interviewerId: string;
   meetingMode: 'builtin' | 'external';
@@ -30,9 +32,8 @@ interface Values {
   endsAt: string;
   notes: string;
   sendInvite: boolean;
-  finalInterview: boolean;
 }
-const KNOWN = ['applicationId', 'interviewerId', 'meetingUrl', 'location', 'startsAt', 'endsAt', 'finalInterview'];
+const KNOWN = ['applicationId', 'interviewerId', 'meetingUrl', 'location', 'startsAt', 'endsAt'];
 
 function nextHalfHour(offsetMinutes = 0): string {
   const d = new Date(Date.now() + 24 * 3600_000);
@@ -58,7 +59,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
     applicationId: applicationId ? String(applicationId) : '',
     meetingType: 'interview', interviewType: 'video', interviewerId: user ? String(user.id) : '',
     meetingMode: 'builtin', meetingProvider: 'Zoom', meetingUrl: '', location: '',
-    startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true, finalInterview: false,
+    startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true,
   }), [applicationId, user]);
   const { register, handleSubmit, control, watch, reset, setError, setValue, formState: { errors } } = useForm<Values>({ defaultValues: defaults });
 
@@ -68,14 +69,16 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
   const appId = watch('applicationId');
   const selectedApp = opts?.applications.find((a) => String(a.id) === appId);
   useEffect(() => {
-    if (selectedApp) setValue('meetingType', selectedApp.stage === 'new' || selectedApp.stage === 'screening' ? 'screening' : 'interview');
+    if (!selectedApp) return;
+    const st = selectedApp.stage;
+    setValue('meetingType', st === 'new' || st === 'screening' ? 'screening' : st === 'final_interview' || st === 'offer' ? 'final' : 'interview');
   }, [selectedApp, setValue]);
   const mode = watch('meetingMode');
   const format = watch('interviewType');
   const interviewerId = watch('interviewerId');
   const meetingType = watch('meetingType');
-  // Guests join through the built-in room, and only on an interview (not a screening).
-  const canBeFinal = meetingType === 'interview' && format !== 'onsite' && mode === 'builtin';
+  // Outside guests join through the built-in room's guest link.
+  const guestLink = meetingType === 'final' && format !== 'onsite' && mode === 'builtin';
   const clash = nearbyBooking(opts, interviewerId, watch('startsAt'));
   const clashName = opts?.interviewers.find((i) => String(i.id) === interviewerId)?.name;
   const interviewerKnown = opts?.interviewers.some((i) => String(i.id) === interviewerId);
@@ -91,10 +94,10 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
     if (bad) return;
     const onsite = v.interviewType === 'onsite';
     const external = !onsite && v.meetingMode === 'external';
-    const finalInterview = v.finalInterview && v.meetingType === 'interview' && !onsite && !external;
+    const finalInterview = v.meetingType === 'final';
     schedule.mutate({
       applicationId: Number(v.applicationId),
-      meetingType: v.meetingType,
+      meetingType: v.meetingType === 'final' ? 'interview' : v.meetingType,
       interviewType: v.interviewType,
       interviewerId: v.interviewerId ? Number(v.interviewerId) : undefined,
       meetingMode: onsite || external ? 'external' : 'builtin',
@@ -133,7 +136,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
               options={opts.applications.map((a) => ({ value: a.id, label: `${a.candidateName} · ${a.jobTitle} (${STAGE_LABELS[a.stage]})` }))} />
           </Field>
           <Controller control={control} name="meetingType" render={({ field }) => (
-            <Field label="Meeting type"><SegmentedControl label="Meeting type" value={field.value} onChange={field.onChange} options={[{ value: 'screening', label: 'Screening' }, { value: 'interview', label: 'Interview' }]} /></Field>
+            <Field label="Meeting type"><SegmentedControl label="Meeting type" value={field.value} onChange={field.onChange} options={[{ value: 'screening', label: 'Screening' }, { value: 'interview', label: 'Interview' }, { value: 'final', label: 'Final interview' }]} /></Field>
           )} />
           <Controller control={control} name="interviewType" render={({ field }) => (
             <Field label="Format"><SegmentedControl label="Format" value={field.value} onChange={field.onChange} options={INTERVIEW_TYPES.map((t) => ({ value: t, label: FORMAT_LABELS[t] }))} /></Field>
@@ -163,11 +166,13 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
             <Field label="Ends at" required error={errors.endsAt?.message}><TextInput type="datetime-local" {...register('endsAt')} /></Field>
           </div>
           {clash ? <Notice tone="warning" title={`${clashName ?? 'This interviewer'} already has an interview at ${formatTime(clash)}.`}>You can still save. Check that the times do not overlap.</Notice> : null}
-          {canBeFinal ? (
-            <Checkbox {...register('finalInterview')} label="Final interview with guests"
-              description="Creates a shareable guest link for department heads or clients. Guests give their name and position and wait until someone in the room admits them." />
+          {meetingType === 'final' ? (
+            <Notice tone="info" title="Moves the candidate to Final interview">
+              {guestLink
+                ? 'You get a shareable guest link for department heads or clients. Guests give their name and position and wait until someone in the room admits them.'
+                : 'Guest links need the built-in Acme Room. With an external link or on-site, invite guests yourself.'}
+            </Notice>
           ) : null}
-          {errors.finalInterview?.message ? <Notice tone="danger">{errors.finalInterview.message}</Notice> : null}
           <Field label="Notes" optional><Textarea rows={3} maxLength={2000} {...register('notes')} /></Field>
           <Checkbox {...register('sendInvite')} label="Email the invitation to the candidate" description={mode === 'builtin' && format !== 'onsite' ? 'Includes their private link to the Acme Room.' : 'Includes the time, format and meeting details.'} />
         </form>

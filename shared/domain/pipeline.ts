@@ -1,14 +1,26 @@
-export const STAGES = ['new', 'screening', 'interview', 'offer', 'hired', 'rejected'] as const;
+export const STAGES = ['new', 'screening', 'interview', 'final_interview', 'offer', 'hired', 'rejected'] as const;
 export type Stage = (typeof STAGES)[number];
 
 /** Forward order used for skip detection; rejected sits outside it. */
-export const STAGE_ORDER = ['new', 'screening', 'interview', 'offer', 'hired'] as const;
+export const STAGE_ORDER = ['new', 'screening', 'interview', 'final_interview', 'offer', 'hired'] as const;
 export type BoardStage = (typeof STAGE_ORDER)[number];
+
+/**
+ * Stages a candidate may pass over without it counting as a skip. Not every
+ * role has a final round, so Interview → Offer stays a normal move.
+ */
+export const OPTIONAL_STAGES: ReadonlySet<Stage> = new Set<Stage>(['final_interview']);
+
+/** Stages that carry their own review (rating, feedback and meeting notes). */
+export const REVIEW_STAGES = ['screening', 'interview', 'final_interview'] as const;
+export type ReviewStage = (typeof REVIEW_STAGES)[number];
+export const REVIEW_STAGE_LABELS: Record<ReviewStage, string> = { screening: 'Screening', interview: 'Interview', final_interview: 'Final interview' };
 
 export const STAGE_LABELS: Record<Stage, string> = {
   new: 'Applied',
   screening: 'Screening',
   interview: 'Interview',
+  final_interview: 'Final interview',
   offer: 'Offer',
   hired: 'Hired',
   rejected: 'Rejected',
@@ -20,6 +32,7 @@ export const STAGE_TONES: Record<Stage, Tone> = {
   new: 'info',
   screening: 'warning',
   interview: 'teal',
+  final_interview: 'teal',
   offer: 'purple',
   hired: 'success',
   rejected: 'danger',
@@ -32,12 +45,13 @@ export function stageRank(stage: Stage): number {
   return (STAGE_ORDER as readonly Stage[]).indexOf(stage);
 }
 
-/** Moving forward past the next stage. Rejecting or moving backward is never a skip. */
+/** Moving forward past a required stage. Rejecting, moving backward or passing an optional stage is never a skip. */
 export function isStageSkip(from: Stage, to: Stage): boolean {
   if (to === 'rejected') return false;
   const f = stageRank(from);
   const t = stageRank(to);
-  return f !== -1 && t !== -1 && t > f + 1;
+  if (f === -1 || t === -1 || t <= f + 1) return false;
+  return STAGE_ORDER.slice(f + 1, t).some((st) => !OPTIONAL_STAGES.has(st));
 }
 
 export type MoveKind = 'forward' | 'skip' | 'backward' | 'reject' | 'same';
@@ -55,14 +69,19 @@ export function classifyMove(from: Stage, to: Stage): MoveKind {
 const TRANSITION_MESSAGES: Record<string, string> = {
   'new>screening': "You're moving this candidate into Screening. Make sure their application and resume have been reviewed.",
   'screening>interview': "You're moving this candidate into Interview. Review their screening results before proceeding.",
-  'interview>offer': "You're moving this candidate to Offer. Confirm that interview feedback and scorecards are complete.",
+  'interview>final_interview': "You're moving this candidate to the Final interview. Schedule it from Interviews; the hiring team can invite outside guests.",
+  'final_interview>offer': "You're moving this candidate to Offer. Confirm that the final interview feedback is complete.",
+  'interview>offer': "You're moving this candidate to Offer without a final interview. Confirm that interview feedback and scorecards are complete.",
   'offer>hired': "You're marking this candidate as Hired. You'll be able to add them to Employees from their profile.",
   'new>interview': 'This skips the Screening stage.',
+  'new>final_interview': 'This skips Screening and Interview.',
+  'screening>final_interview': 'This skips the Interview stage.',
   'new>offer': 'This skips Screening and Interview.',
   'new>hired': 'This skips Screening, Interview, and Offer.',
   'screening>offer': 'This skips the Interview stage.',
   'screening>hired': 'This skips Interview and Offer.',
   'interview>hired': 'This skips the Offer stage.',
+  'final_interview>hired': 'This skips the Offer stage.',
 };
 
 export function transitionMessage(from: Stage, to: Stage): string {

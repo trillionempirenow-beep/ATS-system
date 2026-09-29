@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { ROLE_LABELS } from '../../../shared/domain/access.js';
 import { RECOMMENDATIONS, SCORECARD_CRITERIA } from '../../../shared/domain/interviews.js';
+import { REVIEW_STAGE_LABELS, STAGE_ORDER, stageRank } from '../../../shared/domain/pipeline.js';
 import type {
   InterviewListDto, LiveMeetingDto, PresenceResultDto, ScheduleOptionsDto, ScheduleResultDto, StaffRoomDto,
   momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
@@ -66,7 +67,7 @@ export async function scheduleOptions(): Promise<ScheduleOptionsDto> {
 export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, ctx: Ctx): Promise<ScheduleResultDto> {
   const interviewerId = input.interviewerId ?? ctx.user.id;
   const builtIn = input.meetingMode === 'builtin';
-  const final = builtIn && input.finalInterview;
+  const final = input.finalInterview;
   const [app] = await sql<{ id: number; stage: string; status: string }[]>`select id, stage, status from applications where id = ${input.applicationId}`;
   if (!app || app.status !== 'active' || app.stage === 'hired' || app.stage === 'rejected') {
     throw validationFailed({ applicationId: 'Please select an active application.' });
@@ -85,13 +86,15 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
                                 meeting_provider, room_code, candidate_token, is_final, guest_token, location, notes, status, created_by)
         values (${input.applicationId}, ${interviewerId}, ${input.meetingType}, ${input.startsAt}, ${input.endsAt ?? null}, ${env.APP_TIMEZONE},
                 ${input.interviewType}, ${builtIn ? null : input.meetingUrl || null}, ${builtIn ? 'Acme Room' : input.meetingProvider || 'External'},
-                ${builtIn ? roomCode() : null}, ${builtIn ? randomHex(16) : null}, ${final}, ${final ? randomHex(16) : null}, ${input.location || null}, ${input.notes || null}, 'scheduled', ${ctx.user.id})
+                ${builtIn ? roomCode() : null}, ${builtIn ? randomHex(16) : null}, ${final}, ${final && builtIn ? randomHex(16) : null}, ${input.location || null}, ${input.notes || null}, 'scheduled', ${ctx.user.id})
         returning id`;
       await tx`update applications set assigned_to = ${interviewerId} where id = ${input.applicationId} and assigned_to is null`;
-      const target = input.meetingType === 'screening' ? 'screening' : 'interview';
+      const target = input.meetingType === 'screening' ? 'screening' : input.finalInterview ? 'final_interview' : 'interview';
       const [prev] = await tx<{ stage: string }[]>`select stage from applications where id = ${input.applicationId}`;
+      // Forward only: booking another round never pulls a candidate back to an earlier stage.
+      const earlier = STAGE_ORDER.slice(0, stageRank(target));
       const moved = await tx`update applications set stage = ${target}, updated_at = now()
-                             where id = ${input.applicationId} and stage not in ('hired','rejected') and stage <> ${target}`;
+                             where id = ${input.applicationId} and stage in ${tx(earlier)}`;
       if (moved.count && prev) {
         await audit({ userId: ctx.user.id, action: 'pipeline_stage_move', entityType: 'application', entityId: input.applicationId,
           details: { from: prev.stage, to: target, via: 'interview scheduled' }, ip: ctx.ip }, tx);
@@ -288,20 +291,22 @@ export async function submitReview(id: number, input: z.infer<typeof reviewSchem
   const row = await load(id);
   if (!acceptsReview(row)) throw new AppError(409, 'conflict', 'This interview has not ended yet. End the meeting before submitting a score and review.');
   if (input.score === null && !input.review && !input.recommendation) throw validationFailed({ score: 'Add a score, a review or a recommendation.' });
+  // A final interview has its own stage review, so it never overwrites the first interview's.
+  const stageType = row.meeting_type === 'screening' ? 'screening' : row.is_final ? 'final_interview' : 'interview';
   await transaction(async (tx) => {
     await tx`update interviews set meeting_state = 'reviewed', reviewed_at = now(), score = ${input.score}, feedback = ${input.review || null},
                recommendation = ${input.recommendation}, reviewer_id = ${ctx.user.id},
                status = case when status in ('cancelled','no_show') then status else 'completed' end where id = ${id}`;
     await tx`insert into stage_reviews (application_id, stage_type, rating, feedback, notes, reviewer_id)
-             values (${row.application_id}, ${row.meeting_type}, ${input.score}, ${input.review || null}, ${row.live_notes}, ${ctx.user.id})
+             values (${row.application_id}, ${stageType}, ${input.score}, ${input.review || null}, ${row.live_notes}, ${ctx.user.id})
              on conflict (application_id, stage_type) do update set rating = excluded.rating, feedback = excluded.feedback,
                notes = excluded.notes, reviewer_id = excluded.reviewer_id, updated_at = now()`;
     await audit({ userId: ctx.user.id, action: 'interview_review_submitted', entityType: 'interview', entityId: id, details: {
-      meeting: row.meeting_type === 'screening' ? 'Screening' : 'Interview',
+      meeting: REVIEW_STAGE_LABELS[stageType],
       score: input.score !== null ? `${input.score}/100` : '',
       recommendation: input.recommendation ? RECOMMENDATIONS[input.recommendation] : '',
     }, ip: ctx.ip }, tx);
-    await audit({ userId: ctx.user.id, action: row.meeting_type === 'screening' ? 'screening_review' : 'interview_review', entityType: 'application', entityId: row.application_id, ip: ctx.ip }, tx);
+    await audit({ userId: ctx.user.id, action: `${stageType}_review`, entityType: 'application', entityId: row.application_id, ip: ctx.ip }, tx);
   });
   emitN8nEvent('interview.reviewed', { interviewId: id, applicationId: row.application_id, score: input.score, recommendation: input.recommendation });
 }

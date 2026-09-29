@@ -264,6 +264,7 @@ const STAGE_EVENT: Record<string, [string, string | null]> = {
   new: ['Back to applied', null],
   screening: ['Screening started', 'A recruiter is reviewing your application'],
   interview: ['Interview stage', 'You are moving on to interviews'],
+  final_interview: ['Final interview stage', 'You are through to the final round'],
   offer: ['Offer stage', 'The team is preparing an offer'],
   hired: ['Hired', 'Welcome to the team'],
   rejected: ['Application closed', null],
@@ -296,11 +297,14 @@ export async function statusLookup(email: string, applicationId?: number): Promi
   if (!row) throw notFound('We could not find an application matching that ID and email.');
   const current = stageRank(row.stage);
   const rejected = row.stage === 'rejected';
-  const [feedback, suggestions, resumeName] = await Promise.all([
+  const [feedback, suggestions, resumeName, finalRound] = await Promise.all([
     rejected ? repo.latestFeedback(row.id) : null,
     row.stage === 'hired' ? [] : repo.suggestionsFor(row.id, row.candidate_id),
     repo.primaryResumeName(row.candidate_id),
+    repo.hasFinalRound(row.id),
   ]);
+  // The final round is optional: applicants only see it on their timeline when their process has one.
+  const steps = STAGE_ORDER.filter((key) => key !== 'final_interview' || finalRound || row.stage === 'final_interview');
   const application: ApplicationStatusDto = {
     id: row.id,
     stage: row.stage,
@@ -314,7 +318,7 @@ export async function statusLookup(email: string, applicationId?: number): Promi
     lastName: row.last_name,
     appliedAt: isoOrThrow(row.applied_at),
     updatedAt: isoOrThrow(row.updated_at),
-    timeline: STAGE_ORDER.map((key) => ({ key, label: STAGE_LABELS[key], reached: stageRank(key) <= current, current: key === row.stage })),
+    timeline: steps.map((key) => ({ key, label: STAGE_LABELS[key], reached: stageRank(key) <= current, current: key === row.stage })),
     feedback,
     suggestions: suggestions.map((sg) => ({ title: sg.title, slug: sg.status === 'open' ? sg.slug : null, note: sg.note, alreadyApplied: sg.already_applied })),
     submission: {

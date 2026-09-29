@@ -87,13 +87,14 @@
   --content-max: 1120px;
   --page-pad: 32px;
 
-  /* Chart marks: stage order Applied, Screening, Interview, Offer, Hired.
+  /* Chart marks: stage order Applied, Screening, Interview, Final interview (6), Offer, Hired.
      Validated for lightness, chroma, CVD separation and contrast (light + dark). */
   --chart-1: #2563EB;
   --chart-2: #D97706;
   --chart-3: #0D9488;
   --chart-4: #9333EA;
   --chart-5: #16A34A;
+  --chart-6: #DB2777;
   --chart-grid: #E2E7EF;
   --chart-axis: #596680;
 
@@ -117,6 +118,7 @@
   --chart-3: #0D9488;
   --chart-4: #8B5CF6;
   --chart-5: #16A34A;
+  --chart-6: #EC4899;
   --chart-grid: #232F44;
   --chart-axis: #8C98AD;
   --bg:#0A0F18;

@@ -1,4 +1,4 @@
-.board { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
+.board { display: grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
 .column { display: flex; flex-direction: column; gap: 10px; min-height: 420px; padding: 10px; border-radius: var(--radius-md); background: var(--sunken); border: 1px solid var(--border); scroll-snap-align: start; transition: background-color 0.12s var(--ease), border-color 0.12s var(--ease); }
 .columnOver { background: var(--primary-subtle); border-color: var(--primary); border-style: dashed; }
 .colHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 4px; }
@@ -26,6 +26,6 @@
 .previewHead { display: flex; align-items: center; gap: 12px; }
 
 @container workspace (max-width: 767px) {
-  .board { grid-template-columns: repeat(5, minmax(78vw, 1fr)); }
+  .board { grid-template-columns: repeat(6, minmax(78vw, 1fr)); }
   .card { cursor: default; }
 }
