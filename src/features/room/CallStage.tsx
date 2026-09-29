@@ -164,6 +164,14 @@ interface Props {
 /** The full-screen call: top bar, video stage, optional side panel, and the control bar. */
 export function CallStage(p: Props) {
   const { call, media } = p;
+  // Admitted straight from a waiting room without ever turning devices on: ask now,
+  // otherwise the person sits in the call with no microphone and no way to add one.
+  const requestMedia = media.request;
+  useEffect(() => {
+    if (media.access === 'idle') void requestMedia();
+    // Only on entering the call; later choices (joining without devices) stand.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -179,7 +187,9 @@ export function CallStage(p: Props) {
   const gridCols = everyone <= 4 ? 2 : everyone <= 9 ? 3 : 4;
   const selfHasVideo = Boolean(media.screen || (media.stream?.getVideoTracks().length && media.camOn));
   const selfStream = media.screen ?? media.stream;
-  const selfMic = media.micOn && Boolean(media.stream?.getAudioTracks().length);
+  const hasMic = Boolean(media.stream?.getAudioTracks().length);
+  const hasCam = Boolean(media.stream?.getVideoTracks().length);
+  const selfMic = media.micOn && hasMic;
   const toggle = (panel: Exclude<SidePanel, null>) => p.onPanel(p.panel === panel ? null : panel);
 
   return createPortal(
@@ -247,8 +257,12 @@ export function CallStage(p: Props) {
       </div>
 
       <footer className={s.controls}>
-        <Control icon={media.micOn ? 'mic' : 'micoff'} label={media.micOn ? 'Mute' : 'Unmute'} off={!media.micOn} onClick={media.toggleMic} disabled={!media.stream?.getAudioTracks().length} />
-        <Control icon={media.camOn ? 'video' : 'camoff'} label={media.camOn ? 'Stop video' : 'Start video'} off={!media.camOn} onClick={media.toggleCam} disabled={!media.stream?.getVideoTracks().length} />
+        {hasMic
+          ? <Control icon={media.micOn ? 'mic' : 'micoff'} label={media.micOn ? 'Mute' : 'Unmute'} off={!media.micOn} onClick={media.toggleMic} />
+          : <Control icon="micoff" label="Turn on mic" off onClick={() => void media.request()} disabled={media.access === 'requesting'} />}
+        {hasCam
+          ? <Control icon={media.camOn ? 'video' : 'camoff'} label={media.camOn ? 'Stop video' : 'Start video'} off={!media.camOn} onClick={media.toggleCam} />
+          : <Control icon="camoff" label="Turn on camera" off onClick={() => void media.request()} disabled={media.access === 'requesting'} />}
         <Control icon="screen" label={media.screen ? 'Stop sharing' : 'Share screen'} active={Boolean(media.screen)} onClick={p.onShare} />
         <Control icon="hand" label={p.hand ? 'Lower hand' : 'Raise hand'} active={p.hand} onClick={p.onHand} />
         <span className={s.ctrlSep} />

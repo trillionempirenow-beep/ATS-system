@@ -56,6 +56,7 @@ async function stateFor(row: repo.InterviewRow): Promise<CandidateRoomDto> {
     interviewerPresent: Boolean(row.interviewer_last_seen && Date.now() - row.interviewer_last_seen.getTime() <= windowSeconds * 1000),
     ended: interviewIsOver(timingOf(row)),
     serverTime: new Date().toISOString(),
+    startedAt: iso(row.started_at),
     // The call channel is only issued once the interviewer has let the candidate in.
     realtime: { driver: env.REALTIME_DRIVER, lobby: channels.lobby(row.id), room: admitted ? channels.room(row.id) : null, staff: null },
     rtc: admitted ? await rtcConfig() : null,

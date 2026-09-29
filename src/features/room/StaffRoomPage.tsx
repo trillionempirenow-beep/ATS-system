@@ -170,14 +170,18 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   const notes = useLiveNotes(iv.id, iv.liveNotes);
   const scorecard = useScorecardDraft(iv.id, room.scorecard.myRatings);
   const endedRef = useRef(false);
+  // The parent passes a new onEnded on every render. Reading it through a ref keeps
+  // finish/beat stable, so re-renders do not rejoin channels or post leave + presence.
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
 
   const finish = useCallback((at: string) => {
     if (endedRef.current) return;
     endedRef.current = true;
     void qc.invalidateQueries({ queryKey: interviewKeys.detail(iv.id) });
     void qc.invalidateQueries({ queryKey: interviewKeys.list });
-    onEnded(at);
-  }, [iv.id, onEnded, qc]);
+    onEndedRef.current(at);
+  }, [iv.id, qc]);
 
   const call = useCall({
     driver: room.realtime.driver,
@@ -199,12 +203,13 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       setPending(r.pendingRequest);
       setGuestRequests(r.guestRequests);
       setAdmittedGuests(r.admittedGuests);
+      if (r.startedAt) setStartedAt(r.startedAt);
       if (r.meetingState === 'review_pending' || r.meetingState === 'reviewed') finish(new Date().toISOString());
     } catch { /* the next beat retries */ }
   }, [iv.id, finish]);
 
   useEffect(() => {
-    void beat().then(() => setStartedAt((cur) => iv.startedAt ?? cur));
+    void beat();
     const every = Math.max(5, Math.floor(room.presenceSeconds / 3)) * 1000;
     const t = window.setInterval(() => void beat(), every);
     const leave = () => api.beacon(`/interviews/${iv.id}/leave`);
@@ -214,7 +219,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       window.removeEventListener('pagehide', leave);
       if (!endedRef.current) leave();
     };
-  }, [beat, iv.id, iv.startedAt, room.presenceSeconds]);
+  }, [beat, iv.id, room.presenceSeconds]);
 
   // Entry requests arrive on the staff channel straight away; the heartbeat is the fallback.
   useEffect(() => {

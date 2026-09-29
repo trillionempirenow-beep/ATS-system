@@ -136,7 +136,7 @@ export function CandidateRoomPage() {
   if (!data) return <div className={`${s.shell} ${s.narrow}`}><Skeleton height={320} /></div>;
 
   if (step === 'call' && data.realtime.room && data.rtc) {
-    return <CandidateCall data={data} media={media} since={callStart}
+    return <CandidateCall data={data} media={media} since={data.startedAt ?? callStart}
       onLeave={() => { api.beacon(`${path}/leave`, { t: token }); media.stopAll(); setStep('left'); }}
       onEnded={() => { media.stopAll(); setEndedAt(new Date().toISOString()); setStep('lobby'); void state.refetch(); }} />;
   }

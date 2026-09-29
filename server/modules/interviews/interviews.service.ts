@@ -234,6 +234,7 @@ export async function staffPresence(id: number): Promise<PresenceResultDto> {
     meetingState: displayState(row),
     guestRequests: guestList.requests,
     admittedGuests: guestList.admitted,
+    startedAt: iso(row.started_at),
   };
 }
 

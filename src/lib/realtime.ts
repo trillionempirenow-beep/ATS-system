@@ -47,6 +47,24 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
   let closed = false;
   let lastMeta: M | null = null;
   let current: ConnectionStatus = 'connecting';
+  // Supabase rate-limits presence per client and stops relaying it once exceeded,
+  // so peers never see each other. Send only real changes, at most once a second.
+  let sentMeta: string | null = null;
+  let trackTimer: number | undefined;
+  let lastTrackAt = 0;
+  const flushTrack = () => {
+    trackTimer = undefined;
+    if (!ch || current !== 'connected' || !lastMeta) return;
+    const json = JSON.stringify(lastMeta);
+    if (json === sentMeta) return;
+    sentMeta = json;
+    lastTrackAt = Date.now();
+    void ch.track(lastMeta as Record<string, unknown>);
+  };
+  const scheduleTrack = () => {
+    if (trackTimer !== undefined || closed) return;
+    trackTimer = window.setTimeout(flushTrack, Math.max(0, lastTrackAt + 1000 - Date.now()));
+  };
   // Broadcasts sent before the SDK finished loading go out once the channel exists.
   const queued: Array<{ event: string; payload: unknown }> = [];
 
@@ -60,7 +78,9 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
       current = s === 'SUBSCRIBED' ? 'connected' : s === 'CLOSED' || s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' ? 'disconnected' : 'connecting';
       status.emit(current);
       if (current !== 'connected') return;
-      if (lastMeta) void channel.track(lastMeta as Record<string, unknown>);
+      // A (re)subscribe starts with empty presence on the server: send ours again.
+      sentMeta = null;
+      scheduleTrack();
       for (const m of queued.splice(0)) void channel.send({ type: 'broadcast', event: m.event, payload: m.payload });
     });
   }, () => {
@@ -74,11 +94,12 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
       if (ch && current === 'connected') void ch.send({ type: 'broadcast', event, payload });
       else queued.push({ event, payload });
     },
-    track: (meta) => { lastMeta = meta; if (ch && current === 'connected') void ch.track(meta as Record<string, unknown>); },
+    track: (meta) => { lastMeta = meta; scheduleTrack(); },
     onPresence: (h) => presence.add(h),
     onStatus: (h) => { h(current); return status.add(h); },
     close: () => {
       closed = true;
+      window.clearTimeout(trackTimer);
       if (!ch) return;
       const channel = ch;
       void channel.unsubscribe();

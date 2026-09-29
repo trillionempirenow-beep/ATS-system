@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { RtcConfigDto } from '@shared/api/interviews';
 import { joinChannel, type Channel, type ConnectionStatus, type RealtimeDriver } from '@/lib/realtime';
 
@@ -73,6 +73,11 @@ export interface Call {
 const EV_SIGNAL = 'rtc:signal';
 const EV_CHAT = 'chat:message';
 const EV_ENDED = 'room:ended';
+/** Who is here, sent as a broadcast too, so the call still connects if presence stalls. */
+const EV_HELLO = 'rtc:hello';
+const EV_BYE = 'rtc:bye';
+const HELLO_EVERY_MS = 15_000;
+const HELLO_TTL_MS = 40_000;
 const DROP_GRACE_MS = 8000;
 
 const nonce = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 16);
@@ -85,7 +90,9 @@ const nonce = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).
  */
 export function useCall(opts: CallOptions): Call {
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
-  const [metas, setMetas] = useState<Map<string, ParticipantMeta>>(new Map());
+  const [presenceMetas, setPresenceMetas] = useState<Map<string, ParticipantMeta>>(new Map());
+  const hellos = useRef(new Map<string, { meta: ParticipantMeta; at: number }>());
+  const [helloVersion, bumpHello] = useReducer((x: number) => x + 1, 0);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   // Connections live in refs; bump() re-renders when one of them changes.
   const [, bump] = useReducer((x: number) => x + 1, 0);
@@ -95,6 +102,7 @@ export function useCall(opts: CallOptions): Call {
   const media = useRef({ stream: opts.stream, screen: opts.screen });
   const callbacks = useRef({ onEnded: opts.onEnded, onFirstConnection: opts.onFirstConnection });
   const connectedOnce = useRef(false);
+  const selfMetaRef = useRef<ParticipantMeta | null>(null);
   const selfId = opts.self.id;
 
   media.current = { stream: opts.stream, screen: opts.screen };
@@ -220,18 +228,39 @@ export function useCall(opts: CallOptions): Call {
         if (m && typeof m.text === 'string') setMessages((list) => [...list, { ...m, text: m.text.slice(0, 2000), mine: false }].slice(-200));
       }),
       ch.on(EV_ENDED, (p) => callbacks.current.onEnded?.((p ?? {}) as { endedBy?: string; endedById?: number })),
+      ch.on(EV_HELLO, (p) => {
+        const meta = p as ParticipantMeta | null;
+        if (!meta || typeof meta.id !== 'string' || meta.id === selfId || typeof meta.name !== 'string') return;
+        const isNew = !hellos.current.has(meta.id);
+        hellos.current.set(meta.id, { meta, at: Date.now() });
+        bumpHello();
+        // Someone new: answer at once so they learn about us without waiting.
+        if (isNew && selfMetaRef.current) ch.send(EV_HELLO, selfMetaRef.current);
+      }),
+      ch.on(EV_BYE, (p) => {
+        const id = (p as { id?: unknown } | null)?.id;
+        if (typeof id === 'string' && hellos.current.delete(id)) bumpHello();
+      }),
       ch.onPresence((state) => {
         const next = new Map<string, ParticipantMeta>();
         for (const [key, list] of Object.entries(state)) {
           const meta = list[list.length - 1];
           if (key !== selfId && meta && typeof meta === 'object' && 'name' in meta) next.set(key, { ...meta, id: key });
         }
-        setMetas(next);
+        setPresenceMetas(next);
       }),
     ];
     const current = peers.current;
+    const helloMap = hellos.current;
+    const helloTimer = window.setInterval(() => {
+      if (selfMetaRef.current) ch.send(EV_HELLO, selfMetaRef.current);
+      bumpHello(); // also expires hellos that stopped arriving
+    }, HELLO_EVERY_MS);
     return () => {
+      window.clearInterval(helloTimer);
       offs.forEach((off) => off());
+      ch.send(EV_BYE, { id: selfId });
+      helloMap.clear();
       ch.close();
       channelRef.current = null;
       for (const id of [...current.keys()]) {
@@ -240,6 +269,19 @@ export function useCall(opts: CallOptions): Call {
       }
     };
   }, [opts.channel, opts.driver, rtcKey, selfId, onSignal]);
+
+  // Presence plus recent hellos decide who is in the room.
+  const metas = useMemo(() => {
+    const next = new Map(presenceMetas);
+    const now = Date.now();
+    for (const [id, h] of hellos.current) {
+      if (now - h.at > HELLO_TTL_MS) hellos.current.delete(id);
+      else next.set(id, { ...h.meta, id });
+    }
+    return next;
+    // helloVersion stands in for changes to the hellos ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presenceMetas, helloVersion]);
 
   // Presence decides who we connect to. A short grace period rides out reconnects.
   useEffect(() => {
@@ -254,14 +296,20 @@ export function useCall(opts: CallOptions): Call {
   }, [metas, ensurePeer, closePeer]);
 
   // Publish our own state to everyone in the room.
+  const selfMeta = useMemo<ParticipantMeta>(() => ({
+    id: selfId, name: opts.self.name, role: opts.self.role, ...(opts.self.position ? { position: opts.self.position } : {}),
+    mic: opts.micOn && Boolean(opts.stream?.getAudioTracks().length),
+    cam: opts.camOn && Boolean(opts.stream?.getVideoTracks().length),
+    screen: Boolean(opts.screen), hand: opts.hand,
+  }), [selfId, opts.self.name, opts.self.role, opts.self.position, opts.micOn, opts.camOn, opts.stream, opts.screen, opts.hand]);
+  selfMetaRef.current = selfMeta;
+
   useEffect(() => {
-    channelRef.current?.track({
-      id: selfId, name: opts.self.name, role: opts.self.role, ...(opts.self.position ? { position: opts.self.position } : {}),
-      mic: opts.micOn && Boolean(opts.stream?.getAudioTracks().length),
-      cam: opts.camOn && Boolean(opts.stream?.getVideoTracks().length),
-      screen: Boolean(opts.screen), hand: opts.hand,
-    });
-  }, [selfId, opts.self.name, opts.self.role, opts.self.position, opts.micOn, opts.camOn, opts.stream, opts.screen, opts.hand, status]);
+    const ch = channelRef.current;
+    if (!ch || status !== 'connected') return;
+    ch.track(selfMeta);
+    ch.send(EV_HELLO, selfMeta);
+  }, [selfMeta, status]);
 
   // New camera, microphone or screen: swap the outgoing tracks on every connection.
   useEffect(() => {

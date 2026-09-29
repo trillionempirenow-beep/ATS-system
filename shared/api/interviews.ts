@@ -174,6 +174,8 @@ export interface PresenceResultDto {
   /** Guests on the entry page right now, oldest first. */
   guestRequests: GuestRequestDto[];
   admittedGuests: GuestDto[];
+  /** When the meeting started (first host arrived); the call timer counts from here. */
+  startedAt: string | null;
 }
 
 export const guestDecisionSchema = z.object({ decision: z.enum(['admit', 'deny']) });
@@ -216,6 +218,8 @@ export interface GuestSessionDto extends GuestRoomDto {
   guest: GuestDto & { key: string; state: GuestState };
   realtime: RealtimeGrantDto;
   rtc: RtcConfigDto | null;
+  /** When the meeting started; the call timer counts from here for everyone. */
+  startedAt: string | null;
 }
 
 export interface CandidateRoomDto {
@@ -241,6 +245,8 @@ export interface CandidateRoomDto {
   serverTime: string;
   realtime: RealtimeGrantDto;
   rtc: RtcConfigDto | null;
+  /** When the meeting started; the call timer counts from here for everyone. */
+  startedAt: string | null;
 }
 
 export interface LiveMeetingDto {

@@ -162,7 +162,7 @@ export function GuestRoomPage() {
   if (!info) return <div className={`${s.shell} ${s.narrow}`}><Skeleton height={360} /></div>;
 
   if (step === 'call' && session?.realtime.room && session.rtc) {
-    return <GuestCall session={session} media={media} since={callStart} onLeave={() => void leave()} onEnded={() => void refresh(session.guest.key)} />;
+    return <GuestCall session={session} media={media} since={session.startedAt ?? callStart} onLeave={() => void leave()} onEnded={() => void refresh(session.guest.key)} />;
   }
 
   if (ended || info.ended || info.cancelled) {
