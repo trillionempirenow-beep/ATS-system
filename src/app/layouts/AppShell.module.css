@@ -14,6 +14,12 @@
   background: transparent; color: var(--text2); cursor: pointer;
 }
 .toggleBtn:hover { background: var(--surface2); color: var(--text); }
+.toggleLogo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s ease; }
+.toggleIcon { transition: opacity 0.15s ease; }
+.collapsed .toggleBtn { position: relative; }
+.collapsed .toggleBtn:not(:hover, :focus-visible) { background: transparent; }
+.collapsed .toggleBtn:not(:hover, :focus-visible) .toggleIcon,
+.collapsed .toggleBtn:is(:hover, :focus-visible) .toggleLogo { opacity: 0; }
 .brandName { font-weight: 700; font-size: 15px; line-height: 20px; letter-spacing: -0.01em; white-space: nowrap; }
 .brandName em { font-style: normal; color: var(--text3); font-weight: 500; }
 .brandRole { font-size: 12px; color: var(--text3); white-space: nowrap; }

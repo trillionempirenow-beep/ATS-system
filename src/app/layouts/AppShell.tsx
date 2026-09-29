@@ -274,7 +274,9 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
           onClick={() => { window.clearTimeout(closeTimer.current); setFlyout(null); setTip(null); onToggle(); }}
           {...(mobile ? undefined : tipBind(toggleLabel))}
         >
-          <Icon name={collapsed && !mobile ? 'panelopen' : 'panelclose'} size={20} />
+          {/* Collapsed: the logo holds the toggle's place and gives way to the icon on hover or focus. */}
+          {rail ? <span className={s.toggleLogo} aria-hidden="true"><BrandMark size={32} /></span> : null}
+          <Icon className={s.toggleIcon} name={rail ? 'panelopen' : 'panelclose'} size={20} />
         </button>
       </div>
       <nav ref={navRef} className={s.nav}>
