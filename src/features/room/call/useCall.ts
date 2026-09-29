@@ -2,12 +2,14 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { RtcConfigDto } from '@shared/api/interviews';
 import { joinChannel, type Channel, type ConnectionStatus, type RealtimeDriver } from '@/lib/realtime';
 
-export type ParticipantRole = 'interviewer' | 'staff' | 'candidate';
+export type ParticipantRole = 'interviewer' | 'staff' | 'candidate' | 'guest';
 
 export interface ParticipantMeta {
   id: string;
   name: string;
   role: ParticipantRole;
+  /** Final-interview guests: the position they entered, shown next to their name. */
+  position?: string;
   mic: boolean;
   cam: boolean;
   screen: boolean;
@@ -49,7 +51,7 @@ export interface CallOptions {
   /** The room channel; null until the API grants it. */
   channel: string | null;
   rtc: RtcConfigDto | null;
-  self: { id: string; name: string; role: ParticipantRole };
+  self: { id: string; name: string; role: ParticipantRole; position?: string };
   stream: MediaStream | null;
   screen: MediaStream | null;
   micOn: boolean;
@@ -245,12 +247,12 @@ export function useCall(opts: CallOptions): Call {
   // Publish our own state to everyone in the room.
   useEffect(() => {
     channelRef.current?.track({
-      id: selfId, name: opts.self.name, role: opts.self.role,
+      id: selfId, name: opts.self.name, role: opts.self.role, ...(opts.self.position ? { position: opts.self.position } : {}),
       mic: opts.micOn && Boolean(opts.stream?.getAudioTracks().length),
       cam: opts.camOn && Boolean(opts.stream?.getVideoTracks().length),
       screen: Boolean(opts.screen), hand: opts.hand,
     });
-  }, [selfId, opts.self.name, opts.self.role, opts.micOn, opts.camOn, opts.stream, opts.screen, opts.hand, status]);
+  }, [selfId, opts.self.name, opts.self.role, opts.self.position, opts.micOn, opts.camOn, opts.stream, opts.screen, opts.hand, status]);
 
   // New camera, microphone or screen: swap the outgoing tracks on every connection.
   useEffect(() => {

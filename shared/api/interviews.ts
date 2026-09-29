@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   INTERVIEW_STATUSES, INTERVIEW_TYPES, MEETING_TYPES, RECOMMENDATIONS,
-  type CandidateJoinState, type CandidateRequestState, type DisplayInterviewState, type InterviewStatus, type InterviewType,
+  type CandidateJoinState, type CandidateRequestState, type DisplayInterviewState, type GuestState, type InterviewStatus, type InterviewType,
   type MeetingType, type Recommendation,
 } from '../domain/interviews.js';
 import type { Stage } from '../domain/pipeline.js';
@@ -31,6 +31,7 @@ export interface InterviewListItemDto {
   score: number | null;
   recommendation: Recommendation | null;
   candidateWaiting: boolean;
+  finalInterview: boolean;
 }
 
 export interface InterviewListDto {
@@ -64,8 +65,16 @@ export const scheduleInterviewSchema = z
     location: z.string().trim().max(255).optional().default(''),
     notes: z.string().trim().max(2000).optional().default(''),
     sendInvite: z.boolean().optional().default(true),
+    /** Final interview: issues a guest link so outside stakeholders can ask to join the built-in room. */
+    finalInterview: z.boolean().optional().default(false),
   })
   .superRefine((v, ctx) => {
+    if (v.finalInterview && (v.meetingMode !== 'builtin' || v.interviewType === 'onsite')) {
+      ctx.addIssue({ code: 'custom', path: ['finalInterview'], message: 'A final interview with guests needs the built-in Acme Room.' });
+    }
+    if (v.finalInterview && v.meetingType !== 'interview') {
+      ctx.addIssue({ code: 'custom', path: ['finalInterview'], message: 'Screenings cannot be final interviews.' });
+    }
     if (v.endsAt && Date.parse(v.endsAt) <= Date.parse(v.startsAt)) ctx.addIssue({ code: 'custom', path: ['endsAt'], message: 'The end time must be after the start time.' });
     if (v.meetingMode === 'external' && v.meetingUrl && !/^https?:\/\//i.test(v.meetingUrl)) {
       ctx.addIssue({ code: 'custom', path: ['meetingUrl'], message: 'Use a full meeting link starting with https://' });
@@ -89,6 +98,7 @@ export interface ScheduleResultDto extends DeliveryReport {
   interviewId: number;
   roomCode: string | null;
   candidateLink: string | null;
+  guestLink: string | null;
 }
 
 export const liveNotesSchema = z.object({ liveNotes: z.string().max(20000) });
@@ -143,12 +153,72 @@ export interface StaffRoomDto {
   rtc: RtcConfigDto;
   realtime: RealtimeGrantDto;
   presenceSeconds: number;
+  /** Final interviews only: the shareable guest link (staff only) and who has been let in. */
+  guests: { link: string | null; admitted: GuestDto[] };
+}
+
+/** A guest as the hosts see them: what they typed on the entry page, verified by the server. */
+export interface GuestDto {
+  id: number;
+  /** The id the guest uses in the call ("g12"), to match video tiles to this record. */
+  peerId: string;
+  name: string;
+  position: string;
+}
+
+export interface GuestRequestDto extends GuestDto {
+  since: string;
 }
 
 export interface PresenceResultDto {
   pendingRequest: { state: 'waiting' | 'requested'; since: string | null; name: string; avatarUrl: string | null } | null;
   candidatePresent: boolean;
   meetingState: DisplayInterviewState;
+  /** Guests on the entry page right now, oldest first. */
+  guestRequests: GuestRequestDto[];
+  admittedGuests: GuestDto[];
+}
+
+export const guestDecisionSchema = z.object({ decision: z.enum(['admit', 'deny']) });
+
+// ---- Guest entry (public, guest link) --------------------------------------
+const guestText = (label: string) => z.string().trim()
+  .min(1, `Please enter your ${label}.`).max(120, `Keep your ${label} under 120 characters.`)
+  // Printable text only: these values are shown to everyone in the call.
+  .refine((v) => !/[\p{Cc}<>]/u.test(v), `Remove unusual characters from your ${label}.`);
+
+export const guestJoinSchema = z.object({
+  g: z.string().regex(/^[a-f0-9]{32}$/i),
+  name: guestText('full name'),
+  position: guestText('position or job title'),
+});
+export type GuestJoinInput = z.input<typeof guestJoinSchema>;
+
+export const guestSessionSchema = z.object({
+  g: z.string().regex(/^[a-f0-9]{32}$/i),
+  key: z.string().regex(/^[a-f0-9]{48}$/i),
+});
+
+/** The public entry page. Deliberately thin: no candidate details, notes or scores. */
+export interface GuestRoomDto {
+  interviewId: number;
+  companyName: string;
+  jobTitle: string;
+  startsAt: string;
+  endsAt: string | null;
+  roomCode: string;
+  canJoin: boolean;
+  ended: boolean;
+  cancelled: boolean;
+  message: string;
+  opensAt: string;
+}
+
+/** One guest's own session: their request, and the call once a host admits them. */
+export interface GuestSessionDto extends GuestRoomDto {
+  guest: GuestDto & { key: string; state: GuestState };
+  realtime: RealtimeGrantDto;
+  rtc: RtcConfigDto | null;
 }
 
 export interface CandidateRoomDto {

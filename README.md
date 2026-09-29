@@ -4,7 +4,7 @@ The Acme applicant tracking system, rebuilt from the PHP app as React + TypeScri
 
 - **Careers site**: open roles, apply with CV parsing, application status, withdraw, referrals.
 - **Recruiting**: overview, drag-and-drop pipeline with stage rules, candidates and profiles (resume versions, analysis, notes, stage reviews), add candidate with CV auto-fill.
-- **Interviews**: scheduling (built-in room or external link), reminders, the Acme Room (waiting room, admit, video, screen share, chat, live notes, private scorecard), and reviews.
+- **Interviews**: scheduling (built-in room or external link), reminders, the Acme Room (waiting room, admit, video, screen share, chat, live notes, private scorecard), final interviews with a guest link for outside stakeholders (name and position on entry, admit or deny by any host), and reviews.
 - **Jobs**: postings with PDF import, the approval workflow, job management.
 - **People**: employees (including hired-candidate conversion) and attendance with review and CSV export.
 - **Administration**: Admins and seats (Super Admin), HR / Recruiter accounts, password reset approvals, applicant portal, audit trail, settings.

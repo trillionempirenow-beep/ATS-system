@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import type { PresenceResultDto, StaffRoomDto } from '@shared/api/interviews';
+import type { GuestDto, GuestRequestDto, PresenceResultDto, StaffRoomDto } from '@shared/api/interviews';
 import { Icon } from '@/components/icon/Icon';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Avatar, StatusBadge } from '@/components/ui/Display';
 import { EmptyState, Notice, Skeleton } from '@/components/ui/Feedback';
 import { Modal } from '@/components/ui/Overlay';
+import { TextInput } from '@/components/ui/Form';
 import { Card, CardHeader, DescriptionList, PageHeader } from '@/components/ui/Surface';
 import { useToast } from '@/components/ui/Toast';
 import { QueryErrorPage } from '@/app/system/StatusPages';
@@ -19,6 +20,7 @@ import { FORMAT_LABELS } from '../interviews/ScheduleDrawer';
 import { suggestedScore } from '../interviews/ReviewForm';
 import { CallStage, type SidePanel } from './CallStage';
 import { DeviceCheck } from './DeviceCheck';
+import { GuestAdmissions, copyText, type GuestDecision } from './GuestAdmissions';
 import { StaffDock, useLiveNotes, useScorecardDraft, type DockTab } from './StaffDock';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
@@ -50,7 +52,7 @@ export function StaffRoomPage() {
 function roomTitle(room: StaffRoomDto) {
   const iv = room.interview;
   return {
-    title: `Interview with ${iv.candidateName}`,
+    title: `${iv.finalInterview ? 'Final interview' : 'Interview'} with ${iv.candidateName}`,
     subtitle: `${iv.jobTitle}${iv.roomCode ? ` · Room code ${iv.roomCode}` : ''}`,
   };
 }
@@ -123,8 +125,28 @@ function PreCall({ room, media, phase, onPhase }: { room: StaffRoomDto; media: M
           {iv.notes ? <div className={w.noteCard} style={{ marginTop: 16 }}><div className={w.overline}>Scheduling notes</div><p className={w.pre} style={{ marginTop: 6 }}>{iv.notes}</p></div> : null}
           <ButtonLink variant="secondary" to={`/app/candidates/${iv.applicationId}`} style={{ marginTop: 16 }}>View candidate</ButtonLink>
         </Card>
+        {room.guests.link ? <GuestLinkCard link={room.guests.link} /> : null}
       </div>
     </div>
+  );
+}
+
+/** Final interviews: the shareable link for department heads and outside stakeholders. */
+function GuestLinkCard({ link }: { link: string }) {
+  const toast = useToast();
+  const copy = async () => {
+    if (await copyText(link)) toast.success('Guest link copied.');
+    else toast.error('Copy the link from the box instead.', 'Could not copy');
+  };
+  return (
+    <Card>
+      <CardHeader title="Guest link" />
+      <p className={w.faint}>Share it with department heads or clients joining this final interview. Guests give their name and position, then wait until someone in the room admits them. Do not send it to the candidate: they have their own link.</p>
+      <div className={w.row} style={{ gap: 8, marginTop: 12 }}>
+        <TextInput readOnly value={link} aria-label="Guest link" onFocus={(e) => e.currentTarget.select()} />
+        <Button variant="secondary" icon="copy" onClick={() => void copy()}>Copy</Button>
+      </div>
+    </Card>
   );
 }
 
@@ -138,6 +160,9 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   const [pending, setPending] = useState<PresenceResultDto['pendingRequest']>(null);
   const [dismissedAt, setDismissedAt] = useState<string | null>(null);
   const [admitting, setAdmitting] = useState(false);
+  const [guestRequests, setGuestRequests] = useState<GuestRequestDto[]>([]);
+  const [admittedGuests, setAdmittedGuests] = useState<GuestDto[]>(room.guests.admitted);
+  const [deciding, setDeciding] = useState<number | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [ending, setEnding] = useState(false);
   const [moments, setMoments] = useState(room.moments);
@@ -172,6 +197,8 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
     try {
       const r = await api.post<PresenceResultDto>(`/interviews/${iv.id}/presence`);
       setPending(r.pendingRequest);
+      setGuestRequests(r.guestRequests);
+      setAdmittedGuests(r.admittedGuests);
       if (r.meetingState === 'review_pending' || r.meetingState === 'reviewed') finish(new Date().toISOString());
     } catch { /* the next beat retries */ }
   }, [iv.id, finish]);
@@ -193,8 +220,8 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   useEffect(() => {
     if (!room.realtime.staff) return undefined;
     const ch = joinChannel(room.realtime.driver, room.realtime.staff, `u${room.me.id}`);
-    const off = ch.on('entry:requested', () => void beat());
-    return () => { off(); ch.close(); };
+    const offs = [ch.on('entry:requested', () => void beat()), ch.on('guest:requested', () => void beat())];
+    return () => { offs.forEach((off) => off()); ch.close(); };
   }, [room.realtime.driver, room.realtime.staff, room.me.id, beat]);
 
   const candidateInCall = call.peers.some((p) => p.meta.role === 'candidate');
@@ -211,6 +238,41 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
     } finally {
       setAdmitting(false);
     }
+  };
+
+  const decideGuest = async (guest: GuestRequestDto, decision: GuestDecision) => {
+    setDeciding(guest.id);
+    try {
+      const decided = await api.post<GuestDto>(`/interviews/${iv.id}/guests/${guest.id}/decision`, { decision });
+      setGuestRequests((list) => list.filter((g) => g.id !== guest.id));
+      if (decision === 'admit') {
+        setAdmittedGuests((list) => [...list.filter((g) => g.id !== decided.id), decided]);
+        toast.success(`${guest.name} is joining.`);
+      } else {
+        toast.info(`${guest.name} was not admitted. They have been told politely.`);
+      }
+    } catch (e) {
+      toast.error(errorMessage(e));
+      void beat();
+    } finally {
+      setDeciding(null);
+    }
+  };
+
+  const copyGuestLink = async () => {
+    if (room.guests.link && await copyText(room.guests.link)) toast.success('Guest link copied.');
+    else toast.error('Open the room summary to copy the link.', 'Could not copy');
+  };
+
+  // Guests' tiles and the participants list use the name and position the server
+  // holds for them, not what their browser announces.
+  const verifiedCall = {
+    ...call,
+    peers: call.peers.map((p) => {
+      if (p.meta.role !== 'guest') return p;
+      const known = admittedGuests.find((g) => g.peerId === p.meta.id);
+      return { ...p, meta: { ...p.meta, name: known?.name ?? p.meta.name, position: known ? known.position : 'Not admitted by a host' } };
+    }),
   };
 
   const end = async () => {
@@ -251,7 +313,10 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       subtitle={subtitle}
       since={startedAt}
       pills={live !== null ? <span className={`${s.pill} ${s.pillScore}`}><Icon name="star" size={15} />Score {live}</span> : null}
-      headerAction={<Link className={s.topLink} to={`/app/candidates/${iv.applicationId}`} target="_blank" rel="noopener noreferrer">View candidate<Icon name="external" size={14} /></Link>}
+      headerAction={<>
+        {room.guests.link ? <button type="button" className={s.topLink} onClick={() => void copyGuestLink()}><Icon name="link" size={14} />Copy guest link</button> : null}
+        <Link className={s.topLink} to={`/app/candidates/${iv.applicationId}`} target="_blank" rel="noopener noreferrer">View candidate<Icon name="external" size={14} /></Link>
+      </>}
       banner={showAdmit && pending ? (
         <div className={s.banner} role="alert">
           <Avatar name={pending.name} src={pending.avatarUrl} size={36} />
@@ -260,7 +325,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
           <button type="button" className={s.lightBtn} onClick={() => void admit()} disabled={admitting}>{admitting ? 'Admitting…' : 'Admit candidate'}</button>
         </div>
       ) : null}
-      call={call}
+      call={verifiedCall}
       media={media}
       self={{ name: room.me.name, role: iv.interviewerId === room.me.id ? 'interviewer' : 'staff' }}
       hand={hand}
@@ -278,19 +343,20 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       onPanel={setPanel}
       endLabel="End meeting"
       onEnd={() => setConfirmEnd(true)}
-      overlay={(
+      overlay={(<>
+        <GuestAdmissions requests={guestRequests} deciding={deciding} onDecide={(g, d) => void decideGuest(g, d)} />
         <Modal open={confirmEnd} onClose={() => setConfirmEnd(false)} role="alertdialog" title="End the meeting for everyone?"
           footer={<>
             <Button variant="secondary" onClick={() => setConfirmEnd(false)}>Keep meeting</Button>
             <Button variant="danger" loading={ending} onClick={() => void end()}>End meeting</Button>
           </>}>
           <ul className={s.steps}>
-            <li><span><Icon name="close" size={14} /></span><span><strong>The room closes{candidateInCall ? ` and ${iv.candidateName} is disconnected` : ''}</strong></span></li>
+            <li><span><Icon name="close" size={14} /></span><span><strong>The room closes{candidateInCall ? ` and ${iv.candidateName} is disconnected` : ''}{admittedGuests.length ? `. Guests are disconnected too` : ''}</strong></span></li>
             <li><span><Icon name="check" size={14} /></span><span><strong>Your notes and scorecard draft are saved</strong></span></li>
             <li><span><Icon name="edit" size={14} /></span><span><strong>You score and review the interview next</strong></span></li>
           </ul>
         </Modal>
-      )}
+      </>)}
     />
   );
 }

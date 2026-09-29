@@ -19,7 +19,8 @@ import w from '../workspace.module.css';
 import s from './Interviews.module.css';
 
 const LIVE = new Set(['ready', 'in_progress']);
-const typeLabel = (iv: InterviewListItemDto) => `${iv.meetingType === 'screening' ? 'Screening' : 'Interview'} · ${FORMAT_LABELS[iv.interviewType]}`;
+const typeLabel = (iv: InterviewListItemDto) =>
+  `${iv.meetingType === 'screening' ? 'Screening' : iv.finalInterview ? 'Final interview' : 'Interview'} · ${FORMAT_LABELS[iv.interviewType]}`;
 
 function When({ iv }: { iv: InterviewListItemDto }) {
   return (

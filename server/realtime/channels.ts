@@ -15,12 +15,16 @@ export const channels = {
   staff: (interviewId: number) => `staff-${interviewId}-${tag('staff', interviewId)}`,
   /** The candidate's waiting room: admission and end-of-meeting events. */
   lobby: (interviewId: number) => `lobby-${interviewId}-${tag('lobby', interviewId)}`,
+  /** One final-interview guest's waiting room: their own admit or deny, and the end of the meeting. */
+  guest: (guestId: number) => `guest-${guestId}-${tag('guest', guestId)}`,
 };
 
 export const EVENTS = {
   notificationNew: 'notification:new',
   entryRequested: 'entry:requested',
   entryAdmitted: 'entry:admitted',
+  entryDenied: 'entry:denied',
+  guestRequested: 'guest:requested',
   roomState: 'room:state',
   roomEnded: 'room:ended',
   assistantNote: 'assistant:note',

@@ -30,8 +30,9 @@ interface Values {
   endsAt: string;
   notes: string;
   sendInvite: boolean;
+  finalInterview: boolean;
 }
-const KNOWN = ['applicationId', 'interviewerId', 'meetingUrl', 'location', 'startsAt', 'endsAt'];
+const KNOWN = ['applicationId', 'interviewerId', 'meetingUrl', 'location', 'startsAt', 'endsAt', 'finalInterview'];
 
 function nextHalfHour(offsetMinutes = 0): string {
   const d = new Date(Date.now() + 24 * 3600_000);
@@ -57,7 +58,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
     applicationId: applicationId ? String(applicationId) : '',
     meetingType: 'interview', interviewType: 'video', interviewerId: user ? String(user.id) : '',
     meetingMode: 'builtin', meetingProvider: 'Zoom', meetingUrl: '', location: '',
-    startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true,
+    startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true, finalInterview: false,
   }), [applicationId, user]);
   const { register, handleSubmit, control, watch, reset, setError, setValue, formState: { errors } } = useForm<Values>({ defaultValues: defaults });
 
@@ -72,6 +73,9 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
   const mode = watch('meetingMode');
   const format = watch('interviewType');
   const interviewerId = watch('interviewerId');
+  const meetingType = watch('meetingType');
+  // Guests join through the built-in room, and only on an interview (not a screening).
+  const canBeFinal = meetingType === 'interview' && format !== 'onsite' && mode === 'builtin';
   const clash = nearbyBooking(opts, interviewerId, watch('startsAt'));
   const clashName = opts?.interviewers.find((i) => String(i.id) === interviewerId)?.name;
   const interviewerKnown = opts?.interviewers.some((i) => String(i.id) === interviewerId);
@@ -87,6 +91,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
     if (bad) return;
     const onsite = v.interviewType === 'onsite';
     const external = !onsite && v.meetingMode === 'external';
+    const finalInterview = v.finalInterview && v.meetingType === 'interview' && !onsite && !external;
     schedule.mutate({
       applicationId: Number(v.applicationId),
       meetingType: v.meetingType,
@@ -100,9 +105,10 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
       endsAt: v.endsAt ? fromLocalInput(v.endsAt) : null,
       notes: v.notes.trim(),
       sendInvite: v.sendInvite,
+      finalInterview,
     }, {
       onSuccess: (r) => {
-        toast.success(`Interview scheduled.${v.sendInvite ? deliveryNote(r) : ''}`, 'Saved');
+        toast.success(`${finalInterview ? 'Final interview' : 'Interview'} scheduled.${v.sendInvite ? deliveryNote(r) : ''}${r.guestLink ? ' Copy the guest link from the interview room.' : ''}`, 'Saved');
         onClose();
       },
       onError: (e) => setFormError(applyServerErrors(e, setError, KNOWN)),
@@ -157,6 +163,11 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
             <Field label="Ends at" required error={errors.endsAt?.message}><TextInput type="datetime-local" {...register('endsAt')} /></Field>
           </div>
           {clash ? <Notice tone="warning" title={`${clashName ?? 'This interviewer'} already has an interview at ${formatTime(clash)}.`}>You can still save. Check that the times do not overlap.</Notice> : null}
+          {canBeFinal ? (
+            <Checkbox {...register('finalInterview')} label="Final interview with guests"
+              description="Creates a shareable guest link for department heads or clients. Guests give their name and position and wait until someone in the room admits them." />
+          ) : null}
+          {errors.finalInterview?.message ? <Notice tone="danger">{errors.finalInterview.message}</Notice> : null}
           <Field label="Notes" optional><Textarea rows={3} maxLength={2000} {...register('notes')} /></Field>
           <Checkbox {...register('sendInvite')} label="Email the invitation to the candidate" description={mode === 'builtin' && format !== 'onsite' ? 'Includes their private link to the Acme Room.' : 'Includes the time, format and meeting details.'} />
         </form>

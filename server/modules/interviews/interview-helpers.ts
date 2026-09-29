@@ -61,6 +61,7 @@ export function toListItem(r: InterviewRow, presenceSeconds: number): InterviewL
     recommendation: r.recommendation,
     candidateWaiting:
       (r.candidate_request_state === 'waiting' || r.candidate_request_state === 'requested') && candidatePresent(r, presenceSeconds),
+    finalInterview: r.is_final,
   };
 }
 
@@ -93,6 +94,10 @@ export async function rtcConfig(): Promise<RtcConfigDto> {
 
 export const candidateRoomLink = (r: Pick<InterviewRow, 'room_code' | 'candidate_token'>): string | null =>
   r.room_code && r.candidate_token ? appLink(`/interview/${encodeURIComponent(r.room_code)}?t=${r.candidate_token}`) : null;
+
+/** The shareable link for outside stakeholders. Only final interviews in the built-in room have one. */
+export const guestRoomLink = (r: Pick<InterviewRow, 'is_final' | 'room_code' | 'guest_token'>): string | null =>
+  r.is_final && r.room_code && r.guest_token ? appLink(`/interview/${encodeURIComponent(r.room_code)}/guest?g=${r.guest_token}`) : null;
 
 const TYPE_LABELS: Record<(typeof INTERVIEW_TYPES)[number], string> = { phone: 'Phone call', video: 'Video call', onsite: 'Onsite', panel: 'Panel (video)' };
 

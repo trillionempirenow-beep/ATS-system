@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
-  assistantToggleSchema, endMeetingSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
+  assistantToggleSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
 } from '../../../shared/api/interviews.js';
 import { AppError } from '../../http/errors.js';
 import { body, idParam, parse } from '../../http/validate.js';
@@ -9,6 +9,7 @@ import { requireStaff } from '../../middleware/guards.js';
 import { rateLimit } from '../../middleware/security.js';
 import * as service from './interviews.service.js';
 import * as room from './room-access.service.js';
+import * as guests from './guest-access.service.js';
 
 export const interviewsRouter = Router();
 
@@ -46,6 +47,11 @@ interviewsRouter.post('/interviews/:id/leave', async (req, res) => {
 interviewsRouter.post('/interviews/:id/admit', async (req, res) => {
   await service.admit(idParam(req), ctx(req));
   res.json(ok);
+});
+
+// Final interviews: a host lets a waiting guest in, or turns them away.
+interviewsRouter.post('/interviews/:id/guests/:guestId/decision', async (req, res) => {
+  res.json({ data: await guests.decide(idParam(req), idParam(req, 'guestId'), body(req, guestDecisionSchema).decision, ctx(req)) });
 });
 
 interviewsRouter.post('/interviews/:id/notes', async (req, res) => {
@@ -101,5 +107,27 @@ interviewsRouter.post('/room/:code/cancel', roomLimit, async (req, res) => {
 });
 interviewsRouter.post('/room/:code/leave', roomLimit, async (req, res) => {
   await room.leave(codeOf(req), tokenOf(req));
+  res.json(ok);
+});
+
+// ---- Final-interview guest (guest link) ------------------------------------
+// Joining is limited harder than polling: each join puts a request in front of the hosts.
+const guestJoinLimit = rateLimit({ name: 'guest-join', max: 10, windowSeconds: 600 });
+const guestTokenOf = (req: Request) => parse(z.string().regex(/^[a-f0-9]{32}$/i), req.query.g ?? '');
+
+interviewsRouter.get('/room/:code/guest', roomLimit, async (req, res) => {
+  res.json({ data: await guests.guestRoom(codeOf(req), guestTokenOf(req)) });
+});
+interviewsRouter.post('/room/:code/guest/join', guestJoinLimit, async (req, res) => {
+  const input = body(req, guestJoinSchema);
+  res.status(201).json({ data: await guests.join(codeOf(req), input.g, input.name, input.position) });
+});
+interviewsRouter.post('/room/:code/guest/status', roomLimit, async (req, res) => {
+  const input = body(req, guestSessionSchema);
+  res.json({ data: await guests.status(codeOf(req), input.g, input.key) });
+});
+interviewsRouter.post('/room/:code/guest/leave', roomLimit, async (req, res) => {
+  const input = body(req, guestSessionSchema);
+  await guests.leave(codeOf(req), input.g, input.key);
   res.json(ok);
 });

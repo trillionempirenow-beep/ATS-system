@@ -1,6 +1,6 @@
 import { sql, type Db } from '../../db/client.js';
 import type { Stage } from '../../../shared/domain/pipeline.js';
-import type { CandidateRequestState, InterviewStatus, InterviewType, MeetingState, MeetingType, Recommendation } from '../../../shared/domain/interviews.js';
+import type { CandidateRequestState, GuestState, InterviewStatus, InterviewType, MeetingState, MeetingType, Recommendation } from '../../../shared/domain/interviews.js';
 
 export interface InterviewRow {
   id: number;
@@ -15,6 +15,8 @@ export interface InterviewRow {
   meeting_provider: string;
   room_code: string | null;
   candidate_token: string | null;
+  is_final: boolean;
+  guest_token: string | null;
   location: string | null;
   status: InterviewStatus;
   meeting_state: MeetingState;
@@ -47,7 +49,7 @@ export interface InterviewRow {
 
 const SELECT = sql`
   select i.id, i.application_id, i.interviewer_id, i.meeting_type, i.starts_at, i.ends_at, i.timezone, i.interview_type, i.meeting_url,
-         i.meeting_provider, i.room_code, i.candidate_token, i.location, i.status, i.meeting_state, i.notes, i.live_notes, i.notes_updated_at,
+         i.meeting_provider, i.room_code, i.candidate_token, i.is_final, i.guest_token, i.location, i.status, i.meeting_state, i.notes, i.live_notes, i.notes_updated_at,
          i.feedback, i.score, i.recommendation, i.started_at, i.ended_at, i.reviewed_at, i.reviewer_id, i.candidate_request_state,
          i.candidate_requested_at, i.candidate_last_seen, i.interviewer_last_seen, i.assistant_enabled, i.reminder_sent_at,
          c.id as candidate_id, c.first_name, c.last_name, c.email::text, c.profile_image, j.title as job_title, a.stage,
@@ -100,3 +102,29 @@ export const momentsFor = (interviewId: number) =>
 export const assistantNotesFor = (interviewId: number) =>
   sql<{ at_second: number; topic: string | null; text: string }[]>`
     select at_second, topic, text from assistant_notes where interview_id = ${interviewId} order by at_second`;
+
+export interface GuestRow {
+  id: number;
+  interview_id: number;
+  guest_key: string;
+  name: string;
+  position: string;
+  state: GuestState;
+  requested_at: Date;
+  last_seen: Date;
+}
+
+const GUEST = sql`select id, interview_id, guest_key, name, position, state, requested_at, last_seen from interview_guests`;
+
+export async function guestByKey(interviewId: number, key: string): Promise<GuestRow | null> {
+  const [row] = await sql<GuestRow[]>`${GUEST} where interview_id = ${interviewId} and guest_key = ${key} limit 1`;
+  return row ?? null;
+}
+
+/** Guests still on the entry page: waiting, and seen within the presence window. */
+export const waitingGuests = (interviewId: number, windowSeconds: number) =>
+  sql<GuestRow[]>`${GUEST} where interview_id = ${interviewId} and state = 'waiting'
+                  and last_seen > now() - make_interval(secs => ${windowSeconds}) order by requested_at`;
+
+export const admittedGuests = (interviewId: number) =>
+  sql<GuestRow[]>`${GUEST} where interview_id = ${interviewId} and state = 'admitted' order by decided_at, id`;

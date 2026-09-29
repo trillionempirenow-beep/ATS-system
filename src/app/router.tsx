@@ -24,6 +24,7 @@ export const router = createBrowserRouter([
           { path: 'status', element: page(() => import('@/features/careers/StatusPage'), 'StatusPage') },
           { path: 'refer', element: page(() => import('@/features/careers/ReferPage'), 'ReferPage') },
           { path: 'interview/:code', element: page(() => import('@/features/room/CandidateRoomPage'), 'CandidateRoomPage') },
+          { path: 'interview/:code/guest', element: page(() => import('@/features/room/GuestRoomPage'), 'GuestRoomPage') },
         ],
       },
       {

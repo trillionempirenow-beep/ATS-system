@@ -1178,3 +1178,165 @@
   .side { padding: 8px; }
   .facts { grid-template-columns: 1fr; }
 }
+
+/* ---------- Final interview: guests ---------- */
+/* Name tags: "John Doe - Tech Lead" in the dark pill, truncated rather than wrapped. */
+.tileLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* Equal tiles for panels of three or more; the presenter layout returns while someone shares. */
+.grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.grid > .tile {
+  min-height: 0;
+}
+
+.grid .tileVideo {
+  object-fit: cover;
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .grid .tileName { left: 8px; bottom: 8px; height: 28px; font-size: 12px; max-width: calc(100% - 16px); }
+}
+
+button.topLink {
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.peopleGroups {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
+.peopleTitle {
+  margin: 0;
+  padding: 16px 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.peopleTitle span {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  letter-spacing: 0;
+}
+
+.personPosition {
+  display: block;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c7d7ff;
+}
+
+/* Host admission toasts: one card per guest at the door, newest at the bottom. */
+.admitStack {
+  position: absolute;
+  top: 76px;
+  right: 24px;
+  z-index: 6;
+  width: min(400px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admitToast {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--call-bar);
+  border: 1px solid rgba(125, 166, 255, 0.4);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: admitIn 180ms ease-out;
+}
+
+@keyframes admitIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admitToast { animation: none; }
+}
+
+.admitHead {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.admitText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admitText p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.admitText small {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admitActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.denyBtn:hover {
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.admitMore {
+  align-self: flex-end;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(6, 10, 18, 0.8);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 720px) {
+  .admitStack { top: 72px; right: 16px; left: 16px; width: auto; }
+}

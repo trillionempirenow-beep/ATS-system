@@ -23,8 +23,9 @@ import { channels, EVENTS } from '../../realtime/channels.js';
 import { publish } from '../../realtime/publisher.js';
 import { avatarUrlForCandidate } from '../media/media.urls.js';
 import {
-  acceptsReview, candidatePresent, candidateRoomLink, displayState, groupByDay, invitationEmail, presenceWindow, rtcConfig, toListItem,
+  acceptsReview, candidatePresent, candidateRoomLink, displayState, groupByDay, guestRoomLink, invitationEmail, presenceWindow, rtcConfig, toListItem,
 } from './interview-helpers.js';
+import * as guests from './guest-access.service.js';
 import * as repo from './interviews.repository.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
@@ -65,6 +66,7 @@ export async function scheduleOptions(): Promise<ScheduleOptionsDto> {
 export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, ctx: Ctx): Promise<ScheduleResultDto> {
   const interviewerId = input.interviewerId ?? ctx.user.id;
   const builtIn = input.meetingMode === 'builtin';
+  const final = builtIn && input.finalInterview;
   const [app] = await sql<{ id: number; stage: string; status: string }[]>`select id, stage, status from applications where id = ${input.applicationId}`;
   if (!app || app.status !== 'active' || app.stage === 'hired' || app.stage === 'rejected') {
     throw validationFailed({ applicationId: 'Please select an active application.' });
@@ -80,10 +82,10 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
       if (clash) throw conflict('This interviewer already has an interview scheduled at that exact time. Please pick another time or interviewer.');
       const [created] = await tx<{ id: number }[]>`
         insert into interviews (application_id, interviewer_id, meeting_type, starts_at, ends_at, timezone, interview_type, meeting_url,
-                                meeting_provider, room_code, candidate_token, location, notes, status, created_by)
+                                meeting_provider, room_code, candidate_token, is_final, guest_token, location, notes, status, created_by)
         values (${input.applicationId}, ${interviewerId}, ${input.meetingType}, ${input.startsAt}, ${input.endsAt ?? null}, ${env.APP_TIMEZONE},
                 ${input.interviewType}, ${builtIn ? null : input.meetingUrl || null}, ${builtIn ? 'Acme Room' : input.meetingProvider || 'External'},
-                ${builtIn ? roomCode() : null}, ${builtIn ? randomHex(16) : null}, ${input.location || null}, ${input.notes || null}, 'scheduled', ${ctx.user.id})
+                ${builtIn ? roomCode() : null}, ${builtIn ? randomHex(16) : null}, ${final}, ${final ? randomHex(16) : null}, ${input.location || null}, ${input.notes || null}, 'scheduled', ${ctx.user.id})
         returning id`;
       await tx`update applications set assigned_to = ${interviewerId} where id = ${input.applicationId} and assigned_to is null`;
       const target = input.meetingType === 'screening' ? 'screening' : 'interview';
@@ -95,7 +97,7 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
           details: { from: prev.stage, to: target, via: 'interview scheduled' }, ip: ctx.ip }, tx);
       }
       await audit({ userId: ctx.user.id, action: 'interview_create', entityType: 'interview', entityId: created!.id,
-        details: { meeting: input.meetingType, type: input.interviewType, room: builtIn ? 'Acme Room' : 'external' }, ip: ctx.ip }, tx);
+        details: { meeting: input.meetingType, type: input.interviewType, room: builtIn ? 'Acme Room' : 'external', final }, ip: ctx.ip }, tx);
       return created!.id;
     });
   } catch (e) {
@@ -118,7 +120,7 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
     interviewId, applicationId: row.application_id, startsAt: isoOrThrow(row.starts_at), meetingType: row.meeting_type, interviewType: row.interview_type,
     builtInRoom: builtIn, interviewerId, emailSentByApp: delivery.email === 'sent',
   });
-  return { interviewId, roomCode: row.room_code, candidateLink: candidateRoomLink(row), ...delivery };
+  return { interviewId, roomCode: row.room_code, candidateLink: candidateRoomLink(row), guestLink: guestRoomLink(row), ...delivery };
 }
 
 export async function update(id: number, input: z.infer<typeof updateInterviewSchema>, ctx: Ctx): Promise<DeliveryReport> {
@@ -163,7 +165,10 @@ export async function update(id: number, input: z.infer<typeof updateInterviewSc
     });
     delivery = toDeliveryReport(result);
   }
-  if (cancelled) void publish(channels.lobby(id), EVENTS.roomEnded, { reason: 'cancelled' });
+  if (cancelled) {
+    void publish(channels.lobby(id), EVENTS.roomEnded, { reason: 'cancelled' });
+    void guests.notifyGuests(id, EVENTS.roomEnded, { reason: 'cancelled' });
+  }
   emitN8nEvent('interview.updated', { interviewId: id, status: after.status, startsAt: isoOrThrow(after.starts_at), emailSentByApp: delivery.email === 'sent' });
   return delivery;
 }
@@ -171,8 +176,8 @@ export async function update(id: number, input: z.infer<typeof updateInterviewSc
 export async function staffRoom(id: number, user: CurrentUser): Promise<StaffRoomDto> {
   const row = await load(id);
   const windowSeconds = await presenceWindow();
-  const [myRatings, moments, assistantNotes, rtc] = await Promise.all([
-    repo.scorecardFor(id, user.id), repo.momentsFor(id), repo.assistantNotesFor(id), rtcConfig(),
+  const [myRatings, moments, assistantNotes, rtc, guestList] = await Promise.all([
+    repo.scorecardFor(id, user.id), repo.momentsFor(id), repo.assistantNotesFor(id), rtcConfig(), guests.forHosts(id, windowSeconds),
   ]);
   return {
     interview: {
@@ -201,6 +206,7 @@ export async function staffRoom(id: number, user: CurrentUser): Promise<StaffRoo
     rtc,
     realtime: { driver: env.REALTIME_DRIVER, room: row.room_code ? channels.room(id) : null, staff: channels.staff(id), lobby: null },
     presenceSeconds: windowSeconds,
+    guests: { link: guestRoomLink(row), admitted: guestList.admitted },
   };
 }
 
@@ -211,6 +217,7 @@ export async function staffPresence(id: number): Promise<PresenceResultDto> {
             where id = ${id} and meeting_state in ('scheduled','ready') and status not in ('cancelled','no_show')`;
   const row = await load(id);
   const windowSeconds = await presenceWindow();
+  const guestList = row.is_final ? await guests.forHosts(id, windowSeconds) : { requests: [], admitted: [] };
   const waiting = row.candidate_request_state === 'waiting' || row.candidate_request_state === 'requested';
   if (waiting && row.candidate_request_state === 'waiting' && candidatePresent(row, windowSeconds)) {
     // The interviewer has arrived: a waiting candidate becomes a request to decide on.
@@ -222,6 +229,8 @@ export async function staffPresence(id: number): Promise<PresenceResultDto> {
       : null,
     candidatePresent: candidatePresent(row, windowSeconds),
     meetingState: displayState(row),
+    guestRequests: guestList.requests,
+    admittedGuests: guestList.admitted,
   };
 }
 
@@ -269,7 +278,9 @@ export async function endMeeting(id: number, liveNotes: string | undefined, ctx:
     await audit({ userId: ctx.user.id, action: 'interview_ended', entityType: 'interview', entityId: id, ip: ctx.ip }, tx);
   });
   const payload = { interviewId: id, endedBy: ctx.user.name, endedById: ctx.user.id };
-  await Promise.all([publish(channels.room(id), EVENTS.roomEnded, payload), publish(channels.lobby(id), EVENTS.roomEnded, payload)]);
+  await Promise.all([
+    publish(channels.room(id), EVENTS.roomEnded, payload), publish(channels.lobby(id), EVENTS.roomEnded, payload), guests.notifyGuests(id, EVENTS.roomEnded, payload),
+  ]);
   emitN8nEvent('interview.ended', { interviewId: id });
 }
 

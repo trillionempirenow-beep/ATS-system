@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, type IconName } from '@/components/icon/Icon';
 import { Avatar } from '@/components/ui/Display';
 import { cx } from '@/lib/cx';
 import { formatTime, mmss } from '@/lib/format';
-import type { Call, ParticipantRole, RemotePeer } from './call/useCall';
+import type { Call, ParticipantMeta, ParticipantRole, RemotePeer } from './call/useCall';
 import type { LocalMedia } from './call/useLocalMedia';
 import s from './Room.module.css';
 
-const ROLE_LABELS: Record<ParticipantRole, string> = { interviewer: 'Interviewer', staff: 'Hiring team', candidate: 'Candidate' };
+const ROLE_LABELS: Record<ParticipantRole, string> = { interviewer: 'Interviewer', staff: 'Hiring team', candidate: 'Candidate', guest: 'Guest' };
+
+/** What a tile says under someone: guests show the position they entered, everyone else their role. */
+const tileRole = (meta: Pick<ParticipantMeta, 'role' | 'position' | 'screen'>): { role?: string; position?: string } =>
+  meta.screen ? { role: 'Presenting', position: meta.role === 'guest' ? meta.position : undefined }
+    : meta.role === 'guest' && meta.position ? { position: meta.position } : { role: ROLE_LABELS[meta.role] };
 
 export function Elapsed({ since }: { since: string | null }) {
   const [now, setNow] = useState(() => Date.now());
@@ -17,9 +22,11 @@ export function Elapsed({ since }: { since: string | null }) {
   return <span className={cx(s.pill, s.timer)}><Icon name="clock" size={15} />{mmss(seconds)}</span>;
 }
 
-function Tile({ stream, name, role, mirrored, muted, hasVideo, micOn, hand, small, highlight }: {
-  stream: MediaStream | null; name: string; role?: string; mirrored?: boolean; muted?: boolean; hasVideo: boolean; micOn: boolean; hand?: boolean; small?: boolean; highlight?: boolean;
+function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, hand, small, highlight }: {
+  stream: MediaStream | null; name: string; role?: string; position?: string; mirrored?: boolean; muted?: boolean; hasVideo: boolean; micOn: boolean; hand?: boolean; small?: boolean; highlight?: boolean;
 }) {
+  // "John Doe - Tech Lead": the full text stays readable on hover when the pill truncates it.
+  const label = position ? `${name} - ${position}` : name;
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -31,9 +38,9 @@ function Tile({ stream, name, role, mirrored, muted, hasVideo, micOn, hand, smal
       {!hasVideo ? (
         <div className={s.tileEmpty}><span className={s.glow} /><Avatar name={name} size={small ? 48 : 104} /></div>
       ) : null}
-      <div className={s.tileName}>
+      <div className={s.tileName} title={role ? `${label} · ${role}` : label}>
         <Icon name={micOn ? 'mic' : 'micoff'} size={small ? 13 : 15} />
-        {name}{role ? <span>· {role}</span> : null}
+        <b className={s.tileLabel}>{label}</b>{role ? <span>· {role}</span> : null}
         {hand ? <Icon name="hand" size={15} /> : null}
       </div>
     </div>
@@ -77,18 +84,47 @@ function ChatPanel({ call }: { call: Call }) {
   );
 }
 
-function ParticipantsPanel({ self, peers, extra }: { self: { name: string; role: ParticipantRole; micOn: boolean; camOn: boolean }; peers: RemotePeer[]; extra?: ReactNode }) {
-  const row = (key: string, name: string, sub: string) => (
-    <li key={key} className={s.person}><Avatar name={name} size={36} /><span><strong>{name}</strong><small>{sub}</small></span></li>
-  );
+type PanelSelf = { name: string; role: ParticipantRole; position?: string; micOn: boolean; camOn: boolean };
+
+const GROUPS: Array<{ key: string; title: string; roles: ParticipantRole[] }> = [
+  { key: 'team', title: 'Hiring team', roles: ['interviewer', 'staff'] },
+  { key: 'candidate', title: 'Candidate', roles: ['candidate'] },
+  { key: 'guests', title: 'Guests', roles: ['guest'] },
+];
+
+/** Everyone in the room, grouped so the candidate and the interviewers know exactly who is listening. */
+function ParticipantsPanel({ self, peers, extra }: { self: PanelSelf; peers: RemotePeer[]; extra?: ReactNode }) {
   const status = (mic: boolean, cam: boolean) => `Mic ${mic ? 'on' : 'off'} · Cam ${cam ? 'on' : 'off'}`;
+  const people = [
+    { key: 'self', you: true, name: self.name, role: self.role, position: self.position, mic: self.micOn, cam: self.camOn, hand: false },
+    ...peers.map((p) => ({ key: p.meta.id, you: false, name: p.meta.name, role: p.meta.role, position: p.meta.position, mic: p.meta.mic, cam: p.meta.cam, hand: p.meta.hand })),
+  ];
   return (
     <>
-      <div className={s.sideHead}><strong>Participants</strong><span>{peers.length + 1} in the room</span></div>
-      <ul className={s.people}>
-        {row('self', self.name, `You · ${ROLE_LABELS[self.role]} · ${status(self.micOn, self.camOn)}`)}
-        {peers.map((p) => row(p.meta.id, p.meta.name, `${ROLE_LABELS[p.meta.role]} · ${status(p.meta.mic, p.meta.cam)}${p.meta.hand ? ' · Hand raised' : ''}`))}
-      </ul>
+      <div className={s.sideHead}><strong>Participants</strong><span>{people.length} in the room</span></div>
+      <div className={s.peopleGroups}>
+        {GROUPS.map((g) => {
+          const members = people.filter((m) => g.roles.includes(m.role));
+          if (!members.length) return null;
+          return (
+            <section key={g.key} aria-label={g.title}>
+              <h3 className={s.peopleTitle}>{g.title}<span>{members.length}</span></h3>
+              <ul className={s.people}>
+                {members.map((m) => (
+                  <li key={m.key} className={s.person}>
+                    <Avatar name={m.name} size={36} />
+                    <span>
+                      <strong>{m.name}{m.you ? ' (you)' : ''}</strong>
+                      {m.role === 'guest' && m.position ? <em className={s.personPosition}>{m.position}</em> : null}
+                      <small>{m.role === 'guest' ? 'External guest' : ROLE_LABELS[m.role]} · {status(m.mic, m.cam)}{m.hand ? ' · Hand raised' : ''}</small>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
       {extra}
     </>
   );
@@ -105,7 +141,7 @@ interface Props {
   banner?: ReactNode;
   call: Call;
   media: LocalMedia;
-  self: { name: string; role: ParticipantRole };
+  self: { name: string; role: ParticipantRole; position?: string };
   hand: boolean;
   onHand: () => void;
   onShare: () => void;
@@ -128,10 +164,16 @@ export function CallStage(p: Props) {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  const presenter = call.peers.find((x) => x.meta.screen) ?? call.peers[0] ?? null;
+  const sharing = call.peers.find((x) => x.meta.screen) ?? null;
+  // Three or more people and nobody presenting: everyone gets an equal tile in the grid.
+  const grid = !sharing && call.peers.length >= 2;
+  const presenter = sharing ?? call.peers[0] ?? null;
   const others = call.peers.filter((x) => x !== presenter);
+  const everyone = call.peers.length + 1;
+  const gridCols = everyone <= 4 ? 2 : everyone <= 9 ? 3 : 4;
   const selfHasVideo = Boolean(media.screen || (media.stream?.getVideoTracks().length && media.camOn));
   const selfStream = media.screen ?? media.stream;
+  const selfMic = media.micOn && Boolean(media.stream?.getAudioTracks().length);
   const toggle = (panel: Exclude<SidePanel, null>) => p.onPanel(p.panel === panel ? null : panel);
 
   return createPortal(
@@ -155,22 +197,35 @@ export function CallStage(p: Props) {
 
       <div className={s.body}>
         <div className={s.stage}>
-          <div className={s.main}>
-            {presenter ? (
-              <Tile stream={presenter.stream} name={presenter.meta.name} role={presenter.meta.screen ? 'Presenting' : ROLE_LABELS[presenter.meta.role]}
-                hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight />
-            ) : (
-              <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
-            )}
-            <div className={s.pip}>
-              <Tile stream={selfStream} name="You" muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={media.micOn && Boolean(media.stream?.getAudioTracks().length)} hand={p.hand} small />
+          {grid ? (
+            <div className={s.main}>
+              <div className={s.grid} style={{ '--cols': gridCols } as CSSProperties}>
+                {call.peers.map((o) => (
+                  <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} />
+                ))}
+                <Tile stream={selfStream} name="You" position={p.self.position} muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} />
+              </div>
             </div>
-          </div>
-          {others.length ? (
-            <div className={s.strip}>
-              {others.map((o) => <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} role={ROLE_LABELS[o.meta.role]} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} small />)}
-            </div>
-          ) : null}
+          ) : (
+            <>
+              <div className={s.main}>
+                {presenter ? (
+                  <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)}
+                    hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight />
+                ) : (
+                  <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
+                )}
+                <div className={s.pip}>
+                  <Tile stream={selfStream} name="You" muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small />
+                </div>
+              </div>
+              {others.length ? (
+                <div className={s.strip}>
+                  {others.map((o) => <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} small />)}
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
 
         {p.panel ? (

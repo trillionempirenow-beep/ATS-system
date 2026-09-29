@@ -160,3 +160,14 @@ export const JOIN_STATE_HEADLINES: Record<CandidateJoinState, string> = {
   ended: 'Interview ended',
   cancelled: 'Interview cancelled',
 };
+
+/** Final interviews: external guests join through a shareable link and wait to be admitted. */
+export const GUEST_STATES = ['waiting', 'admitted', 'denied', 'left'] as const;
+export type GuestState = (typeof GUEST_STATES)[number];
+
+/** How many guests may queue at once, so a leaked link cannot flood the hosts. */
+export const MAX_WAITING_GUESTS = 10;
+export const MAX_GUESTS_PER_INTERVIEW = 40;
+
+/** "John Doe - Tech Lead": the label on a guest's video tile and in the participants list. */
+export const guestLabel = (name: string, position: string): string => `${name} - ${position}`;
