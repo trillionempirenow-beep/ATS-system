@@ -9,7 +9,8 @@ import { fullName } from '../../lib/format.js';
 import { sendEmail } from '../../email/email.service.js';
 import { brand, whenInfo } from '../../email/brand.js';
 import { interviewReminder } from '../../email/templates/index.js';
-import { candidateRoomLink } from '../interviews/interview-helpers.js';
+import { candidateRoomLink, interviewCalendarEvent } from '../interviews/interview-helpers.js';
+import { googleCalendarLink } from '../../email/calendar.js';
 import * as interviews from '../interviews/interviews.repository.js';
 import { pruneExpiredUploads } from '../uploads/uploads.service.js';
 import { pruneExpiredSessions } from '../auth/session.repository.js';
@@ -49,7 +50,11 @@ async function interviewReminders(withinMinutes: number) {
       key: `interview-reminder:${id}:${row.starts_at.getTime()}`,
       template: 'interview-reminder',
       to: row.email,
-      email: interviewReminder(b, { candidateName: row.first_name, jobTitle: row.job_title, when: whenInfo(row.starts_at), joinUrl: row.room_code ? candidateRoomLink(row) : row.meeting_url, startsIn }),
+      email: interviewReminder(b, {
+        candidateName: row.first_name, jobTitle: row.job_title, when: whenInfo(row.starts_at),
+        joinUrl: row.room_code ? candidateRoomLink(row) : row.meeting_url, startsIn,
+        calendarUrl: googleCalendarLink(interviewCalendarEvent(row, b.company)),
+      }),
     });
     if (row.interviewer_id) {
       await notifyMany([row.interviewer_id], {

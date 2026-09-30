@@ -232,6 +232,24 @@ You can also use your company mail server instead: set `EMAIL_PROVIDER=smtp` plu
 
 ---
 
+### Sending from Gmail through n8n
+
+The n8n workflow **"ATS - Send email via Gmail"** sends every applicant email from
+the Gmail account you connect in n8n, and attaches the calendar invite to interview
+emails (invitation, new time, cancellation).
+1. In n8n open the workflow, click **Send with invite**, and under Credential choose
+   **Create new → Sign in with Google** with the Gmail account that should send.
+   Pick the same credential on **Send email**. Then **Publish** the workflow.
+2. In Vercel set `EMAIL_PROVIDER` = `n8n`,
+   `EMAIL_N8N_WEBHOOK_URL` = `https://<your-n8n>/webhook/ats-send-email`,
+   `EMAIL_N8N_SECRET` = the value of the workflow's Header Auth credential
+   (the `X-ATS-Secret` one), and `EMAIL_FROM` = `Your Company <the-gmail-address>`.
+3. **Redeploy**, then schedule an interview to yourself to check it arrives with the invite.
+
+Interview emails carry an `.ics` invite with every provider (Gmail via n8n, SMTP,
+Resend) plus an "Add to Google Calendar" button; a reschedule moves the same
+calendar entry and a cancellation removes it.
+
 ## Optional: bring over data from the old PHP system
 
 This copies users (their passwords keep working), jobs, candidates, applications, interviews, notes, employees, attendance and the audit trail, plus the resume, photo and PDF files.

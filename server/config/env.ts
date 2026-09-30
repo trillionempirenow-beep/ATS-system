@@ -47,7 +47,10 @@ const schema = z.object({
   TURN_USERNAME: optionalString,
   TURN_CREDENTIAL: optionalString,
 
-  EMAIL_PROVIDER: z.enum(['resend', 'smtp', 'log', 'none']).default('log'),
+  EMAIL_PROVIDER: z.enum(['resend', 'smtp', 'n8n', 'log', 'none']).default('log'),
+  // EMAIL_PROVIDER=n8n: the "ATS - Send email via Gmail" workflow sends from the connected Gmail.
+  EMAIL_N8N_WEBHOOK_URL: optionalUrl,
+  EMAIL_N8N_SECRET: optionalString,
   EMAIL_FROM: z.string().default('Acme People <no-reply@example.com>'),
   EMAIL_REPLY_TO: optionalString,
   RESEND_API_KEY: optionalString,

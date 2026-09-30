@@ -8,6 +8,7 @@ import type { InterviewListItemDto, RtcConfigDto } from '../../../shared/api/int
 import { formatTime, fullName, iso, isoOrThrow, todayInZone } from '../../lib/format.js';
 import { appLink, brand, whenInfo } from '../../email/brand.js';
 import { interviewInvitation } from '../../email/templates/index.js';
+import { calendarInvite, googleCalendarLink, type CalendarEvent } from '../../email/calendar.js';
 import { avatarUrlForCandidate } from '../media/media.urls.js';
 import { turnServers } from '../../realtime/ice.js';
 import type { InterviewRow } from './interviews.repository.js';
@@ -104,11 +105,36 @@ export const guestRoomLink = (r: Pick<InterviewRow, 'is_final' | 'room_code' | '
 
 const TYPE_LABELS: Record<(typeof INTERVIEW_TYPES)[number], string> = { phone: 'Phone call', video: 'Video call', onsite: 'Onsite', panel: 'Panel (video)' };
 
+/** The interview as a calendar event for the candidate: invite file and Google Calendar link. */
+export function interviewCalendarEvent(r: InterviewRow, company: string): CalendarEvent {
+  const link = r.room_code ? candidateRoomLink(r) : r.meeting_url || null;
+  const kind = r.meeting_type === 'screening' ? 'Screening call' : r.is_final ? 'Final interview' : 'Interview';
+  const description = [
+    `${kind} for ${r.job_title} at ${company}.`,
+    link ? `Join: ${link}` : null,
+    r.room_code ? `Room code: ${r.room_code}` : null,
+    r.interviewer_name ? `Interviewer: ${r.interviewer_name}` : null,
+    r.location ? `Location: ${r.location}` : null,
+    `Your application: ${appLink(`/status?email=${encodeURIComponent(r.email)}&id=${r.application_id}`)}`,
+  ].filter(Boolean).join('\n');
+  return {
+    uid: `interview-${r.id}`,
+    start: r.starts_at,
+    end: r.ends_at,
+    title: `${kind}: ${r.job_title} at ${company}`,
+    description,
+    location: r.location || link,
+    url: link,
+    attendee: { name: fullName(r.first_name, r.last_name), email: r.email },
+  };
+}
+
 export async function invitationEmail(r: InterviewRow) {
   const b = await brand();
   const link = r.room_code ? candidateRoomLink(r) : r.meeting_url || null;
   const minutes = r.ends_at ? Math.round((r.ends_at.getTime() - r.starts_at.getTime()) / 60000) : null;
-  return interviewInvitation(b, {
+  const event = interviewCalendarEvent(r, b.company);
+  const email = interviewInvitation(b, {
     candidateName: r.first_name,
     jobTitle: r.job_title,
     meetingType: r.meeting_type,
@@ -122,5 +148,7 @@ export async function invitationEmail(r: InterviewRow) {
     roomCode: r.room_code,
     builtIn: Boolean(r.room_code),
     statusUrl: appLink(`/status?email=${encodeURIComponent(r.email)}&id=${r.application_id}`),
+    calendarUrl: googleCalendarLink(event),
   });
+  return { ...email, calendar: calendarInvite(event, 'REQUEST') };
 }

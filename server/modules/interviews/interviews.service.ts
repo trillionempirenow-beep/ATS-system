@@ -17,6 +17,7 @@ import { AppError, conflict, isUniqueViolation, notFound, validationFailed } fro
 import { randomHex, roomCode } from '../../lib/crypto.js';
 import { fullName, iso, isoOrThrow } from '../../lib/format.js';
 import { sendEmail, toDeliveryReport } from '../../email/email.service.js';
+import { calendarInvite, googleCalendarLink } from '../../email/calendar.js';
 import { brand, whenInfo } from '../../email/brand.js';
 import { interviewChanged } from '../../email/templates/index.js';
 import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
@@ -24,7 +25,7 @@ import { channels, EVENTS } from '../../realtime/channels.js';
 import { publish } from '../../realtime/publisher.js';
 import { avatarUrlForCandidate } from '../media/media.urls.js';
 import {
-  acceptsReview, candidatePresent, candidateRoomLink, displayState, groupByDay, guestRoomLink, invitationEmail, presenceWindow, rtcConfig, toListItem,
+  acceptsReview, candidatePresent, candidateRoomLink, displayState, groupByDay, guestRoomLink, interviewCalendarEvent, invitationEmail, presenceWindow, rtcConfig, toListItem,
 } from './interview-helpers.js';
 import * as guests from './guest-access.service.js';
 import * as repo from './interviews.repository.js';
@@ -157,14 +158,18 @@ export async function update(id: number, input: z.infer<typeof updateInterviewSc
   if (input.notifyCandidate && (rescheduled || cancelled)) {
     const b = await brand();
     const change = cancelled ? 'cancelled' : 'rescheduled';
+    // Same calendar UID as the invitation: a reschedule moves the entry, a cancellation removes it.
+    const event = interviewCalendarEvent(after, b.company);
+    const email = interviewChanged(b, {
+      candidateName: after.first_name, jobTitle: after.job_title, change,
+      when: cancelled ? null : whenInfo(after.starts_at), joinUrl: cancelled ? null : candidateRoomLink(after) ?? after.meeting_url,
+      calendarUrl: cancelled ? null : googleCalendarLink(event),
+    });
     const result = await sendEmail({
       key: `interview-${change}:${id}:${cancelled ? 'x' : after.starts_at.getTime()}`,
       template: `interview-${change}`,
       to: after.email,
-      email: interviewChanged(b, {
-        candidateName: after.first_name, jobTitle: after.job_title, change,
-        when: cancelled ? null : whenInfo(after.starts_at), joinUrl: cancelled ? null : candidateRoomLink(after) ?? after.meeting_url,
-      }),
+      email: { ...email, calendar: calendarInvite(event, cancelled ? 'CANCEL' : 'REQUEST') },
     });
     delivery = toDeliveryReport(result);
   }

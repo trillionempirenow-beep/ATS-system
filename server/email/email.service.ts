@@ -36,6 +36,7 @@ export async function sendEmail(input: { key: string; template: string; to: stri
       html: input.email.html,
       text: input.email.text,
       idempotencyKey: input.key,
+      ...(input.email.calendar ? { calendar: input.email.calendar } : {}),
     });
 
     if (result.ok) {

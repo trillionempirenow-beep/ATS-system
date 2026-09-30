@@ -1,4 +1,4 @@
-import { renderEmail, type Brand, type RenderedEmail } from './layout.js';
+import { renderEmail, type Block, type Brand, type RenderedEmail } from './layout.js';
 
 export interface WhenInfo {
   date: string;
@@ -9,7 +9,7 @@ export interface WhenInfo {
 export function interviewInvitation(brand: Brand, v: {
   candidateName: string; jobTitle: string; meetingType: 'screening' | 'interview'; final?: boolean; interviewType: string;
   when: WhenInfo; duration: string | null; interviewerName: string | null; joinUrl: string | null;
-  location: string | null; roomCode: string | null; builtIn: boolean; statusUrl: string;
+  location: string | null; roomCode: string | null; builtIn: boolean; statusUrl: string; calendarUrl?: string | null;
 }): RenderedEmail {
   const kind = v.meetingType === 'screening' ? 'screening call' : v.final ? 'final interview' : 'interview';
   const rows: Array<[string, string, 'mono'?]> = [
@@ -38,40 +38,47 @@ export function interviewInvitation(brand: Brand, v: {
     { kind: 'heading', text: `You're scheduled: ${v.jobTitle}` },
     { kind: 'paragraph', text: `Hi ${v.candidateName}, thank you for your interest in ${brand.company}. Here are the details of your ${kind}.` },
     { kind: 'details', rows },
-    ...(v.joinUrl ? [{ kind: 'button' as const, label: v.builtIn ? 'Join interview' : 'Open meeting link', href: v.joinUrl }] : []),
+    ...joinAndCalendar(v.joinUrl ? { label: v.builtIn ? 'Join interview' : 'Open meeting link', href: v.joinUrl } : null, v.calendarUrl),
     { kind: 'list', title: 'Before you join', items: instructions },
     ...(v.joinUrl ? [{ kind: 'link' as const, label: "If the button doesn't work, copy this link:", href: v.joinUrl }] : []),
     { kind: 'note', text: `You can also find this interview on your application status page: ${v.statusUrl}` },
   ]);
 }
 
+/** The join button, with "Add to Google Calendar" beside it when there is a calendar link. */
+function joinAndCalendar(join: { label: string; href: string } | null, calendarUrl: string | null | undefined): Block[] {
+  if (calendarUrl) return [{ kind: 'buttons', ...(join ? { primary: join } : {}), secondary: { label: 'Add to Google Calendar', href: calendarUrl } }];
+  return join ? [{ kind: 'button', ...join }] : [];
+}
+
 export function interviewReminder(brand: Brand, v: {
-  candidateName: string; jobTitle: string; when: WhenInfo; joinUrl: string | null; startsIn: string;
+  candidateName: string; jobTitle: string; when: WhenInfo; joinUrl: string | null; startsIn: string; calendarUrl?: string | null;
 }): RenderedEmail {
   return renderEmail(brand, `Reminder: your interview for ${v.jobTitle} starts ${v.startsIn}`, `${v.when.time} (${v.when.timezone})`, [
     { kind: 'heading', text: `Your interview starts ${v.startsIn}` },
     { kind: 'paragraph', text: `Hi ${v.candidateName}, this is a reminder of your interview for ${v.jobTitle}.` },
     { kind: 'details', rows: [['Date', v.when.date], ['Time', `${v.when.time} (${v.when.timezone})`]] },
-    ...(v.joinUrl ? [{ kind: 'button' as const, label: 'Join interview', href: v.joinUrl }] : []),
+    ...joinAndCalendar(v.joinUrl ? { label: 'Join interview', href: v.joinUrl } : null, v.calendarUrl),
     { kind: 'note', text: 'Find a quiet spot and check your camera and microphone a few minutes before.' },
   ]);
 }
 
 export function interviewChanged(brand: Brand, v: {
-  candidateName: string; jobTitle: string; change: 'rescheduled' | 'cancelled'; when: WhenInfo | null; joinUrl: string | null;
+  candidateName: string; jobTitle: string; change: 'rescheduled' | 'cancelled'; when: WhenInfo | null; joinUrl: string | null; calendarUrl?: string | null;
 }): RenderedEmail {
   if (v.change === 'cancelled') {
     return renderEmail(brand, `Your interview for ${v.jobTitle} was cancelled`, 'We will be in touch about next steps.', [
       { kind: 'heading', text: 'Your interview was cancelled' },
       { kind: 'paragraph', text: `Hi ${v.candidateName}, your interview for ${v.jobTitle} has been cancelled. The recruiting team will contact you about next steps.` },
+      { kind: 'note', text: 'If you added the interview to your calendar, the attached update removes it.' },
     ]);
   }
   return renderEmail(brand, `New time for your ${v.jobTitle} interview`, v.when ? `${v.when.date} at ${v.when.time}` : '', [
     { kind: 'heading', text: 'Your interview has a new time' },
     { kind: 'paragraph', text: `Hi ${v.candidateName}, your interview for ${v.jobTitle} was rescheduled.` },
     ...(v.when ? [{ kind: 'details' as const, rows: [['Date', v.when.date], ['Time', `${v.when.time} (${v.when.timezone})`]] as Array<[string, string]> }] : []),
-    ...(v.joinUrl ? [{ kind: 'button' as const, label: 'Join interview', href: v.joinUrl }] : []),
-    { kind: 'note', text: 'Your previous link still works and now points to the new time.' },
+    ...joinAndCalendar(v.joinUrl ? { label: 'Join interview', href: v.joinUrl } : null, v.calendarUrl),
+    { kind: 'note', text: 'Your previous link still works and now points to the new time. The attached invite moves it on your calendar.' },
   ]);
 }
 

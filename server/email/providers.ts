@@ -1,5 +1,6 @@
 import type { Transporter } from 'nodemailer';
 import { env } from '../config/env.js';
+import type { CalendarInvite } from './calendar.js';
 
 export interface OutgoingEmail {
   to: string;
@@ -7,7 +8,13 @@ export interface OutgoingEmail {
   html: string;
   text: string;
   idempotencyKey: string;
+  calendar?: CalendarInvite;
 }
+
+const ICS_TYPE = (c: CalendarInvite) => `text/calendar; charset=utf-8; method=${c.method}`;
+
+/** "Acme People <no-reply@x>" -> "Acme People" (the name recipients see). */
+const senderName = () => /^\s*"?([^"<]*?)"?\s*</.exec(env.EMAIL_FROM)?.[1]?.trim() || '';
 
 export type ProviderResult = { ok: true; id?: string } | { ok: false; error: string };
 
@@ -37,6 +44,7 @@ const resend: EmailProvider = {
           html: email.html,
           text: email.text,
           ...(env.EMAIL_REPLY_TO ? { reply_to: env.EMAIL_REPLY_TO } : {}),
+          ...(email.calendar ? { attachments: [{ filename: email.calendar.filename, content: Buffer.from(email.calendar.ics).toString('base64'), content_type: ICS_TYPE(email.calendar) }] } : {}),
         }),
         signal: AbortSignal.timeout(10_000),
       });
@@ -74,10 +82,50 @@ const smtp: EmailProvider = {
         text: email.text,
         replyTo: env.EMAIL_REPLY_TO,
         headers: { 'X-Entity-Ref-ID': email.idempotencyKey },
+        // Sent as a calendar alternative part, which Gmail and Outlook show as an invitation.
+        ...(email.calendar ? { icalEvent: { method: email.calendar.method, filename: email.calendar.filename, content: email.calendar.ics } } : {}),
       });
       return { ok: true, id: info.messageId };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'SMTP error' };
+    }
+  },
+};
+
+/**
+ * The "ATS - Send email via Gmail" n8n workflow: POST the message (and the
+ * calendar invite as a base64 attachment) with the shared secret; the workflow
+ * sends it from the Gmail account connected in n8n and answers { ok, id }.
+ */
+const n8n: EmailProvider = {
+  name: 'n8n',
+  delivers: true,
+  async send(email) {
+    if (!env.EMAIL_N8N_WEBHOOK_URL) return { ok: false, error: 'EMAIL_N8N_WEBHOOK_URL is not set.' };
+    try {
+      const res = await fetch(env.EMAIL_N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(env.EMAIL_N8N_SECRET ? { 'X-ATS-Secret': env.EMAIL_N8N_SECRET } : {}) },
+        body: JSON.stringify({
+          to: email.to,
+          subject: email.subject,
+          html: email.html,
+          text: email.text,
+          senderName: senderName(),
+          replyTo: env.EMAIL_REPLY_TO ?? '',
+          idempotencyKey: email.idempotencyKey,
+          attachments: email.calendar
+            ? [{ filename: email.calendar.filename, mimeType: ICS_TYPE(email.calendar), base64: Buffer.from(email.calendar.ics).toString('base64') }]
+            : [],
+        }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const raw = await res.text();
+      if (!res.ok) return { ok: false, error: `n8n HTTP ${res.status}: ${raw.slice(0, 300) || res.statusText}` };
+      const payload = (() => { try { return JSON.parse(raw) as { id?: string }; } catch { return {}; } })();
+      return { ok: true, id: payload.id };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Network error' };
     }
   },
 };
@@ -87,7 +135,7 @@ const log: EmailProvider = {
   name: 'log',
   delivers: false,
   async send(email) {
-    console.log(`[email:log] to=${email.to} subject="${email.subject}"\n${email.text}\n`);
+    console.log(`[email:log] to=${email.to} subject="${email.subject}"${email.calendar ? ` +calendar(${email.calendar.method})` : ''}\n${email.text}\n`);
     return { ok: true };
   },
 };
@@ -96,6 +144,7 @@ export function activeProvider(): EmailProvider | null {
   switch (env.EMAIL_PROVIDER) {
     case 'resend': return resend;
     case 'smtp': return smtp;
+    case 'n8n': return n8n;
     case 'log': return log;
     default: return null;
   }
