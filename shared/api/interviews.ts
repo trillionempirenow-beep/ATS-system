@@ -117,6 +117,8 @@ export const assistantToggleSchema = z.object({ enabled: z.boolean() });
 
 export interface RtcConfigDto {
   iceServers: Array<{ urls: string | string[]; username?: string; credential?: string }>;
+  /** Whether the TURN relay loaded, and why not; logged in the browser console. */
+  turnStatus?: string;
 }
 
 export interface RealtimeGrantDto {

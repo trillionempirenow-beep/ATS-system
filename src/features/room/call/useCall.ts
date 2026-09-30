@@ -130,6 +130,12 @@ export function useCall(opts: CallOptions): Call {
   const rtcKey = opts.rtc ? JSON.stringify(opts.rtc.iceServers) : '';
   const iceServers = useRef<RTCIceServer[]>([]);
   iceServers.current = opts.rtc?.iceServers ?? [];
+  const turnStatus = opts.rtc?.turnStatus;
+  useEffect(() => {
+    if (!turnStatus) return;
+    const relays = iceServers.current.filter((s) => (Array.isArray(s.urls) ? s.urls : [s.urls]).some((u) => u.startsWith('turn'))).length;
+    (relays ? console.info : console.warn)(`[call] relay (TURN): ${turnStatus} · ${relays} relay server(s) in use`);
+  }, [turnStatus]);
 
   const signal = useCallback((entry: PeerEntry, body: Omit<Signal, 'from' | 'to' | 'sid'>) => {
     channelRef.current?.send(EV_SIGNAL, { ...body, from: selfId, to: entry.id, sid: entry.sid } satisfies Signal);

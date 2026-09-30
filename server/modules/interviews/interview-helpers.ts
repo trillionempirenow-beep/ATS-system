@@ -92,7 +92,7 @@ export async function rtcConfig(): Promise<RtcConfigDto> {
     if (Array.isArray(parsed)) base = parsed;
   } catch { /* fall back below */ }
   if (!base.length) base = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
-  return { iceServers: [...base, ...turn] };
+  return { iceServers: [...base, ...turn.servers], turnStatus: turn.status };
 }
 
 export const candidateRoomLink = (r: Pick<InterviewRow, 'room_code' | 'candidate_token'>): string | null =>
