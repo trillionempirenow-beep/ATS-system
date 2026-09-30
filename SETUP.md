@@ -164,19 +164,25 @@ To change one later: Vercel → Settings → Environment Variables → click the
 
 ---
 
-## Smart CV auto-fill (Claude AI)
+## Smart CV auto-fill (AI)
 
 Without it, "Upload a CV" only recognises CVs laid out the way the built-in rules
-expect. With it, Claude reads any CV (two columns, tables, creative designs,
+expect. With it, an AI model reads any CV (two columns, tables, creative designs,
 scanned PDFs) and fills in name, email, phone, current title, experience level,
 skills and education. The recruiter still checks every field before saving, and if
-the AI is unavailable the built-in rules are used as before.
+the AI is unavailable (no key, quota used up, outage) the built-in rules are used.
 
-1. Create an API key at **console.anthropic.com** → **API Keys** (add billing credit
-   under **Plans & Billing**).
-2. In Vercel add `ANTHROPIC_API_KEY` = the key (mark it **Sensitive**), then **Redeploy**.
+**Google Gemini (free tier available)**
+1. Sign in at **aistudio.google.com/apikey** and click **Create API key**.
+2. In Vercel add `GEMINI_API_KEY` = the key (mark it **Sensitive**), then **Redeploy**.
 
-Optional: `RESUME_AI_MODEL` picks another Claude model (default `claude-opus-5-5`).
+Optional: `GEMINI_MODEL` picks another model (default `gemini-flash-latest`).
+On the free tier Google may use what you send to improve its products, and CVs
+hold personal data; enabling billing on the key (paid tier) stops that.
+
+**Anthropic Claude (paid)**: add `ANTHROPIC_API_KEY` instead (from
+console.anthropic.com). Optional `RESUME_AI_MODEL` (default `claude-opus-5-5`).
+If both keys are set, Gemini is used.
 
 ## Video calls across networks (TURN relay)
 

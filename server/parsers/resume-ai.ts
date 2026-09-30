@@ -1,17 +1,22 @@
 import type Anthropic from '@anthropic-ai/sdk';
+import type { GoogleGenAI } from '@google/genai';
 import * as z from 'zod/v4';
 import { EXPERIENCE_LEVELS } from '../../shared/domain/pipeline.js';
 import { env } from '../config/env.js';
 import { tidyCase, type ParsedResumeFields } from './resume-parser.js';
 
 /**
- * Reads a CV of any layout with Claude and returns the Add candidate fields.
- * PDFs are sent as the document itself (columns, tables and scanned pages
- * included); other formats as their extracted text. Returns null when AI is
- * not configured or the call fails, so the caller falls back to the rules.
+ * Reads a CV of any layout with an AI model and returns the Add candidate fields.
+ * Gemini (GEMINI_API_KEY) is used when configured, otherwise Claude
+ * (ANTHROPIC_API_KEY). PDFs are sent as the document itself (columns, tables
+ * and scanned pages included); other formats as their extracted text. Returns
+ * null when no AI is configured or the call fails, so the caller falls back to
+ * the rules.
  */
 
-const MODEL = () => env.RESUME_AI_MODEL ?? 'claude-opus-5-5';
+const CLAUDE_MODEL = () => env.RESUME_AI_MODEL ?? 'claude-opus-5-5';
+/** Google's alias for the current Flash model, which is on the Gemini API free tier. */
+const GEMINI_MODEL = () => env.GEMINI_MODEL ?? 'gemini-flash-latest';
 /** The API function may run 60s (vercel.json); leave room for upload and storage around the call. */
 const TIMEOUT_MS = 40_000;
 
@@ -47,23 +52,64 @@ async function getClient(): Promise<Anthropic | null> {
   return client;
 }
 
-export const resumeAiEnabled = (): boolean => Boolean(env.ANTHROPIC_API_KEY);
+export const resumeAiEnabled = (): boolean => Boolean(env.GEMINI_API_KEY || env.ANTHROPIC_API_KEY);
 
 export async function parseResumeWithAi(input: { pdf?: Buffer; text?: string }): Promise<ParsedResumeFields | null> {
-  const anthropic = await getClient();
-  if (!anthropic) return null;
   const text = input.text?.trim() ?? '';
   if (!input.pdf && text.length < 20) return null;
+  if (env.GEMINI_API_KEY) return parseWithGemini(input.pdf, text);
+  if (env.ANTHROPIC_API_KEY) return parseWithClaude(input.pdf, text);
+  return null;
+}
 
-  const content: Anthropic.Beta.BetaContentBlockParam[] = input.pdf
-    ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: input.pdf.toString('base64') } }]
+let gemini: GoogleGenAI | null = null;
+async function parseWithGemini(pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields | null> {
+  try {
+    const { GoogleGenAI } = await import('@google/genai');
+    gemini ??= new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+    // Gemini takes plain JSON Schema; the $schema marker is not one of the keywords it accepts.
+    const { $schema: _drop, ...schema } = z.toJSONSchema(ResumeFields) as Record<string, unknown>;
+    const response = await gemini.models.generateContent({
+      model: GEMINI_MODEL(),
+      contents: [{
+        role: 'user',
+        parts: [
+          pdf ? { inlineData: { mimeType: 'application/pdf', data: pdf.toString('base64') } } : { text: `<cv>\n${text}\n</cv>` },
+          { text: 'Extract the form fields from this CV.' },
+        ],
+      }],
+      config: {
+        systemInstruction: SYSTEM,
+        responseMimeType: 'application/json',
+        responseJsonSchema: schema,
+        abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+      },
+    });
+    const parsed = ResumeFields.safeParse(JSON.parse(response.text ?? ''));
+    if (!parsed.success) {
+      console.warn('[resume-ai] Gemini returned fields that do not match the form');
+      return null;
+    }
+    return toFields(parsed.data);
+  } catch (e) {
+    console.warn('[resume-ai] Gemini failed, falling back to the rule-based parser:', e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+async function parseWithClaude(pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields | null> {
+  const anthropic = await getClient();
+  if (!anthropic) return null;
+
+  const content: Anthropic.Beta.BetaContentBlockParam[] = pdf
+    ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdf.toString('base64') } }]
     : [{ type: 'text', text: `<cv>\n${text}\n</cv>` }];
   content.push({ type: 'text', text: 'Extract the form fields from this CV.' });
 
   try {
     const { betaZodOutputFormat } = await import('@anthropic-ai/sdk/helpers/beta/zod');
     const response = await anthropic.beta.messages.parse({
-      model: MODEL(),
+      model: CLAUDE_MODEL(),
       max_tokens: 8000,
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',

@@ -64,7 +64,10 @@ const schema = z.object({
   N8N_TIMEOUT_MS: z.coerce.number().int().positive().default(4000),
   N8N_EVENTS: optionalString,
 
-  // CV auto-fill with Claude. Without a key the rule-based parser is used.
+  // CV auto-fill with AI: Gemini when GEMINI_API_KEY is set, else Claude. Without
+  // either key the rule-based parser is used.
+  GEMINI_API_KEY: optionalString,
+  GEMINI_MODEL: optionalString,
   ANTHROPIC_API_KEY: optionalString,
   RESUME_AI_MODEL: optionalString,
 
