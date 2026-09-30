@@ -9,6 +9,7 @@ import { formatTime, fullName, iso, isoOrThrow, todayInZone } from '../../lib/fo
 import { appLink, brand, whenInfo } from '../../email/brand.js';
 import { interviewInvitation } from '../../email/templates/index.js';
 import { avatarUrlForCandidate } from '../media/media.urls.js';
+import { turnServers } from '../../realtime/ice.js';
 import type { InterviewRow } from './interviews.repository.js';
 
 export const timingOf = (r: InterviewRow): InterviewTiming => ({ status: r.status, meeting_state: r.meeting_state, starts_at: isoOrThrow(r.starts_at) });
@@ -84,12 +85,14 @@ export function groupByDay(items: InterviewListItemDto[]) {
 }
 
 export async function rtcConfig(): Promise<RtcConfigDto> {
-  const raw = (await getSettings()).ice_servers;
+  const [s, turn] = await Promise.all([getSettings(), turnServers()]);
+  let base: RtcConfigDto['iceServers'] = [];
   try {
-    const parsed = JSON.parse(raw) as RtcConfigDto['iceServers'];
-    if (Array.isArray(parsed) && parsed.length) return { iceServers: parsed };
+    const parsed = JSON.parse(s.ice_servers) as RtcConfigDto['iceServers'];
+    if (Array.isArray(parsed)) base = parsed;
   } catch { /* fall back below */ }
-  return { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  if (!base.length) base = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+  return { iceServers: [...base, ...turn] };
 }
 
 export const candidateRoomLink = (r: Pick<InterviewRow, 'room_code' | 'candidate_token'>): string | null =>

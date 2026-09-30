@@ -37,6 +37,16 @@ const schema = z.object({
 
   REALTIME_DRIVER: z.enum(['supabase', 'local']).default('supabase'),
 
+  // TURN relay for interview calls. Without one, calls between networks behind
+  // carrier-grade NAT (most mobile data and many home ISPs) cannot connect.
+  // Cloudflare Realtime TURN: short-lived credentials are generated per request.
+  CLOUDFLARE_TURN_KEY_ID: optionalString,
+  CLOUDFLARE_TURN_API_TOKEN: optionalString,
+  // Any other TURN provider (Metered, Twilio, self-hosted coturn): comma-separated URLs.
+  TURN_URLS: optionalString,
+  TURN_USERNAME: optionalString,
+  TURN_CREDENTIAL: optionalString,
+
   EMAIL_PROVIDER: z.enum(['resend', 'smtp', 'log', 'none']).default('log'),
   EMAIL_FROM: z.string().default('Acme People <no-reply@example.com>'),
   EMAIL_REPLY_TO: optionalString,

@@ -164,6 +164,25 @@ To change one later: Vercel → Settings → Environment Variables → click the
 
 ---
 
+## Video calls across networks (TURN relay)
+
+The interview room connects people directly. On many mobile networks and home
+ISPs (carrier-grade NAT) a direct connection is impossible, and the call sits on
+"connecting" with no audio or video. A TURN relay fixes this by passing the media
+through a server. Set up one of these, then **Redeploy**:
+
+**Cloudflare (recommended, 1,000 GB a month free)**
+1. Cloudflare dashboard → **Realtime** → **TURN Server** → **Create**.
+2. Copy the **Turn Token ID** and the **API Token**.
+3. In Vercel add `CLOUDFLARE_TURN_KEY_ID` (Token ID) and `CLOUDFLARE_TURN_API_TOKEN` (API Token).
+
+**Any other provider** (Metered, Twilio, your own coturn): add `TURN_URLS`
+(comma-separated, e.g. `turn:global.relay.metered.ca:80,turns:global.relay.metered.ca:443?transport=tcp`),
+`TURN_USERNAME` and `TURN_CREDENTIAL`.
+
+If a call still fails, the browser console shows a `[call] media to … failed` line
+saying which connection routes were found.
+
 ## Optional: sending emails
 
 Until this is set up, the app works fully but no emails are sent (interview invitations, reminders, status updates, password resets).

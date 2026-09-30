@@ -80,6 +80,21 @@ const HELLO_EVERY_MS = 15_000;
 const HELLO_TTL_MS = 40_000;
 const DROP_GRACE_MS = 8000;
 
+/** Why media did not connect, in the console: which kinds of routes each side found. */
+async function logFailure(id: string, pc: RTCPeerConnection, servers: RTCIceServer[]): Promise<void> {
+  try {
+    const stats = await pc.getStats();
+    const kinds = { local: new Set<string>(), remote: new Set<string>() };
+    stats.forEach((r: { type: string; candidateType?: string }) => {
+      if (r.type === 'local-candidate' && r.candidateType) kinds.local.add(r.candidateType);
+      if (r.type === 'remote-candidate' && r.candidateType) kinds.remote.add(r.candidateType);
+    });
+    const hasTurn = servers.some((s) => (Array.isArray(s.urls) ? s.urls : [s.urls]).some((u) => u.startsWith('turn')));
+    console.warn(`[call] media to ${id} failed. Local routes: ${[...kinds.local].join(', ') || 'none'}; remote routes: ${[...kinds.remote].join(', ') || 'none'}; TURN configured: ${hasTurn}.`
+      + (kinds.local.has('relay') ? '' : ' No relay route: add a TURN server so calls work across networks.'));
+  } catch { /* stats are best effort */ }
+}
+
 const nonce = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 16);
 
 /**
@@ -108,10 +123,11 @@ export function useCall(opts: CallOptions): Call {
   media.current = { stream: opts.stream, screen: opts.screen };
   callbacks.current = { onEnded: opts.onEnded, onFirstConnection: opts.onFirstConnection };
 
-  // Every status poll hands us a fresh rtc object with the same servers. Keying on
-  // its content keeps the channel and every peer connection alive across polls
-  // instead of tearing the call down and starting over each time.
-  const rtcKey = opts.rtc ? JSON.stringify(opts.rtc.iceServers) : null;
+  // Every status poll hands us a fresh rtc object, and TURN credentials rotate. The
+  // call must survive both: the channel only depends on having a config at all, and
+  // new servers are applied to open connections in place (see the effect below).
+  const hasRtc = Boolean(opts.rtc);
+  const rtcKey = opts.rtc ? JSON.stringify(opts.rtc.iceServers) : '';
   const iceServers = useRef<RTCIceServer[]>([]);
   iceServers.current = opts.rtc?.iceServers ?? [];
 
@@ -167,7 +183,11 @@ export function useCall(opts: CallOptions): Call {
       bump();
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed') pc.restartIce();
+      console.info(`[call] ${id}: ${pc.connectionState}`);
+      if (pc.connectionState === 'failed') {
+        void logFailure(id, pc, iceServers.current);
+        pc.restartIce();
+      }
       if (pc.connectionState === 'connected' && !connectedOnce.current) {
         connectedOnce.current = true;
         callbacks.current.onFirstConnection?.();
@@ -217,7 +237,7 @@ export function useCall(opts: CallOptions): Call {
 
   // Join the room channel once it is granted.
   useEffect(() => {
-    if (!opts.channel || !rtcKey) return undefined;
+    if (!opts.channel || !hasRtc) return undefined;
     const ch = joinChannel<ParticipantMeta>(opts.driver, opts.channel, selfId);
     channelRef.current = ch;
     const offs = [
@@ -268,7 +288,16 @@ export function useCall(opts: CallOptions): Call {
         current.delete(id);
       }
     };
-  }, [opts.channel, opts.driver, rtcKey, selfId, onSignal]);
+  }, [opts.channel, opts.driver, hasRtc, selfId, onSignal]);
+
+  // Rotated TURN credentials: hand them to open connections without renegotiating.
+  useEffect(() => {
+    for (const entry of peers.current.values()) {
+      try {
+        entry.pc.setConfiguration({ ...entry.pc.getConfiguration(), iceServers: iceServers.current });
+      } catch { /* a closed connection keeps its old servers */ }
+    }
+  }, [rtcKey]);
 
   // Presence plus recent hellos decide who is in the room.
   const metas = useMemo(() => {
