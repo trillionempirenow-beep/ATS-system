@@ -202,6 +202,8 @@
   line-height: 20px;
   padding: 9px 11px;
   max-height: 104px;
+  overflow-y: hidden;
+  scrollbar-width: thin;
   outline: none;
   transition: border-color .15s ease, box-shadow .15s ease;
 }

@@ -143,7 +143,10 @@ export function AssistantDock() {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 104)}px`;
+    // scrollHeight leaves out the border; without it the box is 2px short and shows a scrollbar.
+    const full = el.scrollHeight + el.offsetHeight - el.clientHeight;
+    el.style.height = `${Math.min(full, 104)}px`;
+    el.style.overflowY = full > 104 ? 'auto' : 'hidden';
   }, [draft]);
 
   if (hidden) return null;
