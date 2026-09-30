@@ -196,6 +196,16 @@ with the fields.
 console.anthropic.com). Optional `RESUME_AI_MODEL` (default `claude-opus-5-5`).
 If several are set, the n8n workflow is used first, then Gemini, then Claude.
 
+## Smart job-description import (n8n)
+
+On **Create job posting**, an uploaded job description PDF of any layout (odd headings,
+numbered or bulleted lists, Taglish) is read by the ATS-system n8n workflow's
+"Read the job description" flow, which fills the form; the department is matched
+to your list. The posting still goes through **Submit for approval** as before.
+Set `JD_N8N_WEBHOOK_URL` = `https://<your-n8n>/webhook/ats-parse-jd` in Vercel
+(it uses the same secret as the CV reader) and redeploy. Without it, or if the
+flow fails, the built-in reader fills the form and the page says why.
+
 ## Video calls across networks (TURN relay)
 
 The interview room connects people directly. On many mobile networks and home

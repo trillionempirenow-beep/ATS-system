@@ -15,6 +15,7 @@ import { iso, isoOrThrow } from '../../lib/format.js';
 import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { extractPdfText } from '../../parsers/text-extract.js';
 import { parseJobDescription, skillsToTags } from '../../parsers/jd-parser.js';
+import { parseJobWithAi } from '../../parsers/jd-ai.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import * as repo from './jobs.repository.js';
 
@@ -235,16 +236,20 @@ export async function extractPdf(uploadId: string, ctx: Ctx): Promise<ExtractPdf
   const file = await consumeUpload(uploadId, 'job_pdf', ctx.user, 'job-descriptions', 'uploadId');
   const result = await extractPdfText(file.data);
   if (result.error) return { ok: false, message: result.error, qualityWarning: null, sourcePdfPath: file.path, fields: null };
-  const f = parseJobDescription(result.text);
   const depts = await repo.departments();
+  // AI reads any layout (n8n "Read the job description" flow); the rules are the fallback.
+  const ai = await parseJobWithAi(result.text, depts.map((d) => d.name));
+  const f = ai?.fields ?? parseJobDescription(result.text);
   const match = f.department
     ? depts.find((d) => d.name.toLowerCase() === f.department.toLowerCase() || f.department.toLowerCase().includes(d.name.toLowerCase()))
     : undefined;
-  await audit({ userId: ctx.user.id, action: 'job_pdf_import', entityType: 'job', details: { file: file.originalName, title: f.title || '(not detected)' }, ip: ctx.ip });
+  await audit({ userId: ctx.user.id, action: 'job_pdf_import', entityType: 'job', details: { file: file.originalName, title: f.title || '(not detected)', reader: ai?.fields ? 'ai' : 'rules' }, ip: ctx.ip });
   return {
     ok: true,
-    message: null,
-    qualityWarning: result.quality === 'poor'
+    message: ai?.fields
+      ? 'Filled in with AI from the job description. Please review every field before submitting.'
+      : ai?.error ? `The AI reader was unavailable (${ai.error}), so the basic reader was used. Please review every field.` : null,
+    qualityWarning: !ai?.fields && result.quality === 'poor'
       ? 'The text layer in this PDF came through with very few word breaks, so some fields may run together. Please review the wording carefully before saving.'
       : null,
     sourcePdfPath: file.path,

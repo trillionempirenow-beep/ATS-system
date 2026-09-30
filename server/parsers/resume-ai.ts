@@ -30,7 +30,7 @@ const N8N_TIMEOUT_MS = 40_000;
 export type AiResumeResult = { fields: ParsedResumeFields; error?: undefined } | { fields: null; error: string };
 
 /** One readable line from an SDK error; Gemini puts a JSON body in the message. */
-function describeError(e: unknown): string {
+export function describeError(e: unknown): string {
   if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError' || /abort|timed? ?out/i.test(e.message))) {
     return 'no answer in time';
   }

@@ -71,6 +71,8 @@ const schema = z.object({
   // called with header X-ATS-Secret: CV_N8N_SECRET), Gemini, then Claude. With none
   // the rule-based parser is used.
   CV_N8N_WEBHOOK_URL: optionalUrl,
+  // Create job posting > upload a job description: the ATS-system workflow's JD reader.
+  JD_N8N_WEBHOOK_URL: optionalUrl,
   CV_N8N_SECRET: optionalString,
   GEMINI_API_KEY: optionalString,
   GEMINI_MODEL: optionalString,

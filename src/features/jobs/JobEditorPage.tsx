@@ -206,13 +206,13 @@ function Editor({ id, data }: { id: number | null; data: JobEditorDto }) {
 
         <div className={w.stack}>
           <Card>
-            <CardHeader title="Job description to job posting" subtitle="Upload a PDF and we will pre-fill the form." />
+            <CardHeader title="Job description to job posting" subtitle="Upload a job description PDF in any layout and we will pre-fill the form. It still goes through approval." />
             {pdf.state === 'working' ? <FileRow name={pdf.name} progress={pdf.pct} sub={pdf.pct < 100 ? `Uploading… ${pdf.pct}%` : 'Reading the PDF…'} /> : null}
             {pdf.state === 'done' ? (
               <div className={w.stack8}>
                 <FileRow name={pdf.name} sub={`Attached · ${pdf.size}`} />
                 {pdf.result.qualityWarning ? <Notice tone="warning">{pdf.result.qualityWarning}</Notice> : null}
-                {!pdf.result.ok && pdf.result.message ? <Notice tone="warning">{pdf.result.message}</Notice> : null}
+                {pdf.result.message ? <Notice tone={pdf.result.ok && !pdf.result.message.includes('unavailable') ? 'info' : 'warning'}>{pdf.result.message}</Notice> : null}
                 <Button variant="secondary" size="sm" onClick={() => setPdf({ state: 'idle' })} style={{ alignSelf: 'flex-start' }}>Extract again</Button>
               </div>
             ) : null}
