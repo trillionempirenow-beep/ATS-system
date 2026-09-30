@@ -1,6 +1,7 @@
 import cookieParser from 'cookie-parser';
 import express, { Router } from 'express';
 import { env } from './config/env.js';
+import { beginDbRequest } from './db/client.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { csrfProtection } from './middleware/security.js';
 import { loadSession } from './middleware/session.js';
@@ -14,6 +15,9 @@ export function createApp(): express.Express {
   app.set('trust proxy', env.TRUST_PROXY || env.NODE_ENV === 'production' ? 1 : false);
 
   app.use((_req, res, next) => {
+    const done = beginDbRequest();
+    res.on('finish', done);
+    res.on('close', done);
     res.set('Cache-Control', 'no-store');
     res.set('X-Content-Type-Options', 'nosniff');
     next();
