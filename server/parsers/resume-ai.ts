@@ -17,8 +17,30 @@ import { tidyCase, type ParsedResumeFields } from './resume-parser.js';
 const CLAUDE_MODEL = () => env.RESUME_AI_MODEL ?? 'claude-opus-5-5';
 /** Google's alias for the current Flash model, which is on the Gemini API free tier. */
 const GEMINI_MODEL = () => env.GEMINI_MODEL ?? 'gemini-flash-latest';
-/** The API function may run 60s (vercel.json); leave room for upload and storage around the call. */
-const TIMEOUT_MS = 40_000;
+/**
+ * One attempt, no retries: the API function may run 60s (vercel.json) and the
+ * upload, storage and fallback parser need time around the call. A failed read
+ * falls back to the rules; the recruiter can always upload again.
+ */
+const TIMEOUT_MS = 25_000;
+
+/** The outcome of an AI read: fields, or why there are none (shown to the recruiter). */
+export type AiResumeResult = { fields: ParsedResumeFields; error?: undefined } | { fields: null; error: string };
+
+/** One readable line from an SDK error; Gemini puts a JSON body in the message. */
+function describeError(e: unknown): string {
+  if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError' || /abort|timed? ?out/i.test(e.message))) {
+    return `no answer within ${TIMEOUT_MS / 1000}s`;
+  }
+  const status = typeof (e as { status?: unknown })?.status === 'number' ? (e as { status: number }).status : null;
+  const raw = e instanceof Error ? e.message : String(e);
+  let detail = raw;
+  try {
+    const body = JSON.parse(raw.slice(raw.indexOf('{'))) as { error?: { message?: string; status?: string; code?: number } };
+    if (body.error) detail = [body.error.status, body.error.message].filter(Boolean).join(': ');
+  } catch { /* not JSON: keep the message as it is */ }
+  return `${status ? `HTTP ${status} ` : ''}${detail}`.replace(/\s+/g, ' ').slice(0, 300);
+}
 
 const ResumeFields = z.object({
   full_name: z.string().describe('The candidate\'s full name, as written. Empty if not found.'),
@@ -54,78 +76,77 @@ async function getClient(): Promise<Anthropic | null> {
 
 export const resumeAiEnabled = (): boolean => Boolean(env.GEMINI_API_KEY || env.ANTHROPIC_API_KEY);
 
-export async function parseResumeWithAi(input: { pdf?: Buffer; text?: string }): Promise<ParsedResumeFields | null> {
+/** Null when no AI provider is configured (or there is nothing to read). */
+export async function parseResumeWithAi(input: { pdf?: Buffer; text?: string }): Promise<AiResumeResult | null> {
   const text = input.text?.trim() ?? '';
   if (!input.pdf && text.length < 20) return null;
-  if (env.GEMINI_API_KEY) return parseWithGemini(input.pdf, text);
-  if (env.ANTHROPIC_API_KEY) return parseWithClaude(input.pdf, text);
-  return null;
-}
-
-let gemini: GoogleGenAI | null = null;
-async function parseWithGemini(pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields | null> {
+  const run = env.GEMINI_API_KEY ? parseWithGemini : env.ANTHROPIC_API_KEY ? parseWithClaude : null;
+  if (!run) return null;
+  const provider = env.GEMINI_API_KEY ? 'Gemini' : 'Claude';
+  const started = Date.now();
   try {
-    const { GoogleGenAI } = await import('@google/genai');
-    gemini ??= new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-    // Gemini takes plain JSON Schema; the $schema marker is not one of the keywords it accepts.
-    const { $schema: _drop, ...schema } = z.toJSONSchema(ResumeFields) as Record<string, unknown>;
-    const response = await gemini.models.generateContent({
-      model: GEMINI_MODEL(),
-      contents: [{
-        role: 'user',
-        parts: [
-          pdf ? { inlineData: { mimeType: 'application/pdf', data: pdf.toString('base64') } } : { text: `<cv>\n${text}\n</cv>` },
-          { text: 'Extract the form fields from this CV.' },
-        ],
-      }],
-      config: {
-        systemInstruction: SYSTEM,
-        responseMimeType: 'application/json',
-        responseJsonSchema: schema,
-        abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-      },
-    });
-    const parsed = ResumeFields.safeParse(JSON.parse(response.text ?? ''));
-    if (!parsed.success) {
-      console.warn('[resume-ai] Gemini returned fields that do not match the form');
-      return null;
-    }
-    return toFields(parsed.data);
+    const fields = await run(input.pdf, text);
+    console.info(`[resume-ai] ${provider} read the CV in ${Date.now() - started}ms`);
+    return { fields };
   } catch (e) {
-    console.warn('[resume-ai] Gemini failed, falling back to the rule-based parser:', e instanceof Error ? e.message : e);
-    return null;
+    const error = `${provider}: ${describeError(e)}`;
+    console.warn(`[resume-ai] ${error} (after ${Date.now() - started}ms); using the rule-based parser`);
+    return { fields: null, error };
   }
 }
 
-async function parseWithClaude(pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields | null> {
+let gemini: GoogleGenAI | null = null;
+async function parseWithGemini(pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields> {
+  const { GoogleGenAI } = await import('@google/genai');
+  // The SDK retries up to 5 times with growing delays by default, which outlasts the function's time limit.
+  gemini ??= new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, httpOptions: { timeout: TIMEOUT_MS, retryOptions: { attempts: 1 } } });
+  // Gemini takes plain JSON Schema; the $schema marker is not one of the keywords it accepts.
+  const { $schema: _drop, ...schema } = z.toJSONSchema(ResumeFields) as Record<string, unknown>;
+  const response = await gemini.models.generateContent({
+    model: GEMINI_MODEL(),
+    contents: [{
+      role: 'user',
+      parts: [
+        pdf ? { inlineData: { mimeType: 'application/pdf', data: pdf.toString('base64') } } : { text: `<cv>\n${text}\n</cv>` },
+        { text: 'Extract the form fields from this CV.' },
+      ],
+    }],
+    config: {
+      systemInstruction: SYSTEM,
+      responseMimeType: 'application/json',
+      responseJsonSchema: schema,
+      abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+    },
+  });
+  if (!response.text) throw new Error(`empty answer (finish reason: ${response.candidates?.[0]?.finishReason ?? 'unknown'})`);
+  const parsed = ResumeFields.safeParse(JSON.parse(response.text));
+  if (!parsed.success) throw new Error('the answer did not match the form fields');
+  return toFields(parsed.data);
+}
+
+async function parseWithClaude(pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields> {
   const anthropic = await getClient();
-  if (!anthropic) return null;
+  if (!anthropic) throw new Error('not configured');
 
   const content: Anthropic.Beta.BetaContentBlockParam[] = pdf
     ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdf.toString('base64') } }]
     : [{ type: 'text', text: `<cv>\n${text}\n</cv>` }];
   content.push({ type: 'text', text: 'Extract the form fields from this CV.' });
 
-  try {
-    const { betaZodOutputFormat } = await import('@anthropic-ai/sdk/helpers/beta/zod');
-    const response = await anthropic.beta.messages.parse({
-      model: CLAUDE_MODEL(),
-      max_tokens: 8000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      system: SYSTEM,
-      output_config: { effort: 'low', format: betaZodOutputFormat(ResumeFields) },
-      messages: [{ role: 'user', content }],
-    });
-    if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens' || !response.parsed_output) {
-      console.warn(`[resume-ai] no fields (stop_reason: ${response.stop_reason})`);
-      return null;
-    }
-    return toFields(response.parsed_output);
-  } catch (e) {
-    console.warn('[resume-ai] failed, falling back to the rule-based parser:', e instanceof Error ? e.message : e);
-    return null;
+  const { betaZodOutputFormat } = await import('@anthropic-ai/sdk/helpers/beta/zod');
+  const response = await anthropic.beta.messages.parse({
+    model: CLAUDE_MODEL(),
+    max_tokens: 8000,
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default',
+    system: SYSTEM,
+    output_config: { effort: 'low', format: betaZodOutputFormat(ResumeFields) },
+    messages: [{ role: 'user', content }],
+  });
+  if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens' || !response.parsed_output) {
+    throw new Error(`no fields (stop reason: ${response.stop_reason})`);
   }
+  return toFields(response.parsed_output);
 }
 
 function toFields(out: z.infer<typeof ResumeFields>): ParsedResumeFields {

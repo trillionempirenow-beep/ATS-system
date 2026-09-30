@@ -314,13 +314,16 @@ export async function parseCv(uploadId: string, ctx: Ctx): Promise<ParseCvResult
   const extracted = await extractDocumentText(file.data, file.extension);
   const hasText = !extracted.error && extracted.text.trim().length >= 40;
   // Claude reads PDFs as documents (any layout, scanned pages too) and other formats as text.
-  const ai = file.extension === 'pdf' || hasText
+  const aiResult = file.extension === 'pdf' || hasText
     ? await parseResumeWithAi(file.extension === 'pdf' ? { pdf: file.data } : { text: extracted.text })
     : null;
+  const ai = aiResult?.fields ?? null;
+  // Said on screen, so a broken key or used-up quota is visible without the server logs.
+  const aiNote = aiResult?.error ? ` The AI reader was unavailable (${aiResult.error}), so the basic reader was used.` : '';
   if (!ai && !hasText) {
     return {
       ok: false, code: 'ERR_CORRUPT_FILE',
-      message: extracted.error ?? 'Parsing failed: the document appears to be corrupted or encrypted. Please enter details manually.',
+      message: (extracted.error ?? 'Parsing failed: the document appears to be corrupted or encrypted. Please enter details manually.') + aiNote,
       document, fields: {}, filled: [], partial: true, resumeText: '',
     };
   }
@@ -332,8 +335,8 @@ export async function parseCv(uploadId: string, ctx: Ctx): Promise<ParseCvResult
   return {
     ok: true,
     message: filled.length
-      ? `Auto-filled ${filled.length} field${filled.length === 1 ? '' : 's'}${ai ? ' with AI' : ''}. Please check each one before saving.`
-      : 'The file was read, but nothing recognisable was found. Please enter the details manually.',
+      ? `Auto-filled ${filled.length} field${filled.length === 1 ? '' : 's'}${ai ? ' with AI' : ''}. Please check each one before saving.${aiNote}`
+      : `The file was read, but nothing recognisable was found. Please enter the details manually.${aiNote}`,
     document,
     fields: fields as ParseCvResultDto['fields'],
     filled,
