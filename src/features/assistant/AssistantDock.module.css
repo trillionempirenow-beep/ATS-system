@@ -10,10 +10,13 @@
 
 /* ---------- Launcher: just the robot, peeking in from the bottom edge ---------- */
 .launcher {
+  --robot-size: 224px; /* the square frame of the idle image and the wave video */
   pointer-events: auto;
+  position: relative;
   display: block;
-  width: 136px;
-  height: 164px;
+  width: var(--robot-size);
+  height: calc(var(--robot-size) * .92);
+  margin-right: -16px;
   padding: 0;
   border: 0;
   background: none;
@@ -23,17 +26,23 @@
   transition: transform .5s var(--dock-ease), opacity .25s ease;
 }
 .launcher:focus-visible { outline: none; box-shadow: none; }
-.robot {
-  display: block;
-  width: 136px;
-  height: auto;
-  margin-top: 8px;
+.robot, .wave {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: var(--robot-size);
+  height: var(--robot-size);
   user-select: none;
-  filter: drop-shadow(0 12px 22px rgba(20, 30, 90, .25));
-  transition: transform .45s var(--dock-ease), filter .2s ease;
+  pointer-events: none;
 }
-.launcher:hover .robot { transform: translateY(-6px); }
-.launcher:active .robot { transform: translateY(-2px) scale(.98); }
+.robot {
+  filter: drop-shadow(0 12px 22px rgba(20, 30, 90, .25));
+  transition: transform .2s var(--dock-ease), filter .2s ease;
+}
+/* The wave sits on the still robot and only shows once it is actually playing. */
+.wave { opacity: 0; }
+.waveOn { opacity: 1; }
+.launcher:has(.waveOn) .robot { opacity: 0; }
+.launcher:active .robot, .launcher:active .wave { transform: scale(.98); transform-origin: 50% 100%; }
 .launcher:focus-visible .robot { filter: drop-shadow(0 0 0 var(--primary)) drop-shadow(0 0 4px var(--primary)); }
 .chipHead { display: none; }
 
@@ -228,8 +237,8 @@
 @media (max-width: 640px) {
   /* The full robot would cover page actions; a head chip floats above them instead. */
   .dock { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom)); }
-  .launcher { width: 60px; height: 58px; overflow: visible; }
-  .robot { display: none; }
+  .launcher { width: 60px; height: 58px; margin-right: 0; overflow: visible; }
+  .robot, .wave { display: none; }
   .chipHead {
     display: block;
     width: 60px;

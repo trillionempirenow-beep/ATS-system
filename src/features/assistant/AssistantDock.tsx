@@ -13,7 +13,9 @@ import s from './AssistantDock.module.css';
  * workspace data. Swap `replyTo` for a real call when the assistant is built.
  */
 
-const BOT_SRC = '/acme-assistant.webp';
+/** Idle robot, and the wave it plays on hover. The idle image is the video's first frame, so they line up. */
+const BOT_SRC = '/acme-assistant-idle.webp';
+const WAVE_SRC = '/acme-assistant-wave.webm';
 const HEAD_SRC = '/acme-assistant-head.webp';
 const TYPING_MS = 900;
 
@@ -116,6 +118,10 @@ export function AssistantDock() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const timer = useRef(0);
+  const waveRef = useRef<HTMLVideoElement>(null);
+  const [waving, setWaving] = useState(false);
+  // Safari cannot draw the transparent video, and some people ask for less motion: they keep the still robot.
+  const [canWave] = useState(() => !/^((?!chrome|android).)*safari/i.test(navigator.userAgent) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const firstName = me.name.trim().split(/\s+/)[0] ?? '';
 
   // Calls fill the screen; the assistant stays out of the way there.
@@ -150,6 +156,21 @@ export function AssistantDock() {
   }, [draft]);
 
   if (hidden) return null;
+
+  function startWave() {
+    const v = waveRef.current;
+    if (!v) return;
+    v.currentTime = 0;
+    v.play().catch(() => { /* not loaded or not allowed: the still robot stays */ });
+  }
+
+  function stopWave() {
+    const v = waveRef.current;
+    setWaving(false);
+    if (!v) return;
+    v.pause();
+    v.currentTime = 0;
+  }
 
   function close() {
     setOpen(false);
@@ -264,13 +285,28 @@ export function AssistantDock() {
         ref={launcherRef}
         type="button"
         className={s.launcher}
-        onClick={() => setOpen(true)}
+        onClick={() => { stopWave(); setOpen(true); }}
+        onPointerEnter={(e) => { if (e.pointerType === 'mouse') startWave(); }}
+        onPointerLeave={stopWave}
         aria-expanded={open}
         aria-controls={panelId}
         aria-label="Open Acme assistant"
         tabIndex={open ? -1 : 0}
       >
         <img className={s.robot} src={BOT_SRC} alt="" draggable={false} />
+        {canWave ? (
+          <video
+            ref={waveRef}
+            className={cx(s.wave, waving && s.waveOn)}
+            src={WAVE_SRC}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+            onPlaying={() => setWaving(true)}
+          />
+        ) : null}
         <img className={s.chipHead} src={HEAD_SRC} alt="" draggable={false} />
       </button>
     </div>
