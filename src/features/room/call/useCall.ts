@@ -299,9 +299,10 @@ export function useCall(opts: CallOptions): Call {
     }
   }, [rtcKey]);
 
-  // Presence plus recent hellos decide who is in the room.
+  // Presence (who) plus recent hellos (who, and their mic/camera/hand state) decide who is in the room.
   const metas = useMemo(() => {
-    const next = new Map(presenceMetas);
+    const next = new Map<string, ParticipantMeta>();
+    for (const [id, m] of presenceMetas) next.set(id, { ...m, mic: m.mic ?? false, cam: m.cam ?? false, screen: m.screen ?? false, hand: m.hand ?? false, id });
     const now = Date.now();
     for (const [id, h] of hellos.current) {
       if (now - h.at > HELLO_TTL_MS) hellos.current.delete(id);
@@ -333,10 +334,19 @@ export function useCall(opts: CallOptions): Call {
   }), [selfId, opts.self.name, opts.self.role, opts.self.position, opts.micOn, opts.camOn, opts.stream, opts.screen, opts.hand]);
   selfMetaRef.current = selfMeta;
 
+  // Supabase allows a client only 5 presence updates per 30 seconds and closes the
+  // whole channel (signalling included) past that. So presence carries only who we
+  // are, sent once; mic, camera, hand and screen changes go out as broadcasts.
+  const { name: selfName, role: selfRole, position: selfPosition } = opts.self;
   useEffect(() => {
     const ch = channelRef.current;
     if (!ch || status !== 'connected') return;
-    ch.track(selfMeta);
+    ch.track({ id: selfId, name: selfName, role: selfRole, ...(selfPosition ? { position: selfPosition } : {}) } as ParticipantMeta);
+  }, [selfId, selfName, selfRole, selfPosition, status]);
+
+  useEffect(() => {
+    const ch = channelRef.current;
+    if (!ch || status !== 'connected') return;
     ch.send(EV_HELLO, selfMeta);
   }, [selfMeta, status]);
 

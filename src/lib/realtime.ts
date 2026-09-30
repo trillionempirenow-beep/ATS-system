@@ -47,8 +47,8 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
   let closed = false;
   let lastMeta: M | null = null;
   let current: ConnectionStatus = 'connecting';
-  // Supabase rate-limits presence per client and stops relaying it once exceeded,
-  // so peers never see each other. Send only real changes, at most once a second.
+  // Supabase allows 5 presence updates per client per 30 seconds and closes the
+  // channel past that. Send only real changes, spaced at least 7 seconds apart.
   let sentMeta: string | null = null;
   let trackTimer: number | undefined;
   let lastTrackAt = 0;
@@ -63,27 +63,40 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
   };
   const scheduleTrack = () => {
     if (trackTimer !== undefined || closed) return;
-    trackTimer = window.setTimeout(flushTrack, Math.max(0, lastTrackAt + 1000 - Date.now()));
+    trackTimer = window.setTimeout(flushTrack, Math.max(0, lastTrackAt + 7000 - Date.now()));
   };
   // Broadcasts sent before the SDK finished loading go out once the channel exists.
   const queued: Array<{ event: string; payload: unknown }> = [];
 
-  void client.then((sb) => {
+  let retries = 0;
+  let reopenTimer: number | undefined;
+  const open = (sb: SupabaseClient) => {
     if (closed) return;
     const channel = sb.channel(name, { config: { broadcast: { self: false, ack: false }, presence: { key: presenceKey } } });
     ch = channel;
     channel.on('broadcast', { event: '*' }, (msg: { event: string; payload: unknown }) => events.get(msg.event)?.emit(msg.payload));
     channel.on('presence', { event: 'sync' }, () => presence.emit(channel.presenceState() as unknown as PresenceState<M>));
     channel.subscribe((s) => {
+      if (ch !== channel) return;
       current = s === 'SUBSCRIBED' ? 'connected' : s === 'CLOSED' || s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' ? 'disconnected' : 'connecting';
       status.emit(current);
+      if (s === 'CLOSED' && !closed && reopenTimer === undefined) {
+        // The server closed the channel (for example over a rate limit) and the SDK
+        // will not rejoin a closed channel by itself: open a fresh one after a pause.
+        void sb.removeChannel(channel);
+        reopenTimer = window.setTimeout(() => { reopenTimer = undefined; open(sb); }, Math.min(15_000, 1000 * 2 ** retries++));
+        return;
+      }
       if (current !== 'connected') return;
+      retries = 0;
       // A (re)subscribe starts with empty presence on the server: send ours again.
       sentMeta = null;
       scheduleTrack();
       for (const m of queued.splice(0)) void channel.send({ type: 'broadcast', event: m.event, payload: m.payload });
     });
-  }, () => {
+  };
+
+  void client.then(open, () => {
     current = 'disconnected';
     status.emit(current);
   });
@@ -100,6 +113,7 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
     close: () => {
       closed = true;
       window.clearTimeout(trackTimer);
+      window.clearTimeout(reopenTimer);
       if (!ch) return;
       const channel = ch;
       void channel.unsubscribe();
