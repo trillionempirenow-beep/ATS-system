@@ -64,6 +64,10 @@ const schema = z.object({
   N8N_TIMEOUT_MS: z.coerce.number().int().positive().default(4000),
   N8N_EVENTS: optionalString,
 
+  // CV auto-fill with Claude. Without a key the rule-based parser is used.
+  ANTHROPIC_API_KEY: optionalString,
+  RESUME_AI_MODEL: optionalString,
+
   TRUST_PROXY: bool,
 });
 

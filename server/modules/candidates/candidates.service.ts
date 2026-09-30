@@ -18,7 +18,11 @@ import { conflict, forbidden, isUniqueViolation, notFound, validationFailed } fr
 import { fullName, iso, isoOrThrow } from '../../lib/format.js';
 import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { extractDocumentText } from '../../parsers/text-extract.js';
-import { parseResumeText } from '../../parsers/resume-parser.js';
+import { parseResumeText, type ParsedResumeFields } from '../../parsers/resume-parser.js';
+import { parseResumeWithAi } from '../../parsers/resume-ai.js';
+
+const pick = (f: ParsedResumeFields, keys: Array<keyof ParsedResumeFields>): ParsedResumeFields =>
+  Object.fromEntries(keys.filter((k) => f[k]).map((k) => [k, f[k]]));
 import { avatarUrlForCandidate } from '../media/media.urls.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import { analyseApplication } from './application-analysis.js';
@@ -308,7 +312,12 @@ export async function parseCv(uploadId: string, ctx: Ctx): Promise<ParseCvResult
     values (null, ${file.path}, ${file.originalName}, ${file.extension}, ${file.mime}, ${file.size}, true, ${ctx.user.id}) returning id`;
   const document = { id: doc!.id, originalName: file.originalName, extension: file.extension, sizeLabel: formatBytes(file.size) };
   const extracted = await extractDocumentText(file.data, file.extension);
-  if (extracted.error || extracted.text.trim().length < 40) {
+  const hasText = !extracted.error && extracted.text.trim().length >= 40;
+  // Claude reads PDFs as documents (any layout, scanned pages too) and other formats as text.
+  const ai = file.extension === 'pdf' || hasText
+    ? await parseResumeWithAi(file.extension === 'pdf' ? { pdf: file.data } : { text: extracted.text })
+    : null;
+  if (!ai && !hasText) {
     return {
       ok: false, code: 'ERR_CORRUPT_FILE',
       message: extracted.error ?? 'Parsing failed: the document appears to be corrupted or encrypted. Please enter details manually.',
@@ -316,12 +325,14 @@ export async function parseCv(uploadId: string, ctx: Ctx): Promise<ParseCvResult
     };
   }
   await sql`update candidate_documents set parsed = true where id = ${doc!.id}`;
-  const fields = parseResumeText(extracted.text);
+  // The rules still back up contact details the AI left empty (email and phone patterns are reliable).
+  const rules = hasText ? parseResumeText(extracted.text) : {};
+  const fields = ai ? { ...pick(rules, ['email', 'phone']), ...ai } : rules;
   const filled = Object.keys(fields);
   return {
     ok: true,
     message: filled.length
-      ? `Auto-filled ${filled.length} field${filled.length === 1 ? '' : 's'}. Please check each one before saving.`
+      ? `Auto-filled ${filled.length} field${filled.length === 1 ? '' : 's'}${ai ? ' with AI' : ''}. Please check each one before saving.`
       : 'The file was read, but nothing recognisable was found. Please enter the details manually.',
     document,
     fields: fields as ParseCvResultDto['fields'],

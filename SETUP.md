@@ -164,6 +164,20 @@ To change one later: Vercel → Settings → Environment Variables → click the
 
 ---
 
+## Smart CV auto-fill (Claude AI)
+
+Without it, "Upload a CV" only recognises CVs laid out the way the built-in rules
+expect. With it, Claude reads any CV (two columns, tables, creative designs,
+scanned PDFs) and fills in name, email, phone, current title, experience level,
+skills and education. The recruiter still checks every field before saving, and if
+the AI is unavailable the built-in rules are used as before.
+
+1. Create an API key at **console.anthropic.com** → **API Keys** (add billing credit
+   under **Plans & Billing**).
+2. In Vercel add `ANTHROPIC_API_KEY` = the key (mark it **Sensitive**), then **Redeploy**.
+
+Optional: `RESUME_AI_MODEL` picks another Claude model (default `claude-opus-5-5`).
+
 ## Video calls across networks (TURN relay)
 
 The interview room connects people directly. On many mobile networks and home
