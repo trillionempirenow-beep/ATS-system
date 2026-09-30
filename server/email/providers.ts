@@ -56,11 +56,14 @@ const smtp: EmailProvider = {
   async send(email) {
     if (!env.SMTP_HOST) return { ok: false, error: 'SMTP_HOST is not set.' };
     const { default: nodemailer } = await import('nodemailer');
+    // Google shows app passwords as "abcd efgh ijkl mnop"; its SMTP server wants them without the spaces.
+    const gmail = /(^|\.)(gmail|googlemail)\.com$/i.test(env.SMTP_HOST);
+    const pass = gmail ? (env.SMTP_PASSWORD ?? '').replace(/\s+/g, '') : (env.SMTP_PASSWORD ?? '');
     transporter ??= nodemailer.createTransport({
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,
       secure: env.SMTP_SECURE,
-      auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASSWORD ?? '' } : undefined,
+      auth: env.SMTP_USER ? { user: env.SMTP_USER.trim(), pass } : undefined,
     });
     try {
       const info = await transporter.sendMail({
