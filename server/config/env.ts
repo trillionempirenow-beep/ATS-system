@@ -64,8 +64,11 @@ const schema = z.object({
   N8N_TIMEOUT_MS: z.coerce.number().int().positive().default(4000),
   N8N_EVENTS: optionalString,
 
-  // CV auto-fill with AI: Gemini when GEMINI_API_KEY is set, else Claude. Without
-  // either key the rule-based parser is used.
+  // CV auto-fill with AI, first configured wins: an n8n workflow (CV_N8N_WEBHOOK_URL,
+  // called with header X-ATS-Secret: CV_N8N_SECRET), Gemini, then Claude. With none
+  // the rule-based parser is used.
+  CV_N8N_WEBHOOK_URL: optionalUrl,
+  CV_N8N_SECRET: optionalString,
   GEMINI_API_KEY: optionalString,
   GEMINI_MODEL: optionalString,
   ANTHROPIC_API_KEY: optionalString,

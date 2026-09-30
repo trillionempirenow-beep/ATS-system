@@ -36,8 +36,9 @@ function describeError(e: unknown): string {
   const raw = e instanceof Error ? e.message : String(e);
   let detail = raw;
   try {
-    const body = JSON.parse(raw.slice(raw.indexOf('{'))) as { error?: { message?: string; status?: string; code?: number } };
+    const body = JSON.parse(raw.slice(raw.indexOf('{'))) as { error?: { message?: string; status?: string; code?: number }; message?: string };
     if (body.error) detail = [body.error.status, body.error.message].filter(Boolean).join(': ');
+    else if (typeof body.message === 'string') detail = body.message; // n8n's error body
   } catch { /* not JSON: keep the message as it is */ }
   return `${status ? `HTTP ${status} ` : ''}${detail}`.replace(/\s+/g, ' ').slice(0, 300);
 }
@@ -74,15 +75,17 @@ async function getClient(): Promise<Anthropic | null> {
   return client;
 }
 
-export const resumeAiEnabled = (): boolean => Boolean(env.GEMINI_API_KEY || env.ANTHROPIC_API_KEY);
+export const resumeAiEnabled = (): boolean => Boolean(env.CV_N8N_WEBHOOK_URL || env.GEMINI_API_KEY || env.ANTHROPIC_API_KEY);
 
 /** Null when no AI provider is configured (or there is nothing to read). */
 export async function parseResumeWithAi(input: { pdf?: Buffer; text?: string }): Promise<AiResumeResult | null> {
   const text = input.text?.trim() ?? '';
   if (!input.pdf && text.length < 20) return null;
-  const run = env.GEMINI_API_KEY ? parseWithGemini : env.ANTHROPIC_API_KEY ? parseWithClaude : null;
+  // The n8n workflow reads text, so a scanned PDF without any goes to a direct provider if there is one.
+  const useN8n = Boolean(env.CV_N8N_WEBHOOK_URL) && text.length >= 20;
+  const run = useN8n ? parseWithN8n : env.GEMINI_API_KEY ? parseWithGemini : env.ANTHROPIC_API_KEY ? parseWithClaude : null;
   if (!run) return null;
-  const provider = env.GEMINI_API_KEY ? 'Gemini' : 'Claude';
+  const provider = useN8n ? 'n8n' : env.GEMINI_API_KEY ? 'Gemini' : 'Claude';
   const started = Date.now();
   try {
     const fields = await run(input.pdf, text);
@@ -93,6 +96,42 @@ export async function parseResumeWithAi(input: { pdf?: Buffer; text?: string }):
     console.warn(`[resume-ai] ${error} (after ${Date.now() - started}ms); using the rule-based parser`);
     return { fields: null, error };
   }
+}
+
+/**
+ * The "ATS - Parse CV fields" n8n workflow: POST { text, fileName } with the
+ * shared secret, answer { fields: { full_name, email, ... } }. The prompt and
+ * model live in n8n, so they can be changed there without a deploy.
+ */
+async function parseWithN8n(_pdf: Buffer | undefined, text: string): Promise<ParsedResumeFields> {
+  const res = await fetch(env.CV_N8N_WEBHOOK_URL!, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(env.CV_N8N_SECRET ? { 'X-ATS-Secret': env.CV_N8N_SECRET } : {}) },
+    body: JSON.stringify({ text: text.slice(0, 60_000) }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    const e = new Error(raw || res.statusText) as Error & { status: number };
+    e.status = res.status;
+    throw e;
+  }
+  let body: unknown;
+  try { body = JSON.parse(raw); } catch { throw new Error('the workflow did not answer with JSON'); }
+  // Tolerate the fields at the top level too, in case the Respond node is changed in n8n,
+  // and an LLM answer that is loose about types (missing fields, skills as one string).
+  const o = ((body as { fields?: unknown })?.fields ?? body) as Record<string, unknown> | null;
+  if (!o || typeof o !== 'object') throw new Error('the workflow\'s answer did not contain fields');
+  const str = (v: unknown) => (typeof v === 'string' ? v : '');
+  const level = str(o.experience_level).toLowerCase();
+  const parsed = ResumeFields.safeParse({
+    full_name: str(o.full_name), email: str(o.email), phone: str(o.phone), current_title: str(o.current_title),
+    experience_level: (EXPERIENCE_LEVELS as readonly string[]).includes(level) ? level : '',
+    skills: Array.isArray(o.skills) ? o.skills.filter((s): s is string => typeof s === 'string') : str(o.skills).split(/[,;•|]/),
+    education: str(o.education),
+  });
+  if (!parsed.success) throw new Error('the workflow\'s answer did not match the form fields');
+  return toFields(parsed.data);
 }
 
 let gemini: GoogleGenAI | null = null;

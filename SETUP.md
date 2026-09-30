@@ -180,9 +180,21 @@ Optional: `GEMINI_MODEL` picks another model (default `gemini-flash-latest`).
 On the free tier Google may use what you send to improve its products, and CVs
 hold personal data; enabling billing on the key (paid tier) stops that.
 
+**n8n workflow** (edit the prompt and model in n8n without a deploy): the workflow
+"ATS - Parse CV fields" receives the CV text, runs it through Gemini, and answers
+with the fields.
+1. In n8n open the workflow, click the **CV from ATS** node, and create its
+   **Header Auth** credential: Name `X-ATS-Secret`, Value = a long random secret.
+2. Click the **Gemini** node and give it a Google Gemini credential with your
+   AI Studio key (n8n's own AI credits run out quickly).
+3. **Publish** the workflow and copy the node's **Production URL**.
+4. In Vercel add `CV_N8N_WEBHOOK_URL` = that URL and `CV_N8N_SECRET` = the same
+   secret, then **Redeploy**. Scanned PDFs without text still go to `GEMINI_API_KEY`
+   directly when that is set.
+
 **Anthropic Claude (paid)**: add `ANTHROPIC_API_KEY` instead (from
 console.anthropic.com). Optional `RESUME_AI_MODEL` (default `claude-opus-5-5`).
-If both keys are set, Gemini is used.
+If several are set, the n8n workflow is used first, then Gemini, then Claude.
 
 ## Video calls across networks (TURN relay)
 
