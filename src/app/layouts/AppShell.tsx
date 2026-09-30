@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/Display';
 import { Menu } from '@/components/ui/Overlay';
 import { Spinner } from '@/components/ui/Feedback';
 import { cx } from '@/lib/cx';
+import { AssistantDock } from '@/features/assistant/AssistantDock';
 import { NotificationItem } from '@/features/notifications/NotificationItem';
 import { useMarkRead, useNotifications, useShellSummary } from '@/features/notifications/api';
 import { useAuth, useMe } from '../providers/AuthProvider';
@@ -474,6 +475,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
           <Outlet />
         </main>
       </div>
+      <AssistantDock />
     </div>
   );
 }
