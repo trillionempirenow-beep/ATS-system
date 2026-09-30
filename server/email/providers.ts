@@ -102,10 +102,12 @@ const n8n: EmailProvider = {
   delivers: true,
   async send(email) {
     if (!env.EMAIL_N8N_WEBHOOK_URL) return { ok: false, error: 'EMAIL_N8N_WEBHOOK_URL is not set.' };
+    // Both webhooks of the ATS-system workflow share one Header Auth credential, so one secret serves both.
+    const secret = env.EMAIL_N8N_SECRET ?? env.CV_N8N_SECRET;
     try {
       const res = await fetch(env.EMAIL_N8N_WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(env.EMAIL_N8N_SECRET ? { 'X-ATS-Secret': env.EMAIL_N8N_SECRET } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(secret ? { 'X-ATS-Secret': secret } : {}) },
         body: JSON.stringify({
           to: email.to,
           subject: email.subject,
@@ -121,7 +123,14 @@ const n8n: EmailProvider = {
         signal: AbortSignal.timeout(20_000),
       });
       const raw = await res.text();
-      if (!res.ok) return { ok: false, error: `n8n HTTP ${res.status}: ${raw.slice(0, 300) || res.statusText}` };
+      if (!res.ok) {
+        const hint = res.status === 403 || res.status === 401
+          ? (secret
+            ? ' (the X-ATS-Secret value does not match the Header Auth credential in n8n: EMAIL_N8N_SECRET must equal its Value exactly)'
+            : ' (no secret was sent: set EMAIL_N8N_SECRET to the Value of the Header Auth credential in n8n)')
+          : '';
+        return { ok: false, error: `n8n HTTP ${res.status}: ${raw.slice(0, 300) || res.statusText}${hint}` };
+      }
       const payload = (() => { try { return JSON.parse(raw) as { id?: string }; } catch { return {}; } })();
       return { ok: true, id: payload.id };
     } catch (e) {
