@@ -23,6 +23,8 @@ const GEMINI_MODEL = () => env.GEMINI_MODEL ?? 'gemini-flash-latest';
  * falls back to the rules; the recruiter can always upload again.
  */
 const TIMEOUT_MS = 25_000;
+/** The n8n route is two hops and its extractor re-asks the model once when an answer is malformed. */
+const N8N_TIMEOUT_MS = 40_000;
 
 /** The outcome of an AI read: fields, or why there are none (shown to the recruiter). */
 export type AiResumeResult = { fields: ParsedResumeFields; error?: undefined } | { fields: null; error: string };
@@ -30,7 +32,7 @@ export type AiResumeResult = { fields: ParsedResumeFields; error?: undefined } |
 /** One readable line from an SDK error; Gemini puts a JSON body in the message. */
 function describeError(e: unknown): string {
   if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError' || /abort|timed? ?out/i.test(e.message))) {
-    return `no answer within ${TIMEOUT_MS / 1000}s`;
+    return 'no answer in time';
   }
   const status = typeof (e as { status?: unknown })?.status === 'number' ? (e as { status: number }).status : null;
   const raw = e instanceof Error ? e.message : String(e);
@@ -108,7 +110,7 @@ async function parseWithN8n(_pdf: Buffer | undefined, text: string): Promise<Par
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(env.CV_N8N_SECRET ? { 'X-ATS-Secret': env.CV_N8N_SECRET } : {}) },
     body: JSON.stringify({ text: text.slice(0, 60_000) }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(N8N_TIMEOUT_MS),
   });
   const raw = await res.text();
   if (!res.ok) {
