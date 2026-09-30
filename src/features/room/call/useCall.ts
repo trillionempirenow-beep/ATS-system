@@ -95,6 +95,27 @@ async function logFailure(id: string, pc: RTCPeerConnection, servers: RTCIceServ
   } catch { /* stats are best effort */ }
 }
 
+/** One console line per connection: bytes and frames each way, and what the other side says about its devices. */
+async function logMedia(id: string, pc: RTCPeerConnection, remote: MediaStream, meta: ParticipantMeta | undefined): Promise<void> {
+  if (pc.connectionState === 'closed') return;
+  try {
+    const stats = await pc.getStats();
+    const kb = (n: unknown) => `${Math.round(Number(n ?? 0) / 1024)}KB`;
+    const parts: string[] = [];
+    stats.forEach((r: Record<string, unknown>) => {
+      if (r.type === 'inbound-rtp') {
+        parts.push(`in ${String(r.kind)} ${kb(r.bytesReceived)}${r.kind === 'video' ? ` ${Number(r.framesDecoded ?? 0)} frames ${Number(r.frameWidth ?? 0)}x${Number(r.frameHeight ?? 0)}` : ''}`);
+      }
+      if (r.type === 'outbound-rtp') {
+        parts.push(`out ${String(r.kind)} ${kb(r.bytesSent)}${r.kind === 'video' ? ` ${Number(r.framesEncoded ?? 0)} frames` : ''}`);
+      }
+    });
+    const tracks = remote.getTracks().map((t) => `${t.kind}:${t.readyState}${t.muted ? '/muted' : ''}`).join(' ') || 'none';
+    const says = meta ? `mic ${meta.mic ? 'on' : 'off'}, cam ${meta.cam ? 'on' : 'off'}` : 'no hello yet';
+    console.info(`[call] ${id} media: ${parts.join(' · ') || 'no rtp'} | remote tracks ${tracks} | they say ${says}`);
+  } catch { /* stats are best effort */ }
+}
+
 const nonce = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 16);
 
 /**
@@ -193,6 +214,10 @@ export function useCall(opts: CallOptions): Call {
       if (pc.connectionState === 'failed') {
         void logFailure(id, pc, iceServers.current);
         pc.restartIce();
+      }
+      if (pc.connectionState === 'connected') {
+        // What is actually flowing each way, to tell "not sent" from "not shown".
+        for (const ms of [5000, 20000]) window.setTimeout(() => void logMedia(id, pc, entry.remote, hellos.current.get(id)?.meta), ms);
       }
       if (pc.connectionState === 'connected' && !connectedOnce.current) {
         connectedOnce.current = true;
@@ -308,7 +333,9 @@ export function useCall(opts: CallOptions): Call {
   // Presence (who) plus recent hellos (who, and their mic/camera/hand state) decide who is in the room.
   const metas = useMemo(() => {
     const next = new Map<string, ParticipantMeta>();
-    for (const [id, m] of presenceMetas) next.set(id, { ...m, mic: m.mic ?? false, cam: m.cam ?? false, screen: m.screen ?? false, hand: m.hand ?? false, id });
+    // Until their hello arrives we do not know their camera state: show whatever video
+    // actually arrives rather than hiding it (a switched-off camera sends no picture anyway).
+    for (const [id, m] of presenceMetas) next.set(id, { ...m, mic: m.mic ?? true, cam: m.cam ?? true, screen: m.screen ?? false, hand: m.hand ?? false, id });
     const now = Date.now();
     for (const [id, h] of hellos.current) {
       if (now - h.at > HELLO_TTL_MS) hellos.current.delete(id);
