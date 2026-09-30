@@ -44,6 +44,8 @@ interface PeerEntry {
   remote: MediaStream;
   senders: { audio?: RTCRtpSender; video?: RTCRtpSender };
   dropTimer?: number;
+  /** Incoming-video watchdog: frames decoded so far, checks without progress, restarts asked for. */
+  watch: { frames: number; stalls: number; kicks: number; lastKick: number };
 }
 
 export interface CallOptions {
@@ -76,6 +78,12 @@ const EV_ENDED = 'room:ended';
 /** Who is here, sent as a broadcast too, so the call still connects if presence stalls. */
 const EV_HELLO = 'rtc:hello';
 const EV_BYE = 'rtc:bye';
+/** "Your camera is on but no picture reaches me": the sender restarts its video. */
+const EV_VIDEO_KICK = 'rtc:video-kick';
+const WATCH_EVERY_MS = 3000;
+const STALLS_BEFORE_KICK = 2;
+const MAX_KICKS = 3;
+const KICK_GAP_MS = 10_000;
 const HELLO_EVERY_MS = 15_000;
 const HELLO_TTL_MS = 40_000;
 const DROP_GRACE_MS = 8000;
@@ -102,12 +110,16 @@ async function logMedia(id: string, pc: RTCPeerConnection, remote: MediaStream, 
     const stats = await pc.getStats();
     const kb = (n: unknown) => `${Math.round(Number(n ?? 0) / 1024)}KB`;
     const parts: string[] = [];
+    const codec = (r: Record<string, unknown>) => {
+      const c = typeof r.codecId === 'string' ? (stats.get(r.codecId) as { mimeType?: string } | undefined) : undefined;
+      return c?.mimeType ? ` ${c.mimeType.replace(/^video\//, '')}` : '';
+    };
     stats.forEach((r: Record<string, unknown>) => {
       if (r.type === 'inbound-rtp') {
-        parts.push(`in ${String(r.kind)} ${kb(r.bytesReceived)}${r.kind === 'video' ? ` ${Number(r.framesDecoded ?? 0)} frames ${Number(r.frameWidth ?? 0)}x${Number(r.frameHeight ?? 0)}` : ''}`);
+        parts.push(`in ${String(r.kind)} ${kb(r.bytesReceived)}${r.kind === 'video' ? ` ${Number(r.framesDecoded ?? 0)} frames ${Number(r.frameWidth ?? 0)}x${Number(r.frameHeight ?? 0)}${codec(r)}` : ''}`);
       }
       if (r.type === 'outbound-rtp') {
-        parts.push(`out ${String(r.kind)} ${kb(r.bytesSent)}${r.kind === 'video' ? ` ${Number(r.framesEncoded ?? 0)} frames` : ''}`);
+        parts.push(`out ${String(r.kind)} ${kb(r.bytesSent)}${r.kind === 'video' ? ` ${Number(r.framesEncoded ?? 0)} frames${codec(r)}` : ''}`);
       }
     });
     const tracks = remote.getTracks().map((t) => `${t.kind}:${t.readyState}${t.muted ? '/muted' : ''}`).join(' ') || 'none';
@@ -139,6 +151,7 @@ export function useCall(opts: CallOptions): Call {
   const callbacks = useRef({ onEnded: opts.onEnded, onFirstConnection: opts.onFirstConnection });
   const connectedOnce = useRef(false);
   const selfMetaRef = useRef<ParticipantMeta | null>(null);
+  const metasRef = useRef<Map<string, ParticipantMeta>>(new Map());
   const selfId = opts.self.id;
 
   media.current = { stream: opts.stream, screen: opts.screen };
@@ -175,6 +188,30 @@ export function useCall(opts: CallOptions): Call {
     }
   }, []);
 
+  /**
+   * The other side gets no picture from us although our camera is on. First swap the
+   * track out and back in (restarts the encoder, sends a fresh keyframe); if that did
+   * not help, drop the video sender and add a new one, which renegotiates the video.
+   */
+  const restartVideo = useCallback((entry: PeerEntry, attempt: number) => {
+    const sender = entry.senders.video;
+    const track = sender?.track ?? media.current.screen?.getVideoTracks()[0] ?? media.current.stream?.getVideoTracks()[0] ?? null;
+    console.info(`[call] ${entry.id} gets no video from us: restarting it (attempt ${attempt})`);
+    if (!sender || !track) { syncTracks(entry); return; }
+    if (attempt <= 1) {
+      void sender.replaceTrack(null)
+        .then(() => new Promise((r) => window.setTimeout(r, 300)))
+        .then(() => sender.replaceTrack(track))
+        .catch(() => undefined);
+      return;
+    }
+    try {
+      entry.pc.removeTrack(sender);
+    } catch { /* connection closed meanwhile */ }
+    entry.senders.video = undefined;
+    syncTracks(entry);
+  }, [syncTracks]);
+
   const closePeer = useCallback((id: string) => {
     const entry = peers.current.get(id);
     if (!entry) return;
@@ -186,7 +223,8 @@ export function useCall(opts: CallOptions): Call {
 
   const createPeer = useCallback((id: string): PeerEntry => {
     const pc = new RTCPeerConnection({ iceServers: iceServers.current });
-    const entry: PeerEntry = { id, sid: nonce(), remoteSid: null, pc, polite: selfId > id, makingOffer: false, ignoreOffer: false, remote: new MediaStream(), senders: {} };
+    const entry: PeerEntry = { id, sid: nonce(), remoteSid: null, pc, polite: selfId > id, makingOffer: false, ignoreOffer: false, remote: new MediaStream(), senders: {},
+      watch: { frames: 0, stalls: 0, kicks: 0, lastKick: 0 } };
     pc.onnegotiationneeded = async () => {
       try {
         entry.makingOffer = true;
@@ -292,6 +330,12 @@ export function useCall(opts: CallOptions): Call {
         const id = (p as { id?: unknown } | null)?.id;
         if (typeof id === 'string' && hellos.current.delete(id)) bumpHello();
       }),
+      ch.on(EV_VIDEO_KICK, (p) => {
+        const k = p as { from?: unknown; to?: unknown; attempt?: unknown } | null;
+        if (!k || k.to !== selfId || typeof k.from !== 'string') return;
+        const entry = peers.current.get(k.from);
+        if (entry) restartVideo(entry, Math.min(MAX_KICKS, Math.max(1, Number(k.attempt) || 1)));
+      }),
       ch.onPresence((state) => {
         const next = new Map<string, ParticipantMeta>();
         for (const [key, list] of Object.entries(state)) {
@@ -319,7 +363,7 @@ export function useCall(opts: CallOptions): Call {
         current.delete(id);
       }
     };
-  }, [opts.channel, opts.driver, hasRtc, selfId, onSignal]);
+  }, [opts.channel, opts.driver, hasRtc, selfId, onSignal, restartVideo]);
 
   // Rotated TURN credentials: hand them to open connections without renegotiating.
   useEffect(() => {
@@ -345,6 +389,35 @@ export function useCall(opts: CallOptions): Call {
     // helloVersion stands in for changes to the hellos ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presenceMetas, helloVersion]);
+
+  metasRef.current = metas;
+
+  // Watchdog: someone says their camera is on, we are connected, yet no new video
+  // frames arrive. Ask them to restart their video, a few times at most.
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      for (const [id, entry] of peers.current) {
+        const meta = metasRef.current.get(id);
+        if (entry.pc.connectionState !== 'connected' || !(meta?.cam || meta?.screen)) { entry.watch.stalls = 0; continue; }
+        void entry.pc.getStats().then((stats) => {
+          let frames = 0;
+          stats.forEach((r: { type: string; kind?: string; framesDecoded?: number }) => {
+            if (r.type === 'inbound-rtp' && r.kind === 'video') frames += r.framesDecoded ?? 0;
+          });
+          const w = entry.watch;
+          if (frames > w.frames) { w.frames = frames; w.stalls = 0; return; }
+          w.stalls++;
+          if (w.stalls < STALLS_BEFORE_KICK || w.kicks >= MAX_KICKS || Date.now() - w.lastKick < KICK_GAP_MS) return;
+          w.kicks++;
+          w.lastKick = Date.now();
+          w.stalls = 0;
+          console.warn(`[call] no video from ${id} for ${(STALLS_BEFORE_KICK * WATCH_EVERY_MS) / 1000}s although their camera is on: asking them to restart it (attempt ${w.kicks})`);
+          channelRef.current?.send(EV_VIDEO_KICK, { from: selfId, to: id, attempt: w.kicks });
+        }).catch(() => undefined);
+      }
+    }, WATCH_EVERY_MS);
+    return () => window.clearInterval(t);
+  }, [selfId]);
 
   // Presence decides who we connect to. A short grace period rides out reconnects.
   useEffect(() => {
