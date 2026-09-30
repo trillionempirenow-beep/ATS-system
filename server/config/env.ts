@@ -82,9 +82,42 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
+/** Settings the app cannot run without: a bad value here stops it with a clear message. */
+const CORE_KEYS = new Set(['NODE_ENV', 'APP_URL', 'DATABASE_URL', 'SESSION_SECRET', 'STORAGE_DRIVER', 'REALTIME_DRIVER', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
+const CHOICE_KEYS = new Set(['NODE_ENV', 'STORAGE_DRIVER', 'REALTIME_DRIVER', 'EMAIL_PROVIDER']);
+
+/**
+ * Values pasted into a dashboard often carry stray spaces, a trailing newline,
+ * wrapping quotes or different capitals ("n8n ", "\"https://...\"", "N8N").
+ * Clean those up rather than refuse to start over them.
+ */
+function tidy(key: string, raw: string): string {
+  let v = raw.trim();
+  if (v.length >= 2 && ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))) v = v.slice(1, -1).trim();
+  return CHOICE_KEYS.has(key) ? v.toLowerCase() : v;
+}
+
 function load(): Env {
-  const provided = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v.trim() !== ''));
-  const parsed = schema.safeParse(provided);
+  const provided: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (v === undefined) continue;
+    const clean = tidy(k, v);
+    if (clean !== '') provided[k] = clean;
+  }
+  let parsed = schema.safeParse(provided);
+  if (!parsed.success) {
+    // An invalid optional setting (an integration URL, a provider name) turns that
+    // feature off with a warning; it must not take sign-in and everything else down.
+    const bad = [...new Set(parsed.error.issues.map((i) => String(i.path[0] ?? '')))];
+    const optional = bad.filter((k) => k && !CORE_KEYS.has(k));
+    if (optional.length && optional.length === bad.length) {
+      for (const i of parsed.error.issues) {
+        console.error(`[config] ignoring ${i.path.join('.')}: ${i.message}. Fix it in the environment variables and redeploy.`);
+      }
+      for (const k of optional) delete provided[k];
+      parsed = schema.safeParse(provided);
+    }
+  }
   if (!parsed.success) {
     const lines = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`);
     throw new Error(`Invalid server configuration:\n${lines.join('\n')}`);
