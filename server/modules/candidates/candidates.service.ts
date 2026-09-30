@@ -313,9 +313,10 @@ export async function parseCv(uploadId: string, ctx: Ctx): Promise<ParseCvResult
   const document = { id: doc!.id, originalName: file.originalName, extension: file.extension, sizeLabel: formatBytes(file.size) };
   const extracted = await extractDocumentText(file.data, file.extension);
   const hasText = !extracted.error && extracted.text.trim().length >= 40;
-  // Claude reads PDFs as documents (any layout, scanned pages too) and other formats as text.
+  // Gemini and Claude read PDFs as documents (any layout, scanned pages too); the n8n reader and
+  // other formats use the extracted text, which has broken ligatures repaired ("Chris*an" -> "Christian").
   const aiResult = file.extension === 'pdf' || hasText
-    ? await parseResumeWithAi(file.extension === 'pdf' ? { pdf: file.data } : { text: extracted.text })
+    ? await parseResumeWithAi({ pdf: file.extension === 'pdf' ? file.data : undefined, text: hasText ? extracted.text : undefined })
     : null;
   const ai = aiResult?.fields ?? null;
   // Said on screen, so a broken key or used-up quota is visible without the server logs.
@@ -328,9 +329,10 @@ export async function parseCv(uploadId: string, ctx: Ctx): Promise<ParseCvResult
     };
   }
   await sql`update candidate_documents set parsed = true where id = ${doc!.id}`;
-  // The rules still back up contact details the AI left empty (email and phone patterns are reliable).
+  // The rules back up what the AI left empty: contact details (reliable patterns) and the name,
+  // which a model may skip when the text layer is odd while the top line clearly holds it.
   const rules = hasText ? parseResumeText(extracted.text) : {};
-  const fields = ai ? { ...pick(rules, ['email', 'phone']), ...ai } : rules;
+  const fields = ai ? { ...pick(rules, ['full_name', 'email', 'phone']), ...ai } : rules;
   const filled = Object.keys(fields);
   return {
     ok: true,

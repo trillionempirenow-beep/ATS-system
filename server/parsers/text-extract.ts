@@ -16,6 +16,21 @@ export function cleanupText(t: string): string {
     .trim();
 }
 
+/**
+ * Word's "Save as PDF" with some fonts (Calibri, Cambria) writes the "ti" and "ft"
+ * ligatures with a broken character map, so the text layer reads "Chris*an",
+ * "Opera;ons", "So\ware". When a document shows that pattern, put the letters
+ * back. Gated on several hits so a lone "a;b" in ordinary text is left alone.
+ */
+export function repairLigatures(t: string): string {
+  const hits = t.match(/\p{Ll}[;*]\p{Ll}/gu)?.length ?? 0;
+  if (hits < 3) return t;
+  return t
+    .replace(/(?<=\p{L})[;*](?=\p{Ll})/gu, 'ti')
+    .replace(/(?<=^|[\s(/-])[;*](?=\p{Ll}{2})/gmu, 'ti')
+    .replace(/(?<=\p{Ll})\\(?=\p{Ll})/gu, 'ft');
+}
+
 interface TextItem { str: string; hasEOL?: boolean; transform: number[] }
 
 /** Rebuilds lines from pdf.js text items: a new line on EOL or a vertical jump, a space on a horizontal gap. */
@@ -52,9 +67,9 @@ export async function extractPdfText(data: Buffer): Promise<ExtractResult> {
     return { text: '', error: 'That file does not look like a PDF.', quality: 'poor' };
   }
   let text = '';
-  try { text = cleanupText(await layoutText(data)); } catch { text = ''; }
+  try { text = repairLigatures(cleanupText(await layoutText(data))); } catch { text = ''; }
   if (text.length < 40) {
-    try { text = cleanupText(rawPdfText(data)); } catch { /* fall through to the error below */ }
+    try { text = repairLigatures(cleanupText(rawPdfText(data))); } catch { /* fall through to the error below */ }
   }
   if (text.length < 40) {
     return {

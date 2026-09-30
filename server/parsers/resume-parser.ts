@@ -49,11 +49,15 @@ export function parseResumeText(text: string): ParsedResumeFields {
     if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) fields.email = e;
   }
 
-  // At least 7 digits so a year range or postcode is not taken for a phone.
-  const phone = /(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{1,4}\)[\s.-]?)?\d[\d\s.-]{6,}\d/u.exec(text)?.[0];
-  if (phone) {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length >= 7 && digits.length <= 15) fields.phone = phone.trim();
+  // The first run of 7 to 15 digits that is not a year or a year range ("2008-2012", "2019 - 2021").
+  // The part after an area code may be as short as 7 digits: "(0917) 8772327".
+  for (const m of text.matchAll(/(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{1,4}\)[\s.-]?)?\d[\d\s.-]{4,}\d/gu)) {
+    const candidate = m[0].trim();
+    if (/^(?:19|20)\d{2}(?:\s*[-–.]\s*(?:(?:19|20)\d{2}|\d{2}))?$/u.test(candidate)) continue;
+    const digits = candidate.replace(/\D/g, '');
+    if (digits.length < 7 || digits.length > 15) continue;
+    fields.phone = candidate;
+    break;
   }
 
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
