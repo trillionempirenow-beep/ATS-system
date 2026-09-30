@@ -60,6 +60,7 @@
   box-shadow: var(--sh-lg);
   overflow: hidden;
   transform-origin: 85% 100%;
+  --scrollbar-size: 8px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(24px) scale(.92);
@@ -203,7 +204,6 @@
   padding: 9px 11px;
   max-height: 104px;
   overflow-y: hidden;
-  scrollbar-width: thin;
   outline: none;
   transition: border-color .15s ease, box-shadow .15s ease;
 }

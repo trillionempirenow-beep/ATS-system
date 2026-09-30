@@ -108,6 +108,13 @@
   --brand-panel-chip: rgba(255, 255, 255, 0.12);
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+
+  /* Scrollbars: slim, and tinted from the text colour so they follow the theme.
+     Override per area (e.g. --scrollbar-size) instead of restyling scrollbars there. */
+  --scrollbar-size: 10px;
+  --scrollbar-thumb: color-mix(in srgb, var(--text3) 38%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text3) 65%, transparent);
+  --scrollbar-track: transparent;
   --ease: cubic-bezier(.2, .7, .2, 1);
 }
 
