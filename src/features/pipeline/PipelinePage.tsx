@@ -122,7 +122,7 @@ export function PipelinePage() {
           <div className={s.previewSection}>
             <div className={s.previewHead}>
               <Avatar name={preview.name} src={preview.avatarUrl} size={48} />
-              <div><div style={{ fontWeight: 650 }}>{preview.jobTitle}</div><div className={w.faint}>{preview.email}</div></div>
+              <div><div style={{ fontWeight: 600 }}>{preview.jobTitle}</div><div className={w.faint}>{preview.email}</div></div>
             </div>
             <DescriptionList items={[
               ['Current stage', STAGE_LABELS[preview.stage]],

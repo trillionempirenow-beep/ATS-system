@@ -11,10 +11,9 @@
 .legend {
   padding: 0;
   margin-bottom: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+
   color: var(--text3);
 }
 
@@ -50,8 +49,8 @@
   background: var(--primary-subtle);
   color: var(--primary-subtle-fg);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-small);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -69,7 +68,7 @@
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 
 .steps {
@@ -86,7 +85,7 @@
   counter-increment: step;
   display: flex;
   gap: 10px;
-  font-size: 14px;
+  font-size: var(--fs-body);
   color: var(--text2);
 }
 
@@ -100,6 +99,6 @@
   place-items: center;
   background: var(--sunken);
   color: var(--text2);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
 }

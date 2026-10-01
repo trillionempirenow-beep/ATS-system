@@ -75,7 +75,7 @@ function SuggestionsCard({ app }: { app: ApplicationStatusDto }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {app.suggestions.map((sg) => (
           <div key={`${sg.title}-${sg.slug ?? ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <p style={{ fontWeight: 650 }}>{sg.title}</p>
+            <p style={{ fontWeight: 600 }}>{sg.title}</p>
             {sg.note ? <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line' }}>{sg.note}</p> : null}
             <div style={{ marginTop: 8 }}>
               {sg.alreadyApplied ? <Badge tone="success" icon="checkcircle">You applied for this role</Badge>
@@ -106,13 +106,13 @@ function SubmissionCard({ app }: { app: ApplicationStatusDto }) {
       <DescriptionList items={details} />
       {coverLetter ? (
         <div style={{ marginTop: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 650, marginBottom: 6 }}>About you</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>About you</h3>
           <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>{coverLetter}</p>
         </div>
       ) : null}
       {whyUs ? (
         <div style={{ marginTop: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 650, marginBottom: 6 }}>Why you want to work here</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Why you want to work here</h3>
           <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>{whyUs}</p>
         </div>
       ) : null}

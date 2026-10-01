@@ -24,7 +24,7 @@
 
 .panelFoot {
   margin-top: 14px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: var(--text3);
 }
 
@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13.5px;
+  font-size: var(--fs-small);
   color: var(--text2);
 }
 
@@ -68,16 +68,15 @@
   gap: 8px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+
   color: var(--text2);
 }
 
 .tierHead span {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
   letter-spacing: 0;
   text-transform: none;
   color: var(--text3);
@@ -111,7 +110,7 @@
 .matchHead > :nth-child(2) { flex: 1; }
 
 .matchName {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -132,7 +131,7 @@ a.matchName:hover { color: var(--primary); }
 .score[data-tier='strong'] { color: var(--success-fg); }
 .score[data-tier='partial'] { color: var(--warning-fg); }
 
-.score strong { font-size: 15px; line-height: 18px; }
+.score strong { font-size: var(--fs-body); line-height: 18px; }
 
 .scoreBar {
   width: 52px;
@@ -150,20 +149,20 @@ a.matchName:hover { color: var(--primary); }
 }
 
 .reason {
-  font-size: 13.5px;
+  font-size: var(--fs-small);
   line-height: 20px;
   color: var(--text2);
 }
 
 .skills {
-  font-size: 12.5px;
+  font-size: var(--fs-caption);
   line-height: 18px;
   color: var(--text2);
 }
 
 .skills span {
   margin-right: 6px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--success-fg);
 }
 

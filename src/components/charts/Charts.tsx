@@ -2,7 +2,8 @@ import { Area, AreaChart as RArea, Bar, BarChart as RBar, CartesianGrid, Respons
 import s from './Charts.module.css';
 
 /** One color per board stage, in STAGE_ORDER: Applied, Screening, Interview, Final interview, Offer, Hired. */
-export const STAGE_CHART_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-6)', 'var(--chart-4)', 'var(--chart-5)'] as const;
+/** The stage scale, in pipeline order (Applied → Hired): how far along reads from the colour itself. */
+export const STAGE_CHART_COLORS = ['var(--stage-new)', 'var(--stage-screening)', 'var(--stage-interview)', 'var(--stage-final)', 'var(--stage-offer)', 'var(--stage-hired)'] as const;
 
 function ChartTooltip({ active, payload, label, unit, color }: TooltipProps<number, string> & { unit: string; color: string }) {
   if (!active || !payload?.length) return null;

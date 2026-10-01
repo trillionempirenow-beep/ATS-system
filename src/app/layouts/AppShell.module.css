@@ -20,9 +20,9 @@
 .collapsed .toggleBtn:not(:hover, :focus-visible) { background: transparent; }
 .collapsed .toggleBtn:not(:hover, :focus-visible) .toggleIcon,
 .collapsed .toggleBtn:is(:hover, :focus-visible) .toggleLogo { opacity: 0; }
-.brandName { font-weight: 700; font-size: 15px; line-height: 20px; letter-spacing: -0.01em; white-space: nowrap; }
-.brandName em { font-style: normal; color: var(--text3); font-weight: 500; }
-.brandRole { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.brandName { font-weight: var(--fw-semibold); font-size: var(--fs-body); line-height: 20px; letter-spacing: -0.01em; white-space: nowrap; }
+.brandName em { font-style: normal; color: var(--text3); font-weight: var(--fw-medium); }
+.brandRole { font-size: var(--fs-caption); color: var(--text3); white-space: nowrap; }
 .nav {
   flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 2px;
   scrollbar-width: none; -ms-overflow-style: none; /* Scrollable, but no visible scrollbar */
@@ -30,17 +30,17 @@
 .nav::-webkit-scrollbar { display: none; }
 .groupLabel {
   height: 28px; padding: 0 14px; margin-top: 8px; display: flex; align-items: flex-end; overflow: hidden; white-space: nowrap;
-  font-size: 12px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text3);
+  font-size: var(--fs-caption); font-weight: var(--fw-semibold);color: var(--text3);
   transition: height 0.3s ease, margin 0.3s ease, opacity 0.2s ease;
 }
 .item {
   position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px; border-radius: var(--radius-sm);
-  color: var(--text2); font-size: 14px; font-weight: 500; white-space: nowrap; border: 0; background: transparent; width: 100%; text-align: left;
+  color: var(--text2); font-size: var(--fs-body); font-weight: var(--fw-medium); white-space: nowrap; border: 0; background: transparent; width: 100%; text-align: left;
 }
 .item:hover { background: var(--surface2); color: var(--text); }
-.itemActive, .itemActive:hover { background: var(--primary-subtle); color: var(--primary-subtle-fg); font-weight: 650; }
+.itemActive, .itemActive:hover { background: var(--primary-subtle); color: var(--primary-subtle-fg); font-weight: var(--fw-semibold); }
 .itemLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.2s ease 0.1s; }
-.count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger-solid); color: var(--danger-solid-fg); font-size: 11px; line-height: 20px; font-weight: 700; text-align: center; }
+.count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger-solid); color: var(--danger-solid-fg); font-size: var(--fs-micro); line-height: 20px; font-weight: var(--fw-semibold); text-align: center; }
 .caret { display: flex; transition: transform 0.3s ease, opacity 0.2s ease; }
 .caretOpen { transform: rotate(180deg); }
 
@@ -57,7 +57,7 @@
 .collapsed .brandLogo { opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0s linear 0.15s; }
 .collapsed .groupLabel { height: 0; margin-top: 0; opacity: 0; }
 .collapsed .item[aria-expanded='true']:not(.itemActive) { background: var(--surface2); color: var(--text); }
-.collapsed .count { position: absolute; top: 2px; right: 4px; min-width: 16px; height: 16px; line-height: 16px; font-size: 10px; padding: 0 4px; }
+.collapsed .count { position: absolute; top: 2px; right: 4px; min-width: 16px; height: 16px; line-height: 16px; font-size: var(--fs-micro); padding: 0 4px; }
 
 /* Rail popovers are portaled to <body>, so the sidebar's overflow never clips them. Below modals (60). */
 .flyout {
@@ -65,12 +65,12 @@
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--sh-lg); visibility: hidden;
 }
 .flyoutOpen { visibility: visible; animation: flyoutIn 0.14s var(--ease); }
-.flyoutTitle { padding: 8px 10px 6px; font-size: 12px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text3); }
+.flyoutTitle { padding: 8px 10px 6px; font-size: var(--fs-caption); font-weight: var(--fw-semibold);color: var(--text3); }
 .flyoutList { display: flex; flex-direction: column; gap: 2px; }
 @keyframes flyoutIn { from { opacity: 0; transform: translateX(-4px); } }
 .tooltip {
   position: fixed; z-index: 56; transform: translateY(-50%); padding: 8px 14px; border-radius: var(--radius-full); pointer-events: none;
-  background: var(--tooltip-bg); color: var(--tooltip-fg); box-shadow: var(--sh-md); font-size: 13px; font-weight: 500; line-height: 18px; white-space: nowrap;
+  background: var(--tooltip-bg); color: var(--tooltip-fg); box-shadow: var(--sh-md); font-size: var(--fs-small); font-weight: var(--fw-medium); line-height: 18px; white-space: nowrap;
   animation: tooltipIn 0.12s var(--ease) 0.1s both;
 }
 @keyframes tooltipIn { from { opacity: 0; } }
@@ -85,12 +85,13 @@
 .mobileMenu { display: none; }
 .accountBtn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 4px; border-radius: var(--radius-full); border: 1px solid transparent; background: none; color: var(--text2); }
 .accountBtn:hover { background: var(--surface2); }
-.content { flex: 1; width: 100%; max-width: calc(var(--content-max) + var(--page-pad) * 2); margin: 0 auto; padding: 32px var(--page-pad) 64px; container: workspace / inline-size; }
+.content { flex: 1; width: 100%; max-width: calc(var(--content-max) + var(--page-pad) * 2); margin: 0 auto; padding: 32px var(--page-pad) 168px; container: workspace / inline-size; }
+/* The bottom padding keeps the end of every page clear of the assistant launcher. */
 .contentWide { max-width: none; }
 
 .liveBanner {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px var(--page-pad);
-  background: var(--teal-bg); color: var(--teal-fg); border-bottom: 1px solid var(--teal-border); font-weight: 600; font-size: 13px;
+  background: var(--teal-bg); color: var(--teal-fg); border-bottom: 1px solid var(--teal-border); font-weight: var(--fw-semibold); font-size: var(--fs-small);
 }
 .liveDot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-solid); box-shadow: 0 0 0 4px color-mix(in srgb, var(--teal-solid) 25%, transparent); animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 7px transparent; } }
@@ -101,9 +102,9 @@
 }
 .popHead { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .popList { max-height: 380px; overflow-y: auto; }
-.popFoot { display: block; padding: 10px 16px; text-align: center; border-top: 1px solid var(--border); font-weight: 600; color: var(--primary); font-size: 13px; }
+.popFoot { display: block; padding: 10px 16px; text-align: center; border-top: 1px solid var(--border); font-weight: var(--fw-semibold); color: var(--primary); font-size: var(--fs-small); }
 .popFoot:hover { background: var(--surface2); }
-.linkBtn { border: 0; background: none; color: var(--primary); font-weight: 600; font-size: 13px; padding: 4px; border-radius: 6px; }
+.linkBtn { border: 0; background: none; color: var(--primary); font-weight: var(--fw-semibold); font-size: var(--fs-small); padding: 4px; border-radius: 6px; }
 
 .scrim { display: none; }
 

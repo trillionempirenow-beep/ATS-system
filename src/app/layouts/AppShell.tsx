@@ -455,7 +455,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
                   <Icon name="chevron" size={14} />
                 </button>
               )}
-              header={<div><div style={{ fontWeight: 650 }}>{me.name}</div><div style={{ fontSize: 13, color: 'var(--text3)' }}>{me.roleLabel}</div></div>}
+              header={<div><div style={{ fontWeight: 600 }}>{me.name}</div><div style={{ fontSize: 13, color: 'var(--text3)' }}>{me.roleLabel}</div></div>}
               items={[
                 { label: 'My profile', icon: 'user', onSelect: () => navigate('/app/profile') },
                 { label: 'Notifications', icon: 'bell', onSelect: () => navigate('/app/notifications') },

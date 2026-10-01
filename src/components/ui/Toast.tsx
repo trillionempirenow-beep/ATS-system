@@ -40,11 +40,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           {items.map((t) => (
             <div key={t.id} className={cx(s.toast, TONE_CLASS[t.tone])} role={t.tone === 'error' ? 'alert' : 'status'}>
               <Icon name={ICONS[t.tone]} size={18} className={s.toastIcon} />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className={s.toastText}>
                 {t.title ? <div className={s.toastTitle}>{t.title}</div> : null}
                 <div className={t.title ? s.toastMsg : undefined}>{t.message}</div>
               </div>
-              <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss" style={{ border: 0, background: 'none', color: 'var(--text3)', padding: 2, display: 'inline-flex', borderRadius: 4 }}>
+              <button type="button" className={s.toastClose} onClick={() => dismiss(t.id)} aria-label="Dismiss">
                 <Icon name="close" size={14} />
               </button>
             </div>

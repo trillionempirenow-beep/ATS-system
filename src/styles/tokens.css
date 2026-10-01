@@ -1,67 +1,114 @@
-/* Acme People design tokens. Values come straight from the redesign blueprint
-   (Foundations → Color, Status system, Type, Spacing). Components read only
-   these semantic variables; nothing else in the app hard-codes a colour. */
+/* Casefile design tokens.
+   Ink on paper, one action colour (Jade), one urgency colour (Ember), and a single
+   ordered scale for the hiring stages: the stage is the one memorable thing in the
+   product, everything else stays quiet. Components read only these variables. */
 
 :root {
   color-scheme: light;
-  --bg:#F5F7FA;
-  --surface:#FFFFFF;
-  --surface2:#F0F3F8;
-  --sunken:#EEF1F6;
-  --border:#E2E7EF;
-  --border-strong:#CBD3DF;
-  --border-input:#8791A3;
-  --text:#0E1626;
-  --text2:#435068;
-  --text3:#596680;
-  --placeholder:#6A7489;
-  --primary:#2563EB;
-  --primary-hover:#1D4ED8;
-  --primary-fg:#FFFFFF;
-  --primary-subtle:#EAF1FF;
-  --primary-subtle-fg:#1E40AF;
-  --primary-ring:rgba(37,99,235,.32);
-  --success-bg:#DCFCE7;
-  --success-fg:#166534;
-  --success-border:#86EFAC;
-  --success-solid:#16A34A;
-  --warning-bg:#FEF3C7;
-  --warning-fg:#92400E;
-  --warning-border:#FCD34D;
-  --warning-solid:#D97706;
-  --danger-bg:#FEE2E2;
-  --danger-fg:#991B1B;
-  --danger-border:#FCA5A5;
-  --danger-solid:#DC2626;
-  --danger-solid-fg:#FFFFFF;
-  --info-bg:#DBEAFE;
-  --info-fg:#1E40AF;
-  --info-border:#93C5FD;
-  --info-solid:#2563EB;
-  --teal-bg:#CCFBF1;
-  --teal-fg:#115E59;
-  --teal-border:#5EEAD4;
-  --teal-solid:#0D9488;
-  --purple-bg:#F3E8FF;
-  --purple-fg:#6B21A8;
-  --purple-border:#D8B4FE;
-  --purple-solid:#9333EA;
-  --neutral-bg:#EEF1F6;
-  --neutral-fg:#3B465C;
-  --neutral-border:#CBD3DF;
-  --neutral-solid:#64748B;
-  --scrim:rgba(15,23,42,.46);
-  --sh-sm:0 1px 2px rgba(16,24,40,.06);
-  --sh-md:0 4px 12px -2px rgba(16,24,40,.08), 0 2px 4px -2px rgba(16,24,40,.06);
-  --sh-lg:0 18px 44px -10px rgba(16,24,40,.20), 0 6px 14px -6px rgba(16,24,40,.10);
-  --tooltip-bg:#E3E5E8;
-  --tooltip-fg:#1F1F1F;
-  --video:#1B2333;
-  --video-tile:#26314A;
-  --call-bar:#0F1524;
 
-  --font-sans: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Base palette */
+  --ink: #17233A;
+  --paper: #F7F8FA;
+  --sheet: #FFFFFF;
+  --rule: #DDE2EA;
+  --jade: #0E7C66;
+  --ember: #C2410C;
+
+  /* Surfaces and text */
+  --bg: var(--paper);
+  --surface: var(--sheet);
+  --surface2: #F1F3F6;
+  --sunken: #ECEFF3;
+  --border: var(--rule);
+  --border-strong: #C7CFDA;
+  --border-input: #8A94A6;
+  --text: var(--ink);
+  --text2: #46526A;
+  --text3: #5D6880;
+  --placeholder: #6E7890;
+
+  /* Action: Jade */
+  --primary: var(--jade);
+  --primary-hover: #0A6855;
+  --primary-fg: #FFFFFF;
+  --primary-subtle: #E4F2EE;
+  --primary-subtle-fg: #0A5A49;
+  --primary-ring: rgba(14, 124, 102, .30);
+
+  /* System messages. Success shares Jade; danger is Ember. */
+  --success-bg: #E4F2EE;
+  --success-fg: #0A5A49;
+  --success-border: #A9D6CA;
+  --success-solid: #0E7C66;
+  --warning-bg: #FBF1DC;
+  --warning-fg: #8A4B06;
+  --warning-border: #EDCB86;
+  --warning-solid: #B7791F;
+  --danger-bg: #FBEDE6;
+  --danger-fg: #9A330A;
+  --danger-border: #F0B79E;
+  --danger-solid: var(--ember);
+  --danger-solid-fg: #FFFFFF;
+  --info-bg: #E9EEF6;
+  --info-fg: #2F4A7A;
+  --info-border: #BFCBE0;
+  --info-solid: #3D5A8C;
+  --teal-bg: #E3F0F0;
+  --teal-fg: #20605F;
+  --teal-border: #A8CDCB;
+  --teal-solid: #3E8F8C;
+  --purple-bg: #F0ECF6;
+  --purple-fg: #563C77;
+  --purple-border: #D3C6E5;
+  --purple-solid: #7A5A9E;
+  --neutral-bg: #EEF1F5;
+  --neutral-fg: #46526A;
+  --neutral-border: #CED5E0;
+  --neutral-solid: #6B7689;
+
+  /* The stage scale: one ordered ramp from slate (just applied) to deep jade (hired).
+     How far along someone is reads from the colour itself. Rejected is Ember. */
+  --stage-new: #8792A6;
+  --stage-screening: #6A979A;
+  --stage-interview: #3F9483;
+  --stage-final: #1F8670;
+  --stage-offer: #0E7C66;
+  --stage-hired: #0A5A49;
+  --stage-rejected: var(--ember);
+
+  --scrim: rgba(17, 25, 41, .48);
+  /* Shadows only for things that float above the page. */
+  --sh-sm: 0 1px 2px rgba(23, 35, 58, .07);
+  --sh-md: 0 6px 16px -6px rgba(23, 35, 58, .16), 0 2px 4px -2px rgba(23, 35, 58, .08);
+  --sh-lg: 0 20px 44px -12px rgba(23, 35, 58, .26), 0 6px 14px -6px rgba(23, 35, 58, .12);
+  --tooltip-bg: var(--ink);
+  --tooltip-fg: #FFFFFF;
+  --video: #141C2B;
+  --video-tile: #1E2839;
+  --call-bar: #0D1320;
+
+  /* Type: IBM Plex Sans throughout; Plex Mono only for codes and IDs. */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --fs-micro: 11px;
+  --fs-caption: 12px;
+  --fs-small: 13px;
+  --fs-body: 14px;
+  --fs-lead: 16px;
+  --fs-title: 20px;
+  --fs-heading: 26px;
+  --fs-display: 34px;
+  --fs-hero: 52px;
+  --lh-caption: 16px;
+  --lh-small: 18px;
+  --lh-body: 20px;
+  --lh-lead: 24px;
+  --lh-title: 28px;
+  --lh-heading: 34px;
+  --lh-display: 42px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -73,116 +120,128 @@
   --space-8: 48px;
   --space-9: 64px;
 
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-tile: 10px;
-  --radius-md: 12px;
-  --radius-lg: 14px;
-  --radius-xl: 16px;
+  /* Corners by hierarchy: fields and badges, cards, then things that float. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-tile: 8px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
   --radius-full: 999px;
 
-  --sidebar-w: 256px;
+  --sidebar-w: 248px;
   --sidebar-w-collapsed: 72px;
   --header-h: 56px;
   --content-max: 1120px;
   --page-pad: 32px;
 
-  /* Chart marks: stage order Applied, Screening, Interview, Final interview (6), Offer, Hired.
-     Validated for lightness, chroma, CVD separation and contrast (light + dark). */
-  --chart-1: #2563EB;
-  --chart-2: #D97706;
-  --chart-3: #0D9488;
-  --chart-4: #9333EA;
-  --chart-5: #16A34A;
-  --chart-6: #DB2777;
-  --chart-grid: #E2E7EF;
-  --chart-axis: #596680;
+  /* Charts: Jade first, then colours that sit with it. Stages use the stage scale. */
+  --chart-1: #0E7C66;
+  --chart-2: #B7791F;
+  --chart-3: #3D5A8C;
+  --chart-4: #7A5A9E;
+  --chart-5: #3E8F8C;
+  --chart-6: #C2410C;
+  --chart-grid: #E4E8EE;
+  --chart-axis: #5D6880;
 
-  /* Brand panel on the sign-in screens: fixed navy in both themes. */
-  --brand-panel: #0F1E4A;
+  /* Brand panel on the sign-in screens: ink in both themes. */
+  --brand-panel: #17233A;
   --brand-panel-text: #FFFFFF;
-  --brand-panel-muted: #C7D5F5;
-  --brand-panel-soft: #DCE6FB;
-  --brand-panel-faint: #AFC1EA;
-  --brand-panel-accent: #9DB4E8;
-  --brand-panel-chip: rgba(255, 255, 255, 0.12);
+  --brand-panel-muted: #C3CCDA;
+  --brand-panel-soft: #DDE3EC;
+  --brand-panel-faint: #A7B2C4;
+  --brand-panel-accent: #7FD3BD;
+  --brand-panel-chip: rgba(255, 255, 255, 0.10);
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 
-  /* Scrollbars: slim, and tinted from the text colour so they follow the theme.
-     Override per area (e.g. --scrollbar-size) instead of restyling scrollbars there. */
+  /* Scrollbars: slim, and tinted from the text colour so they follow the theme. */
   --scrollbar-size: 10px;
   --scrollbar-thumb: color-mix(in srgb, var(--text3) 38%, transparent);
   --scrollbar-thumb-hover: color-mix(in srgb, var(--text3) 65%, transparent);
   --scrollbar-track: transparent;
   --ease: cubic-bezier(.2, .7, .2, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --chart-1: #3B82F6;
-  --chart-2: #D97706;
-  --chart-3: #0D9488;
-  --chart-4: #8B5CF6;
-  --chart-5: #16A34A;
-  --chart-6: #EC4899;
-  --chart-grid: #232F44;
-  --chart-axis: #8C98AD;
-  --bg:#0A0F18;
-  --surface:#111826;
-  --surface2:#172033;
-  --sunken:#0D131F;
-  --border:#232F44;
-  --border-strong:#36455F;
-  --border-input:#5B6B86;
-  --text:#EDF1F7;
-  --text2:#AEB9CB;
-  --text3:#8C98AD;
-  --placeholder:#7A879D;
-  --primary:#6F9BFF;
-  --primary-hover:#8DB0FF;
-  --primary-fg:#0A0F18;
-  --primary-subtle:#1B2A4A;
-  --primary-subtle-fg:#A9C4FF;
-  --primary-ring:rgba(111,155,255,.40);
-  --success-bg:#12301F;
-  --success-fg:#4ADE80;
-  --success-border:#1F5C38;
-  --success-solid:#22C55E;
-  --warning-bg:#3A2E10;
-  --warning-fg:#FBBF24;
-  --warning-border:#6B5418;
-  --warning-solid:#F59E0B;
-  --danger-bg:#3A1A1F;
-  --danger-fg:#F87171;
-  --danger-border:#6B2A31;
-  --danger-solid:#F87171;
-  --danger-solid-fg:#1A0A0A;
-  --info-bg:#132A4A;
-  --info-fg:#60A5FA;
-  --info-border:#24508A;
-  --info-solid:#60A5FA;
-  --teal-bg:#0F3532;
-  --teal-fg:#2DD4BF;
-  --teal-border:#1B6660;
-  --teal-solid:#2DD4BF;
-  --purple-bg:#2A2148;
-  --purple-fg:#C4B5FD;
-  --purple-border:#4B3D82;
-  --purple-solid:#A78BFA;
-  --neutral-bg:#1E283A;
-  --neutral-fg:#AEB9CB;
-  --neutral-border:#36455F;
-  --neutral-solid:#8C98AD;
-  --scrim:rgba(3,6,12,.70);
-  --sh-sm:0 1px 2px rgba(0,0,0,.40);
-  --sh-md:0 6px 16px -4px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.35);
-  --sh-lg:0 22px 50px -10px rgba(0,0,0,.65), 0 8px 16px -8px rgba(0,0,0,.5);
-  --tooltip-bg:#E3E3E3;
-  --tooltip-fg:#1F1F1F;
-  --video:#0B111C;
-  --video-tile:#182235;
-  --call-bar:#070B12;
+  --ink: #E7ECF3;
+  --paper: #0E1420;
+  --sheet: #151D2B;
+  --rule: #263247;
+  --jade: #3DBB9B;
+  --ember: #F0804F;
+
+  --surface2: #1B2536;
+  --sunken: #111927;
+  --border-strong: #35435C;
+  --border-input: #5A6882;
+  --text2: #AAB4C5;
+  --text3: #8B96AA;
+  --placeholder: #75819A;
+
+  --primary-hover: #5CCBAE;
+  --primary-fg: #07130F;
+  --primary-subtle: #133129;
+  --primary-subtle-fg: #8FDCC6;
+  --primary-ring: rgba(61, 187, 155, .40);
+
+  --success-bg: #133129;
+  --success-fg: #8FDCC6;
+  --success-border: #22594B;
+  --success-solid: #3DBB9B;
+  --warning-bg: #33280F;
+  --warning-fg: #F2C46D;
+  --warning-border: #6A531C;
+  --warning-solid: #E2A93E;
+  --danger-bg: #3A1D14;
+  --danger-fg: #F7A47F;
+  --danger-border: #74351F;
+  --danger-solid-fg: #1A0B05;
+  --info-bg: #17243A;
+  --info-fg: #A9BEE2;
+  --info-border: #2F4569;
+  --info-solid: #8DA8D8;
+  --teal-bg: #12302F;
+  --teal-fg: #8BCFCB;
+  --teal-border: #22524F;
+  --teal-solid: #5FB3AE;
+  --purple-bg: #261F37;
+  --purple-fg: #C9B6E6;
+  --purple-border: #463863;
+  --purple-solid: #A88ACF;
+  --neutral-bg: #1C2637;
+  --neutral-fg: #AAB4C5;
+  --neutral-border: #35435C;
+  --neutral-solid: #8B96AA;
+
+  --stage-new: #7E8AA0;
+  --stage-screening: #6FA4A6;
+  --stage-interview: #4FAE98;
+  --stage-final: #3DBB9B;
+  --stage-offer: #5CCBAE;
+  --stage-hired: #8FDCC6;
+
+  --scrim: rgba(3, 6, 12, .70);
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, .40);
+  --sh-md: 0 8px 18px -6px rgba(0, 0, 0, .55), 0 2px 4px -2px rgba(0, 0, 0, .40);
+  --sh-lg: 0 22px 50px -12px rgba(0, 0, 0, .70), 0 8px 16px -8px rgba(0, 0, 0, .50);
+  --tooltip-bg: #E7ECF3;
+  --tooltip-fg: #17233A;
+  --video: #0A0F18;
+  --video-tile: #172131;
+  --call-bar: #070B12;
+
+  --chart-1: #3DBB9B;
+  --chart-2: #E2A93E;
+  --chart-3: #8DA8D8;
+  --chart-4: #A88ACF;
+  --chart-5: #5FB3AE;
+  --chart-6: #F0804F;
+  --chart-grid: #263247;
+  --chart-axis: #8B96AA;
 }
 
 @media (max-width: 1023px) {

@@ -22,7 +22,7 @@ export function Card({ padding = 20, className, children, ...rest }: CardProps) 
 export function CardHeader({ title, subtitle, actions, flush, as: Tag = 'h2' }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; flush?: boolean; as?: 'h2' | 'h3' }) {
   return (
     <div className={cx(s.cardHeader, flush && s.cardHeaderFlush)}>
-      <div style={{ minWidth: 0 }}>
+      <div className={s.cardHeadText}>
         <Tag className={s.cardTitle}>{title}</Tag>
         {subtitle ? <p className={s.cardSub}>{subtitle}</p> : null}
       </div>
@@ -36,12 +36,12 @@ export interface Crumb { label: string; to?: string }
 export function PageHeader({ title, description, crumbs, actions }: { title: ReactNode; description?: ReactNode; crumbs?: Crumb[]; actions?: ReactNode }) {
   return (
     <header className={s.pageHeader}>
-      <div style={{ minWidth: 0 }}>
+      <div className={s.pageHeadText}>
         {crumbs?.length ? (
           <nav className={s.crumbs} aria-label="Breadcrumb">
             {crumbs.map((c, i) => (
               <Fragment key={`${c.label}-${i}`}>
-                {i > 0 ? <Icon name="chevronr" size={12} /> : null}
+                {i > 0 ? <span className={s.crumbSep} aria-hidden>/</span> : null}
                 {c.to && i < crumbs.length - 1 ? <Link to={c.to}>{c.label}</Link> : <span className={i === crumbs.length - 1 ? s.crumbCurrent : undefined}>{c.label}</span>}
               </Fragment>
             ))}
@@ -55,20 +55,22 @@ export function PageHeader({ title, description, crumbs, actions }: { title: Rea
   );
 }
 
-export function StatCard({ icon, label, value, delta, hint, loading }: { icon: IconName; label: string; value: ReactNode; delta?: number | null; hint?: string; loading?: boolean }) {
+/**
+ * One figure in the stats strip: label, value, and a plain-words note. `delta` is the
+ * change since the same day last week. `icon` is kept for callers but not drawn: the
+ * label says what the number is.
+ */
+export function StatCard({ label, value, delta, hint, loading }: { icon?: IconName; label: string; value: ReactNode; delta?: number | null; hint?: string; loading?: boolean }) {
+  const note = typeof delta === 'number'
+    ? (delta === 0 ? <span>No change since last week</span>
+      : <span><span className={delta > 0 ? s.deltaUp : s.deltaDown}>{delta > 0 ? `+${delta}` : `−${Math.abs(delta)}`}</span> since last week</span>)
+    : hint ? <span>{hint}</span> : null;
   return (
-    <Card padding={0} className={s.stat} role="group" aria-label={label}>
-      <div className={s.statTop}>
-        <span className={s.statIcon}><Icon name={icon} size={17} /></span>
-        {typeof delta === 'number' ? (
-          <span className={cx(s.delta, delta > 0 ? s.deltaUp : delta < 0 ? s.deltaDown : s.deltaFlat)}>{delta > 0 ? `+${delta}` : delta < 0 ? String(delta) : '±0'}</span>
-        ) : hint ? <span className={cx(s.delta, s.deltaFlat)}>{hint}</span> : null}
-      </div>
-      <div>
-        {loading ? <Skeleton width={56} height={28} /> : <div className={s.statValue}>{value}</div>}
-        <div className={s.statLabel}>{label}</div>
-      </div>
-    </Card>
+    <div className={s.stat} role="group" aria-label={label}>
+      <div className={s.statLabel}>{label}</div>
+      {loading ? <Skeleton width={56} height={30} /> : <div className={s.statValue}>{value}</div>}
+      {note ? <div className={s.statNote}>{note}</div> : null}
+    </div>
   );
 }
 
@@ -172,7 +174,7 @@ export function PillTabs<K extends string>({ items, value, onChange, label }: { 
       {items.map((t) => (
         <button key={t.key} type="button" className={s.pill} aria-pressed={t.key === value} onClick={() => onChange(t.key)}>
           {t.label}
-          {typeof t.count === 'number' ? <span className="num" style={{ opacity: 0.75 }}>{t.count}</span> : null}
+          {typeof t.count === 'number' ? <span className={s.pillCount}>{t.count}</span> : null}
         </button>
       ))}
     </div>
@@ -191,7 +193,7 @@ export function Pagination({ page, pageCount, total, pageSize, onChange }: { pag
         <button type="button" className={s.pageBtn} disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="Previous page"><Icon name="chevronl" size={14} /></button>
         {pages.map((p, i) => (
           <Fragment key={p}>
-            {i > 0 && p - (pages[i - 1] ?? p) > 1 ? <span style={{ padding: '0 4px', alignSelf: 'center' }}>…</span> : null}
+            {i > 0 && p - (pages[i - 1] ?? p) > 1 ? <span className={s.pageGap}>…</span> : null}
             <button type="button" className={s.pageBtn} aria-current={p === page ? 'page' : undefined} onClick={() => onChange(p)}>{p}</button>
           </Fragment>
         ))}

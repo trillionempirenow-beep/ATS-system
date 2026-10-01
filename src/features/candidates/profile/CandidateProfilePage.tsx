@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { STAGE_LABELS, STAGE_ORDER, STAGES, stageRank, type Stage } from '@shared/domain/pipeline';
+import { STAGE_LABELS, STAGE_ORDER, stageRank, type Stage } from '@shared/domain/pipeline';
 import { Icon } from '@/components/icon/Icon';
 import { Button } from '@/components/ui/Button';
 import { Avatar, Rating, StatusBadge } from '@/components/ui/Display';
@@ -26,9 +26,11 @@ type TabKey = (typeof TABS)[number];
 
 function StageTrack({ stage }: { stage: Stage }) {
   const rank = stageRank(stage);
+  const steps: Stage[] = stage === 'rejected' ? [...STAGE_ORDER, 'rejected'] : [...STAGE_ORDER];
   return (
-    <div className={s.track} aria-label={`Current stage: ${STAGE_LABELS[stage]}`}>
-      {STAGES.map((st) => {
+    // The six steps sit on one row; Rejected only appears, at the end, for a rejected application.
+    <div className={s.track} style={{ '--steps': steps.length } as CSSProperties} aria-label={`Current stage: ${STAGE_LABELS[stage]}`}>
+      {steps.map((st) => {
         const r = stageRank(st);
         const current = st === stage;
         const done = stage !== 'rejected' && r !== -1 && r < rank;

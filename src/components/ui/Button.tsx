@@ -84,7 +84,9 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       ref={ref}
       type={type}
       aria-label={label}
-      title={label}
+      // The house tooltip (global [data-tip]); below the button, since most sit in headers and toolbars.
+      data-tip={label}
+      data-tip-side="bottom"
       className={cx(s.iconBtn, variant === 'secondary' && s.iconSecondary, active && s.active, className)}
       style={{ width: size, height: size }}
       {...rest}

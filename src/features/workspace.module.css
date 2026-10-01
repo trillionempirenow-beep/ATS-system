@@ -10,8 +10,8 @@
 .rowBetween { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
 .wrap { flex-wrap: wrap; }
 .muted { color: var(--text2); }
-.faint { color: var(--text3); font-size: 13px; }
-.strong { font-weight: 650; }
+.faint { color: var(--text3); font-size: var(--fs-small); }
+.strong { font-weight: var(--fw-semibold); }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .pre { white-space: pre-line; overflow-wrap: anywhere; }
 
@@ -22,23 +22,24 @@
 .listItemLink:hover .strong { color: var(--primary); }
 
 .dateChip { flex: none; width: 44px; height: 48px; border-radius: var(--radius-sm); background: var(--primary-subtle); color: var(--primary-subtle-fg); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
-.dateChip span { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.dateChip strong { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dateChip span { font-size: var(--fs-micro); font-weight: var(--fw-semibold); }
+.dateChip strong { font-size: var(--fs-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
 
 .person { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .personText { display: flex; flex-direction: column; min-width: 0; }
-.personName { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.personSub { font-size: 13px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.personName { font-weight: var(--fw-semibold); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.personSub { font-size: var(--fs-small); color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .formActions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-.stickyActions { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; margin: 0 -16px -16px; background: color-mix(in srgb, var(--surface) 92%, transparent); border-top: 1px solid var(--border); backdrop-filter: blur(6px); flex-wrap: wrap; }
+/* Solid, so form text never shows through it while scrolling. */
+.stickyActions { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; margin: 0 -16px -16px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -8px 16px -12px rgba(23, 35, 58, .18); flex-wrap: wrap; }
 
-.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 14px; }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: var(--fs-body); }
 .kv dt { color: var(--text3); }
-.kv dd { margin: 0; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.kv dd { margin: 0; font-weight: var(--fw-medium); text-align: right; overflow-wrap: anywhere; }
 
 .noteCard { padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface2); border: 1px solid var(--border); }
-.noteMeta { font-size: 12px; color: var(--text3); margin-top: 6px; }
+.noteMeta { font-size: var(--fs-caption); color: var(--text3); margin-top: 6px; }
 
 .filterBar { display: flex; align-items: center; gap: 8px; padding: 12px; flex-wrap: wrap; }
 .filterSearch { flex: 1 1 240px; min-width: 200px; }
@@ -53,6 +54,6 @@
   .filterSelect { flex: 1 1 100%; }
 }
 
-.overline { font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text3); }
-.link { color: var(--primary); font-weight: 600; }
+.overline { font-size: var(--fs-caption); line-height: 16px; font-weight: var(--fw-semibold);color: var(--text3); }
+.link { color: var(--primary); font-weight: var(--fw-semibold); }
 .link:hover { text-decoration: underline; text-underline-offset: 3px; }

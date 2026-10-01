@@ -14,7 +14,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  font-weight: 650;
+  font-weight: var(--fw-semibold);
 }
 
 .tags {
@@ -31,8 +31,8 @@
   border-radius: var(--radius-xs);
   background: var(--sunken);
   color: var(--text2);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
@@ -44,7 +44,7 @@
 }
 
 .applicants span {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text3);
 }
 
@@ -57,7 +57,7 @@
 
 .reviewNote {
   max-width: 260px;
-  font-size: 12.5px;
+  font-size: var(--fs-caption);
   color: var(--text3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -96,7 +96,7 @@
 }
 
 .deptList span {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text3);
 }
 
@@ -114,11 +114,11 @@
 
 .flow strong {
   display: block;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 
 .flow span {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text3);
 }
 
@@ -133,7 +133,7 @@
 
 .jobHead h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--fs-heading);
   line-height: 28px;
 }
 
@@ -147,15 +147,15 @@
 
 .section h3 {
   margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
 }
 
 .section p,
 .section ul {
   margin: 0;
   color: var(--text2);
-  font-size: 14px;
+  font-size: var(--fs-body);
   line-height: 22px;
 }
 
@@ -164,7 +164,7 @@
 }
 
 .creator {
-  font-size: 13.5px;
+  font-size: var(--fs-small);
   color: var(--text2);
   white-space: nowrap;
 }

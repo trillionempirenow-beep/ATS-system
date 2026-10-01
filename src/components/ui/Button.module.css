@@ -1,3 +1,5 @@
+/* Buttons: one action colour (Jade). Disabled buttons are drawn as inactive,
+   not faded, so they never look broken. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -7,32 +9,31 @@
   padding: 0 16px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-medium);
   white-space: nowrap;
   text-decoration: none;
-  transition: background-color 0.12s var(--ease), border-color 0.12s var(--ease), color 0.12s var(--ease);
+  transition: background-color .12s var(--ease), border-color .12s var(--ease), color .12s var(--ease);
   user-select: none;
 }
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
+.btn:focus-visible { box-shadow: var(--focus-ring); }
 .btn:disabled,
 .btn[aria-disabled='true'] {
-  opacity: 0.5;
   cursor: not-allowed;
+  background: var(--sunken);
+  border-color: var(--border);
+  color: var(--text3);
 }
-.btn:focus-visible {
-  box-shadow: var(--focus-ring);
-}
+.btn[aria-busy='true'] { cursor: progress; }
 
-.sm { height: 32px; padding: 0 12px; font-size: 13px; line-height: 18px; gap: 6px; }
-.lg { height: 48px; padding: 0 20px; font-size: 15px; }
+.sm { height: 32px; padding: 0 12px; font-size: var(--fs-small); line-height: var(--lh-small); gap: 6px; }
+.lg { height: 48px; padding: 0 22px; font-size: var(--fs-lead); }
 .full { width: 100%; }
 
 .primary { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); }
 .primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.primary:active:not(:disabled) { background: var(--primary-subtle-fg); border-color: var(--primary-subtle-fg); }
 
 .secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
 .secondary:hover:not(:disabled) { background: var(--surface2); border-color: var(--text3); }
@@ -40,12 +41,14 @@
 
 .ghost { background: transparent; color: var(--text2); }
 .ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+.ghost:active:not(:disabled) { background: var(--sunken); }
+.ghost:disabled { background: transparent; border-color: transparent; }
 
 .subtle { background: var(--primary-subtle); color: var(--primary-subtle-fg); }
-.subtle:hover:not(:disabled) { background: var(--sunken); }
+.subtle:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); }
 
 .danger { background: var(--danger-solid); border-color: var(--danger-solid); color: var(--danger-solid-fg); }
-.danger:hover:not(:disabled) { filter: brightness(0.94); }
+.danger:hover:not(:disabled) { background: var(--danger-fg); border-color: var(--danger-fg); }
 
 .dangerGhost { background: transparent; border-color: var(--danger-border); color: var(--danger-fg); }
 .dangerGhost:hover:not(:disabled) { background: var(--danger-bg); }
@@ -56,7 +59,7 @@
   border-radius: 50%;
   border: 2px solid currentColor;
   border-right-color: transparent;
-  animation: spin 0.7s linear infinite;
+  animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -70,26 +73,29 @@
   border: 1px solid transparent;
   background: transparent;
   color: var(--text2);
-  transition: background-color 0.12s var(--ease), color 0.12s var(--ease);
+  transition: background-color .12s var(--ease), color .12s var(--ease), border-color .12s var(--ease);
 }
 .iconBtn:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+.iconBtn:active:not(:disabled) { background: var(--sunken); }
 .iconBtn.iconSecondary { border-color: var(--border-strong); background: var(--surface); }
+.iconBtn.iconSecondary:hover:not(:disabled) { border-color: var(--text3); }
 .iconBtn.active { background: var(--primary-subtle); color: var(--primary-subtle-fg); }
-.iconBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.iconBtn:disabled { cursor: not-allowed; color: var(--border-strong); }
 
 .badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 1px;
+  right: 1px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
   border-radius: var(--radius-full);
   background: var(--danger-solid);
   color: var(--danger-solid-fg);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   line-height: 16px;
-  font-weight: 700;
+  font-weight: var(--fw-semibold);
   text-align: center;
+  font-variant-numeric: tabular-nums;
   box-shadow: 0 0 0 2px var(--surface);
 }

@@ -11,7 +11,7 @@ export function Notice({ tone = 'info', title, children, action, style }: { tone
   return (
     <div className={cx(s.notice, s[tone])} role={tone === 'danger' ? 'alert' : 'status'} style={style}>
       <Icon name={NOTICE_ICONS[tone]} size={18} />
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className={s.noticeText}>
         {title ? <div className={s.noticeTitle}>{title}</div> : null}
         {children ? <div className={s.noticeBody}>{children}</div> : null}
       </div>
@@ -23,7 +23,7 @@ export function Notice({ tone = 'info', title, children, action, style }: { tone
 export function EmptyState({ icon = 'layers', title, text, actions, compact }: { icon?: IconName; title: ReactNode; text?: ReactNode; actions?: ReactNode; compact?: boolean }) {
   return (
     <div className={cx(s.state, compact && s.stateCompact)}>
-      <span className={s.stateIcon}><Icon name={icon} size={24} /></span>
+      <span className={s.stateIcon}><Icon name={icon} size={28} /></span>
       <h3 className={s.stateTitle}>{title}</h3>
       {text ? <p className={s.stateText}>{text}</p> : null}
       {actions ? <div className={s.stateActions}>{actions}</div> : null}
@@ -31,10 +31,10 @@ export function EmptyState({ icon = 'layers', title, text, actions, compact }: {
   );
 }
 
-export function ErrorState({ title = 'This could not be loaded', text = 'Something went wrong while loading this. Check your connection and try again.', onRetry, compact }: { title?: string; text?: ReactNode; onRetry?: () => void; compact?: boolean }) {
+export function ErrorState({ title = 'This could not be loaded', text = 'The request did not finish. Check your connection, then try again.', onRetry, compact }: { title?: string; text?: ReactNode; onRetry?: () => void; compact?: boolean }) {
   return (
     <div className={cx(s.state, compact && s.stateCompact)} role="alert">
-      <span className={cx(s.stateIcon, s.stateIconDanger)}><Icon name="alert" size={24} /></span>
+      <span className={cx(s.stateIcon, s.stateIconDanger)}><Icon name="alert" size={28} /></span>
       <h3 className={s.stateTitle}>{title}</h3>
       <p className={s.stateText}>{text}</p>
       {onRetry ? (
@@ -62,7 +62,7 @@ export interface StepItem { key: string; label: string; done: boolean; current: 
 
 export function Stepper({ steps, rejected }: { steps: StepItem[]; rejected?: boolean }) {
   return (
-    <ol className={s.stepper} aria-label="Progress" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+    <ol className={s.stepper} aria-label="Progress">
       {steps.map((st, i) => (
         <li key={st.key} className={cx(s.step, st.done && !st.current && s.stepDone, st.current && !rejected && s.stepCurrent, st.current && rejected && s.stepRejected)} aria-current={st.current ? 'step' : undefined}>
           <span className={s.stepDot}>{st.done && !st.current ? <Icon name="check" size={14} /> : st.current && rejected ? <Icon name="close" size={14} /> : i + 1}</span>
@@ -79,7 +79,7 @@ export function Timeline({ items }: { items: Array<{ key: string | number; title
       {items.map((it) => (
         <li key={it.key} className={s.tlItem}>
           <span className={cx(s.tlDot, it.done && s.tlDone)}><Icon name={it.icon ?? (it.done ? 'check' : 'clock')} size={13} /></span>
-          <div style={{ minWidth: 0 }}>
+          <div className={s.tlText}>
             <div className={s.tlTitle}>{it.title}</div>
             {it.sub ? <div className={s.tlSub}>{it.sub}</div> : null}
           </div>

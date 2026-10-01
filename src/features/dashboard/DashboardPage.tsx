@@ -42,8 +42,8 @@ export function DashboardPage() {
       <StatGrid>
         <StatCard icon="briefcase" label="Open roles" value={d?.stats.openRoles.value ?? 0} delta={d?.stats.openRoles.delta} loading={!d} />
         <StatCard icon="candidates" label="Active candidates" value={d?.stats.activeCandidates.value ?? 0} delta={d?.stats.activeCandidates.delta} loading={!d} />
-        <StatCard icon="interviews" label="Interviews this week" value={d?.stats.interviewsThisWeek.value ?? 0} hint="7 days" loading={!d} />
-        <StatCard icon="checkcircle" label="Hired this month" value={d?.stats.hiredThisMonth.value ?? 0} hint="MTD" loading={!d} />
+        <StatCard icon="interviews" label="Interviews this week" value={d?.stats.interviewsThisWeek.value ?? 0} loading={!d} />
+        <StatCard icon="checkcircle" label="Hired this month" value={d?.stats.hiredThisMonth.value ?? 0} loading={!d} />
       </StatGrid>
 
       <div className={w.cols21}>

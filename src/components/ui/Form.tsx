@@ -81,8 +81,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Omit<TextInputProps, '
       icon="lock"
       {...props}
       trailing={
-        <button type="button" onClick={() => setShown((v) => !v)} aria-label={shown ? 'Hide password' : 'Show password'} aria-pressed={shown}
-          style={{ width: 36, height: 32, border: 0, background: 'none', color: 'var(--text3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}>
+        <button type="button" className={s.trailBtn} onClick={() => setShown((v) => !v)} aria-label={shown ? 'Hide password' : 'Show password'} aria-pressed={shown}>
           <Icon name={shown ? 'eyeoff' : 'eye'} size={17} />
         </button>
       }
@@ -147,12 +146,33 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   );
 });
 
+/** One choice from a short list, as radio buttons (drawn in the house style by global.css). */
+export function RadioGroup<T extends string>({ legend, name, options, value, onChange, inline }: {
+  legend: ReactNode; name: string; options: Array<{ value: T; label: ReactNode; description?: ReactNode; disabled?: boolean }>;
+  value: T | null; onChange: (v: T) => void; inline?: boolean;
+}) {
+  return (
+    <fieldset className={cx(s.radioGroup, inline && s.radioGroupInline)}>
+      <legend className={s.radioLegend}>{legend}</legend>
+      {options.map((o) => (
+        <label key={o.value} className={s.check}>
+          <input type="radio" name={name} value={o.value} checked={value === o.value} disabled={o.disabled} onChange={() => onChange(o.value)} />
+          <span className={s.checkText}>
+            <span>{o.label}</span>
+            {o.description ? <span className={s.checkDesc}>{o.description}</span> : null}
+          </span>
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 export function Toggle({ checked, onChange, label, description, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: ReactNode; description?: ReactNode; disabled?: boolean }) {
   const id = useId();
   return (
     <div className={s.toggleRow}>
       <span className={s.checkText}>
-        <span id={`${id}-l`} style={{ fontWeight: 600 }}>{label}</span>
+        <span id={`${id}-l`} className={s.toggleLabel}>{label}</span>
         {description ? <span className={s.checkDesc}>{description}</span> : null}
       </span>
       <button type="button" role="switch" aria-checked={checked} aria-labelledby={`${id}-l`} disabled={disabled} className={s.toggle} onClick={() => onChange(!checked)} />
@@ -195,8 +215,10 @@ export function Dropzone({ accept, hint, title = 'Drop a file here or browse', e
       onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files[0]; if (f && !disabled) onFile(f); }}
     >
       <span className={s.dropIcon}><Icon name="upload" size={20} /></span>
-      <span className={s.dropTitle}>{title}</span>
-      <span className={s.dropHint}>{hint}</span>
+      <span className={s.dropText}>
+        <span className={s.dropTitle}>{title}</span>
+        <span className={s.dropHint}>{hint}</span>
+      </span>
       <input ref={input} type="file" accept={accept} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
     </div>
   );
@@ -215,7 +237,7 @@ export function FileRow({ name, sub, progress, onRemove, actions }: { name: stri
       </span>
       {actions}
       {onRemove ? (
-        <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} style={{ border: 0, background: 'none', color: 'var(--text3)', padding: 6, borderRadius: 6, display: 'inline-flex' }}>
+        <button type="button" className={s.trailBtn} onClick={onRemove} aria-label={`Remove ${name}`}>
           <Icon name="close" size={16} />
         </button>
       ) : null}
