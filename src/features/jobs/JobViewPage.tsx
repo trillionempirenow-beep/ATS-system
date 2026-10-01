@@ -20,9 +20,16 @@ import s from './JobView.module.css';
 
 type Match = JobViewDto['matches'][number];
 
+const TIERS = [
+  { key: 'strong', label: 'Strong fit', hint: '75% and up', min: 75 },
+  { key: 'good', label: 'Good fit', hint: '60 to 74%', min: 60 },
+  { key: 'partial', label: 'Partial fit', hint: 'related skills or background', min: 0 },
+] as const;
+const tierOf = (score: number) => TIERS.find((t) => score >= t.min)!.key;
+
 function Score({ value }: { value: number }) {
   return (
-    <div className={s.score} data-high={value >= 80 ? '' : undefined} aria-label={`${value}% match`}>
+    <div className={s.score} data-tier={tierOf(value)} aria-label={`${value}% match`}>
       <strong className="num">{value}%</strong>
       <span className={s.scoreBar}><span style={{ width: `${value}%` }} /></span>
     </div>
@@ -63,14 +70,23 @@ function MatchPanel({ d, jobId }: { d: JobViewDto; jobId: number }) {
   } else if (!d.matchedAt) {
     body = <p className={w.faint}>Score every registered applicant against this role and see who fits.</p>;
   } else if (!d.matches.length) {
-    body = <p className={w.faint}>{d.scored ? `Scored ${d.scored} applicant${d.scored === 1 ? '' : 's'}; none reached 60% for this role.` : 'No registered applicants to score yet.'}</p>;
+    body = <p className={w.faint}>{d.scored ? `Scored ${d.scored} applicant${d.scored === 1 ? '' : 's'}; none has a real connection to this role yet.` : 'No registered applicants to score yet.'}</p>;
   } else {
-    body = <ul className={s.matches}>{d.matches.map((m) => <MatchItem key={m.candidateId} m={m} />)}</ul>;
+    body = TIERS.map((tier) => {
+      const list = d.matches.filter((m) => tierOf(m.score) === tier.key);
+      if (!list.length) return null;
+      return (
+        <section key={tier.key} className={s.tier}>
+          <h3 className={s.tierHead}>{tier.label}<span>{list.length} · {tier.hint}</span></h3>
+          <ul className={s.matches}>{list.map((m) => <MatchItem key={m.candidateId} m={m} />)}</ul>
+        </section>
+      );
+    });
   }
   return (
     <Card className={s.panel}>
       <CardHeader title={<span className={s.panelTitle}><Icon name="sparkle" size={16} />Matching applicants</span>}
-        subtitle="All registered applicants · 60%+"
+        subtitle="Everyone with a connection to the role, by fit"
         actions={d.matchingEnabled ? (
           <Button size="sm" variant={d.matchedAt ? 'secondary' : 'primary'} icon={d.matchedAt ? 'refresh' : 'sparkle'} loading={busy}
             onClick={() => run.mutate(undefined, { onError: (e) => toast.error(errorMessage(e)) })}>

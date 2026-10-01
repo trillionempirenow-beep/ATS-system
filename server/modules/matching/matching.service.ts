@@ -17,7 +17,10 @@ import { describeError } from '../../parsers/resume-ai.js';
  *    the job's previous scores.
  */
 
+/** Role suggestions shown to applicants start here. */
 export const MIN_MATCH = 60;
+/** The job page lists everyone with a real connection to the role, from here up (or with any matching requirement). */
+export const MIN_CONNECTION = 30;
 /** Inside the function's 60-second limit on Vercel, with room to save the result. */
 const TIMEOUT_MS = 50_000;
 /** Applicants scored for one job, after a quick keyword pre-filter. */

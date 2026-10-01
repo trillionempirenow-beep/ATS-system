@@ -218,8 +218,11 @@ The ATS-system n8n workflow's **Match applicants and jobs** flow
   application stays as it is; applying is up to them.
 - **Matching applicants for a job (any time):** open any job in the job list and
   press **Find matches** (later **Run again**). Every registered applicant is
-  scored against it in the background (up to a minute) and the ones at 60% and
-  up show on the right. It works for jobs that were already published, and it
+  scored against it in the background (up to a minute). Everyone with a real
+  connection to the role shows on the right with their %, grouped as Strong fit
+  (75%+), Good fit (60-74%) and Partial fit (related skills or background); only
+  applicants with no connection are left out. Transferable skills count (Vue
+  for a React role, design-system coding for a frontend role). It works for jobs that were already published, and it
   also runs by itself when a job is published. Each run replaces the last.
 
 Setup: nothing extra if `CV_N8N_WEBHOOK_URL` is set; the ATS calls

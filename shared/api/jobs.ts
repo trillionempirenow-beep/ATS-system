@@ -45,7 +45,7 @@ export interface MyJobsDto {
 export interface JobViewDto {
   job: NonNullable<JobEditorDto['job']>;
   applicants: Array<{ applicationId: number; candidateId: number; name: string; stage: Stage; appliedAt: string; aiScore: number | null }>;
-  /** Registered applicants the AI scored against this job, best first (60% and up). */
+  /** Registered applicants the AI found a real connection to this job, best first, with their score. */
   matches: Array<{
     candidateId: number; applicationId: number | null; name: string; currentTitle: string | null;
     score: number; reason: string; matched: string[]; missing: string[]; appliedHere: boolean;

@@ -5,7 +5,8 @@ import { USERS, getApp, signIn } from '../helpers.js';
 
 /**
  * A stand-in for the "Match applicants and jobs" n8n flow. For a job it scores
- * candidate 1 at 82 and everyone else 40, so the 60% cut-off shows.
+ * candidate 1 at 82 (strong), candidate 2 at 45 (partial, still shown) and
+ * everyone else 20 with nothing matched (no connection, hidden).
  */
 let n8n: Server;
 const calls: Array<{ mode: string }> = [];
@@ -14,7 +15,7 @@ interface Body { mode: string; candidates: Array<{ id: number }>; jobs: Array<{ 
 function fakeMatcher(body: Body) {
   calls.push({ mode: body.mode });
   const matches = body.mode === 'job'
-    ? body.candidates.map((c) => ({ candidate_id: c.id, job_id: body.jobs[0]!.id, score: c.id === 1 ? 82 : 40, reason: 'Strong SQL.', applicant_note: '', matched: ['SQL'], missing: [] }))
+    ? body.candidates.map((c) => ({ candidate_id: c.id, job_id: body.jobs[0]!.id, score: c.id === 1 ? 82 : c.id === 2 ? 45 : 20, reason: 'Strong SQL.', applicant_note: '', matched: c.id <= 2 ? ['SQL'] : [], missing: [] }))
     : body.jobs.map((j, i) => ({ candidate_id: body.candidates[0]!.id, job_id: j.id, score: i === 1 ? 77 : 55, reason: 'Fits.', applicant_note: 'Your SQL work fits this role.', matched: ['SQL'], missing: ['Go'] }));
   const analysis = body.mode === 'application'
     ? { score: 55, summary: 'Solid analyst, light on the applied role.', strengths: ['SQL'], concerns: ['No Go'], recommendation: 'Recommended for Screening Call', categories: { Skills: 60 } }
@@ -74,7 +75,7 @@ describe('job list, job page and AI matching', () => {
     expect(done.matchedAt).not.toBeNull();
     expect(done.matchingError).toBeNull();
     expect(done.scored).toBeGreaterThan(1);
-    expect(done.matches.map((m: { score: number }) => m.score)).toEqual([82]);
+    expect(done.matches.map((m: { score: number }) => m.score)).toEqual([82, 45]);
 
     // It can be run again at any time, on any job; the new scores replace the old.
     const jobCalls = calls.filter((c) => c.mode === 'job').length;

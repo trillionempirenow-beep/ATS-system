@@ -19,7 +19,7 @@ import { parseJobDescription, skillsToTags } from '../../parsers/jd-parser.js';
 import { parseJobWithAi } from '../../parsers/jd-ai.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import * as repo from './jobs.repository.js';
-import { MIN_MATCH, isMatching, matchingEnabled, startJobMatching } from '../matching/matching.service.js';
+import { MIN_CONNECTION, isMatching, matchingEnabled, startJobMatching } from '../matching/matching.service.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -97,8 +97,8 @@ export async function view(id: number, user: CurrentUser): Promise<JobViewDto> {
              (select a.id from applications a where a.candidate_id = m.candidate_id order by (a.job_id = ${id}) desc, a.applied_at desc limit 1) as application_id,
              exists (select 1 from applications a where a.candidate_id = m.candidate_id and a.job_id = ${id}) as applied_here
       from candidate_job_matches m join candidates c on c.id = m.candidate_id
-      where m.job_id = ${id} and m.score >= ${MIN_MATCH} and c.record_status = 'active'
-      order by m.score desc limit 20`,
+      where m.job_id = ${id} and (m.score >= ${MIN_CONNECTION} or cardinality(m.matched) > 0) and c.record_status = 'active'
+      order by m.score desc limit 40`,
     sql<{ n: number }[]>`select count(*)::int as n from candidate_job_matches where job_id = ${id}`,
   ]);
   return {
