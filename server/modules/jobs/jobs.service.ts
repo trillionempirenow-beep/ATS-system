@@ -1,8 +1,9 @@
 import type { z } from 'zod';
 import { canPublishJobs, hasPermission, isAdminLevel } from '../../../shared/domain/access.js';
 import { jobState, jobTags } from '../../../shared/domain/jobs.js';
+import type { Stage } from '../../../shared/domain/pipeline.js';
 import type {
-  ApprovalDetailDto, ApprovalEventDto, ApprovalQueueDto, ExtractPdfResultDto, JobEditorDto, JobRowDto, JobsOverviewDto, MyJobsDto,
+  ApprovalDetailDto, ApprovalEventDto, ApprovalQueueDto, ExtractPdfResultDto, JobEditorDto, JobRowDto, JobViewDto, JobsOverviewDto, MyJobsDto,
   approvalDecisionSchema, departmentSchema, jobStatusSchema, quickEditSchema, saveJobSchema,
 } from '../../../shared/api/jobs.js';
 import { sql, transaction } from '../../db/client.js';
@@ -11,13 +12,14 @@ import { jobReviewerIds, notify, notifyMany } from '../../core/notifications.js'
 import { getSettings, intSetting } from '../../core/settings.js';
 import type { CurrentUser } from '../../http/context.js';
 import { AppError, conflict, forbidden, isUniqueViolation, notFound, validationFailed } from '../../http/errors.js';
-import { iso, isoOrThrow } from '../../lib/format.js';
+import { fullName, iso, isoOrThrow } from '../../lib/format.js';
 import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { extractPdfText } from '../../parsers/text-extract.js';
 import { parseJobDescription, skillsToTags } from '../../parsers/jd-parser.js';
 import { parseJobWithAi } from '../../parsers/jd-ai.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import * as repo from './jobs.repository.js';
+import { MIN_MATCH, inBackground, matchJobOnce, matchingEnabled } from '../matching/matching.service.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -29,6 +31,9 @@ export function canEditJob(job: Pick<repo.JobRow, 'created_by' | 'owner_id' | 's
   return mine && ['draft', 'rejected', 'changes_requested'].includes(jobState(job));
 }
 
+/** Once, in the background: score every registered applicant against a newly published job. */
+const matchOnPublish = (jobId: number) => inBackground(`job ${jobId}`, () => matchJobOnce(jobId));
+
 function toRow(j: repo.JobRow, user: CurrentUser): JobRowDto {
   return {
     id: j.id, title: j.title, slug: j.slug, department: j.department, departmentId: j.department_id, location: j.location,
@@ -36,6 +41,7 @@ function toRow(j: repo.JobRow, user: CurrentUser): JobRowDto {
     status: j.status, approvalStatus: j.approval_status, state: jobState(j), applications: j.applications,
     creatorName: j.creator_name, reviewerName: j.reviewer_name, reviewNote: j.review_note, createdAt: isoOrThrow(j.created_at),
     publishedAt: iso(j.published_at), submittedAt: iso(j.submitted_at), canEdit: canEditJob(j, user),
+    mine: j.created_by === user.id || j.owner_id === user.id,
   };
 }
 
@@ -67,11 +73,52 @@ export async function overview(user: CurrentUser): Promise<JobsOverviewDto> {
   };
 }
 
+/** Every posting, for every staff member; other people's drafts stay private to them. */
+const visibleTo = (j: repo.JobRow, user: CurrentUser) => isAdminLevel(user) || j.created_by === user.id || j.owner_id === user.id || jobState(j) !== 'draft';
+
 export async function mine(user: CurrentUser): Promise<MyJobsDto> {
-  const jobs = (await repo.jobsOwnedBy(user.id)).map((j) => toRow(j, user));
+  const jobs = (await repo.allJobs()).filter((j) => visibleTo(j, user)).map((j) => toRow(j, user));
+  // The counts are about the person's own postings.
   const byState: MyJobsDto['byState'] = {};
-  for (const j of jobs) byState[j.state] = (byState[j.state] ?? 0) + 1;
+  for (const j of jobs) if (j.mine) byState[j.state] = (byState[j.state] ?? 0) + 1;
   return { jobs, byState, canPost: hasPermission(user, 'job_posting') };
+}
+
+export async function view(id: number, user: CurrentUser): Promise<JobViewDto> {
+  const job = await repo.byId(id);
+  if (!job || !visibleTo(job, user)) throw notFound('That job no longer exists.');
+  const [applicants, matches] = await Promise.all([
+    sql<{ application_id: number; candidate_id: number; first_name: string; last_name: string; stage: Stage; applied_at: Date; score: number | null }[]>`
+      select a.id as application_id, c.id as candidate_id, c.first_name, c.last_name, a.stage, a.applied_at, x.overall_score as score
+      from applications a join candidates c on c.id = a.candidate_id left join candidate_ai_analysis x on x.application_id = a.id
+      where a.job_id = ${id} and a.status = 'active' order by a.applied_at desc`,
+    sql<{ candidate_id: number; first_name: string; last_name: string; current_title: string | null; score: number; reason: string; matched: string[]; missing: string[]; application_id: number | null; applied_here: boolean }[]>`
+      select m.candidate_id, c.first_name, c.last_name, c.current_title, m.score, m.reason, m.matched, m.missing,
+             (select a.id from applications a where a.candidate_id = m.candidate_id order by (a.job_id = ${id}) desc, a.applied_at desc limit 1) as application_id,
+             exists (select 1 from applications a where a.candidate_id = m.candidate_id and a.job_id = ${id}) as applied_here
+      from candidate_job_matches m join candidates c on c.id = m.candidate_id
+      where m.job_id = ${id} and m.score >= ${MIN_MATCH} and c.record_status = 'active'
+      order by m.score desc limit 20`,
+  ]);
+  return {
+    job: editorJob(job, user),
+    applicants: applicants.map((a) => ({ applicationId: a.application_id, candidateId: a.candidate_id, name: fullName(a.first_name, a.last_name), stage: a.stage, appliedAt: isoOrThrow(a.applied_at), aiScore: a.score })),
+    matches: matches.map((m) => ({
+      candidateId: m.candidate_id, applicationId: m.application_id, name: fullName(m.first_name, m.last_name), currentTitle: m.current_title,
+      score: m.score, reason: m.reason, matched: m.matched, missing: m.missing, appliedHere: m.applied_here,
+    })),
+    matchedAt: iso(job.matched_at),
+    matchingEnabled: matchingEnabled(),
+  };
+}
+
+/** Jobs published before matching existed get their one-time scoring from the job page. */
+export async function runMatching(id: number, user: CurrentUser): Promise<JobViewDto> {
+  const job = await repo.byId(id);
+  if (!job || !visibleTo(job, user)) throw notFound('That job no longer exists.');
+  if (!matchingEnabled()) throw new AppError(503, 'service_unavailable', 'AI matching is not connected yet. See SETUP.md, "Applicant and job matching".');
+  if (!job.matched_at) await matchJobOnce(id);
+  return view(id, user);
 }
 
 export async function editor(id: number | null, user: CurrentUser): Promise<JobEditorDto> {
@@ -154,7 +201,10 @@ export async function save(id: number | null, input: z.infer<typeof saveJobSchem
   });
 
   if (input.action === 'submit') await notifySubmitted(result.jobId, f.title, user);
-  if (input.action === 'publish') emitN8nEvent('job.status_changed', { jobId: result.jobId, title: f.title, status: 'open' });
+  if (input.action === 'publish') {
+    emitN8nEvent('job.status_changed', { jobId: result.jobId, title: f.title, status: 'open' });
+    matchOnPublish(result.jobId);
+  }
   return result;
 }
 
@@ -203,6 +253,7 @@ export async function setStatus(id: number, input: z.infer<typeof jobStatusSchem
     return job.title;
   });
   emitN8nEvent('job.status_changed', { jobId: id, title, status: input.status });
+  if (input.status === 'open') matchOnPublish(id);
 }
 
 export async function quickEdit(id: number, input: z.infer<typeof quickEditSchema>, ctx: Ctx): Promise<void> {
@@ -318,5 +369,6 @@ export async function decide(id: number, input: z.infer<typeof approvalDecisionS
     await notify({ userId: decided.recipient, actorId: ctx.user.id, type: 'job_decision', title: decided.title, body: decided.body, link: decided.link, actionLabel: 'Open posting', entityType: 'job', entityId: id });
   }
   emitN8nEvent('job.decided', { jobId: id, title: decided.job.title, decision: input.decision, published: decided.publish });
+  if (decided.publish) matchOnPublish(id);
   return { published: decided.publish };
 }

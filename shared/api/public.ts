@@ -142,7 +142,8 @@ export interface ApplicationStatusDto {
   timeline: Array<{ key: Stage; label: string; reached: boolean; current: boolean }>;
   feedback: { fit: string; notes: string | null } | null;
   /** Other roles the hiring team suggested, newest first. `slug` is null once the role closes. */
-  suggestions: Array<{ title: string; slug: string | null; note: string | null; alreadyApplied: boolean }>;
+  /** Roles that could suit the applicant: from the hiring team, or from the one-time AI match (fromAi). */
+  suggestions: Array<{ title: string; slug: string | null; note: string | null; alreadyApplied: boolean; fromAi: boolean }>;
   /** What the applicant sent. Cover letter and answer belong to this application; the rest is their current record. */
   submission: { coverLetter: string | null; whyUs: string | null; portfolio: string | null; source: string | null; resumeName: string | null };
   interviews: CandidateInterviewDto[];

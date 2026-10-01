@@ -37,6 +37,12 @@ export const ADMIN_PERMISSION_CATALOG: Record<PermissionKey, PermissionInfo> = {
   },
 };
 
+/**
+ * What a Super Admin may grant an Admin. Creating HR/Recruiter accounts
+ * (manage_accounts) is the Super Admin's alone and is never granted.
+ */
+export const ADMIN_GRANTABLE_PERMISSIONS = PERMISSIONS.filter((p) => p !== 'manage_accounts');
+
 /** The subset an Admin may pass on to an HR/Recruiter. */
 export const RECRUITER_PERMISSION_KEYS = ['job_management', 'job_posting', 'audit_trail'] as const satisfies readonly PermissionKey[];
 

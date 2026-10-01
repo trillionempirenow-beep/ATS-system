@@ -71,6 +71,8 @@ const schema = z.object({
   // called with header X-ATS-Secret: CV_N8N_SECRET), Gemini, then Claude. With none
   // the rule-based parser is used.
   CV_N8N_WEBHOOK_URL: optionalUrl,
+  // Optional: the applicant/job matching flow. By default it sits next to the CV reader (…/webhook/ats-match).
+  MATCH_N8N_WEBHOOK_URL: optionalUrl,
   // Create job posting > upload a job description: the ATS-system workflow's JD reader.
   JD_N8N_WEBHOOK_URL: optionalUrl,
   CV_N8N_SECRET: optionalString,

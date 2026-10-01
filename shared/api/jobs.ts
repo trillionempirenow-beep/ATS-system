@@ -1,3 +1,4 @@
+import type { Stage } from '../domain/pipeline.js';
 import { z } from 'zod';
 import { EMPLOYMENT_TYPES, JOB_STATUSES, type ApprovalStatus, type EmploymentType, type JobApprovalAction, type JobState, type JobStatus } from '../domain/jobs.js';
 
@@ -23,6 +24,8 @@ export interface JobRowDto {
   publishedAt: string | null;
   submittedAt: string | null;
   canEdit: boolean;
+  /** Created or owned by the person looking. */
+  mine: boolean;
 }
 
 export interface JobsOverviewDto {
@@ -36,6 +39,20 @@ export interface MyJobsDto {
   jobs: JobRowDto[];
   byState: Partial<Record<JobState, number>>;
   canPost: boolean;
+}
+
+/** The job's own page in the workspace: the posting, who has applied, and who else would fit. */
+export interface JobViewDto {
+  job: NonNullable<JobEditorDto['job']>;
+  applicants: Array<{ applicationId: number; candidateId: number; name: string; stage: Stage; appliedAt: string; aiScore: number | null }>;
+  /** Registered applicants the AI scored against this job, best first (60% and up). */
+  matches: Array<{
+    candidateId: number; applicationId: number | null; name: string; currentTitle: string | null;
+    score: number; reason: string; matched: string[]; missing: string[]; appliedHere: boolean;
+  }>;
+  /** When the one-time scoring against all applicants ran; null if it has not yet. */
+  matchedAt: string | null;
+  matchingEnabled: boolean;
 }
 
 export interface JobEditorDto {

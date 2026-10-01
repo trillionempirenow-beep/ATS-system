@@ -206,6 +206,31 @@ Set `JD_N8N_WEBHOOK_URL` = `https://<your-n8n>/webhook/ats-parse-jd` in Vercel
 (it uses the same secret as the CV reader) and redeploy. Without it, or if the
 flow fails, the built-in reader fills the form and the page says why.
 
+## Applicant and job matching (n8n, Gemini)
+
+The ATS-system n8n workflow's **Match applicants and jobs** flow
+(`/webhook/ats-match`, Gemini) runs **one time** for each event and the results
+are stored:
+
+- **Someone applies:** their CV and application are analysed for that job (the
+  AI analysis on their profile), and they are scored against every other open
+  job. Roles that fit 60% or more (up to 3) appear on their **application status
+  page** as "Another role that could fit you". Their application stays as it is;
+  applying is up to them.
+- **A job is published:** every registered applicant is scored against it. The
+  job's page in the workspace (open any row in the job list) shows the ones at
+  60% and up on the right. For jobs published before this existed, press
+  **Find matching applicants** once on that page.
+
+Setup: nothing extra if `CV_N8N_WEBHOOK_URL` is set; the ATS calls
+`/webhook/ats-match` on the same n8n with the same secret. To use another
+address, set `MATCH_N8N_WEBHOOK_URL`. The flow never receives names, emails or
+phone numbers.
+
+The job list shows every staff member all postings (drafts stay with their
+author) with a **Created by** column. The careers site never shows who created
+a posting.
+
 ## Acme assistant (n8n agent, voice)
 
 The robot in the bottom-right corner is an agent: ask it things ("sino nasa

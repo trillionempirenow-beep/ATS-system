@@ -26,6 +26,7 @@ const pick = (f: ParsedResumeFields, keys: Array<keyof ParsedResumeFields>): Par
 import { avatarUrlForCandidate } from '../media/media.urls.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import { analyseApplication } from './application-analysis.js';
+import { analyseApplicationOnce, inBackground, matchingEnabled } from '../matching/matching.service.js';
 import * as repo from './candidates.repository.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
@@ -219,6 +220,19 @@ export async function saveStageReview(applicationId: number, stageType: ReviewSt
 
 export async function runAnalysis(applicationId: number, ctx: Ctx): Promise<void> {
   const app = await basics(applicationId);
+  // The AI analysis runs once per application; the basic one below is the fallback.
+  if (matchingEnabled()) {
+    try {
+      const r = await analyseApplicationOnce(applicationId);
+      const [done] = await sql<{ ok: boolean }[]>`select true as ok from candidate_ai_analysis where application_id = ${applicationId} and ai_notes like 'AI analysis%'`;
+      if (r === 'done' || done) {
+        await audit({ userId: ctx.user.id, action: 'ai_analysis_generated', entityType: 'application', entityId: applicationId, ip: ctx.ip });
+        return;
+      }
+    } catch (e) {
+      console.warn('[analysis] AI analysis failed; using the basic analysis', e);
+    }
+  }
   const [doc] = await sql<{ id: number }[]>`select id from candidate_documents where candidate_id = ${app.candidate_id} limit 1`;
   const a = analyseApplication({
     candidateId: app.candidate_id, applicationId, coverLetter: app.cover_letter, whyUs: app.why_us,
@@ -418,6 +432,8 @@ export async function addCandidate(input: z.infer<typeof addCandidateSchema>, ct
     return { candidateId, applicationId };
   });
   if (!isDraft) emitN8nEvent('candidate.created', { candidateId: result.candidateId, applicationId: result.applicationId, source: input.source, actorId: ctx.user.id });
+  const newApplication = result.applicationId;
+  if (newApplication) inBackground(`application ${newApplication}`, () => analyseApplicationOnce(newApplication));
   return { ...result, draft: isDraft };
 }
 

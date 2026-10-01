@@ -68,7 +68,9 @@ function SuggestionsCard({ app }: { app: ApplicationStatusDto }) {
     <Card>
       <CardHeader
         title={app.rejected ? (many ? 'Roles that might suit you' : 'A role that might suit you') : (many ? 'Other roles that could fit you' : 'Another role that could fit you')}
-        subtitle="Suggested by the hiring team based on your application."
+        subtitle={app.suggestions.every((sg) => sg.fromAi)
+          ? (app.rejected ? 'Based on your CV and application.' : 'Based on your CV. Your current application stays as it is, and applying is up to you.')
+          : 'Suggested by the hiring team based on your application.'}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {app.suggestions.map((sg) => (
@@ -77,7 +79,7 @@ function SuggestionsCard({ app }: { app: ApplicationStatusDto }) {
             {sg.note ? <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line' }}>{sg.note}</p> : null}
             <div style={{ marginTop: 8 }}>
               {sg.alreadyApplied ? <Badge tone="success" icon="checkcircle">You applied for this role</Badge>
-                : sg.slug ? <ButtonLink to={`/jobs/${sg.slug}`} size="sm" iconRight="arrowr">View role</ButtonLink>
+                : sg.slug ? <ButtonLink to={`/jobs/${sg.slug}`} size="sm" variant={app.rejected ? 'primary' : 'secondary'} iconRight="arrowr">View role</ButtonLink>
                   : <span style={{ color: 'var(--text3)', fontSize: 13 }}>This role is no longer open.</span>}
             </div>
           </div>
@@ -158,11 +160,13 @@ function ApplicationView({ app, email }: { app: ApplicationStatusDto; email: str
             <p style={{ color: 'var(--text2)', whiteSpace: 'pre-line' }}>{app.feedback.notes || 'The team did not add further notes.'}</p>
           </Card>
         ) : null}
-        {app.suggestions.length ? <SuggestionsCard app={app} /> : null}
+        {/* After a rejection the next step is another role, so it comes first; while the application is open, its progress does. */}
+        {app.rejected && app.suggestions.length ? <SuggestionsCard app={app} /> : null}
         <Card>
           <CardHeader title="Progress" />
           <Timeline items={app.events.map((e, i) => ({ key: e.key, title: e.title, sub: `${formatDate(e.at)}${e.note ? ` · ${e.note}` : ''}`, done: i > 0 || e.title === 'Application received' }))} />
         </Card>
+        {!app.rejected && app.suggestions.length ? <SuggestionsCard app={app} /> : null}
         <SubmissionCard app={app} />
       </div>
       <aside style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

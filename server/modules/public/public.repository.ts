@@ -96,9 +96,9 @@ export async function latestFeedback(applicationId: number) {
 
 /** One row per suggested role (the newest note wins), newest first. */
 export async function suggestionsFor(applicationId: number, candidateId: number) {
-  return sql<{ title: string; slug: string; status: string; note: string | null; already_applied: boolean }[]>`
-    select title, slug, status, note, already_applied from (
-      select distinct on (s.suggested_job_id) j.title, j.slug, j.status, s.note, s.created_at,
+  return sql<{ title: string; slug: string; status: string; note: string | null; already_applied: boolean; from_ai: boolean }[]>`
+    select title, slug, status, note, already_applied, from_ai from (
+      select distinct on (s.suggested_job_id) j.title, j.slug, j.status, s.note, s.created_at, s.from_ai,
              exists (select 1 from applications a where a.candidate_id = ${candidateId} and a.job_id = s.suggested_job_id) as already_applied
       from candidate_role_suggestions s join jobs j on j.id = s.suggested_job_id
       where s.application_id = ${applicationId}

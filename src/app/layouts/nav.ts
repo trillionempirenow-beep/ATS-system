@@ -55,11 +55,10 @@ export function navFor(user: MeDto): NavGroup[] {
   }];
 
   const jobs: NavItem[] = [];
-  if (perm('job_management')) {
-    jobs.push(user.role === 'admin'
-      ? { to: '/app/jobs', label: 'Jobs', icon: 'briefcase', end: true }
-      : { to: '/app/jobs/mine', label: 'My jobs', icon: 'briefcase' });
-  }
+  // Every staff member sees the job list; managing listings stays with the permission.
+  jobs.push(user.role === 'admin' && perm('job_management')
+    ? { to: '/app/jobs', label: 'Jobs', icon: 'briefcase', end: true }
+    : { to: '/app/jobs/mine', label: 'Job postings', icon: 'briefcase' });
   if (perm('job_posting')) jobs.push({ to: '/app/jobs/new', label: 'Create job', icon: 'plus' });
   if (canPublishJobs(subject)) jobs.push({ to: '/app/jobs/approvals', label: 'Job approvals', icon: 'checkcircle', badge: 'approvals' });
   if (jobs.length) groups.push({ key: 'jobs', label: 'Jobs', icon: 'briefcase', collapsible: true, items: jobs });

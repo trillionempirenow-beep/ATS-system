@@ -4,37 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { Avatar, Badge } from '@/components/ui/Display';
 import { Modal } from '@/components/ui/Overlay';
 import c from '@/features/careers/Careers.module.css';
+import { Bullets, Tags } from '@/features/careers/PostingSections';
 import s from './AssistantDock.module.css';
 
 /**
  * What a job posting or new applicant the assistant prepared will look like,
  * before anything is saved. The job uses the careers page's own styles.
  */
-
-const lines = (v: string) => v.split(/\r?\n/).map((l) => l.replace(/^[\s•\-*]+/, '').trim()).filter(Boolean);
-const tags = (v: string) => v.split(/\r?\n|,\s*/).map((t) => t.trim()).filter(Boolean);
-
-function Bullets({ title, text }: { title: string; text: string }) {
-  const items = lines(text);
-  if (!items.length) return null;
-  return (
-    <section className={c.block}>
-      <h2 className={c.blockTitle}>{title}</h2>
-      <ul className={c.bullets}>{items.map((i) => <li key={i}>{i}</li>)}</ul>
-    </section>
-  );
-}
-
-function Tags({ title, text }: { title: string; text: string }) {
-  const items = tags(text);
-  if (!items.length) return null;
-  return (
-    <section className={c.block}>
-      <h2 className={c.blockTitle}>{title}</h2>
-      <div className={c.tags}>{items.map((t) => <span key={t} className={c.tag}>{t}</span>)}</div>
-    </section>
-  );
-}
 
 /** The email as the recipient's inbox shows it: header, then the real HTML in a sandboxed frame. */
 function EmailPreview({ email }: { email: PreviewEmail }) {

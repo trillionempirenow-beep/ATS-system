@@ -23,6 +23,7 @@ export interface JobRow {
   review_note: string | null;
   published_at: Date | null;
   created_at: Date;
+  matched_at: Date | null;
   description: string | null;
   requirements: string | null;
   responsibilities: string | null;

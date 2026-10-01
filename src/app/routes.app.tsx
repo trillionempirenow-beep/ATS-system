@@ -30,9 +30,10 @@ export const appRoutes: RouteObject[] = [
         path: 'jobs',
         children: [
           { index: true, element: <RequireRoles roles={['admin']}><RequirePermission permission="job_management">{page(() => import('@/features/jobs/JobsPage'), 'JobsPage')}</RequirePermission></RequireRoles> },
-          { path: 'mine', element: <RequirePermission permission="job_management">{page(() => import('@/features/jobs/MyJobsPage'), 'MyJobsPage')}</RequirePermission> },
+          { path: 'mine', element: page(() => import('@/features/jobs/MyJobsPage'), 'MyJobsPage') },
           { path: 'new', element: <RequirePermission permission="job_posting">{page(() => import('@/features/jobs/JobEditorPage'), 'JobEditorPage')}</RequirePermission> },
           { path: ':id/edit', element: <RequireAnyPermission permissions={['job_posting', 'job_management']}>{page(() => import('@/features/jobs/JobEditorPage'), 'JobEditorPage')}</RequireAnyPermission> },
+          { path: ':id', element: page(() => import('@/features/jobs/JobViewPage'), 'JobViewPage') },
           {
             path: 'approvals',
             element: <RequireCanPublish />,

@@ -53,7 +53,8 @@ export async function loadActiveUser(userId: number): Promise<CurrentUser | null
     accountStatus: row.account_status,
     permissions: row.role === 'super_admin'
       ? ['manage_accounts', 'job_management', 'job_posting', 'audit_trail', 'applicant_portal']
-      : row.permissions,
+      // Account management is the Super Admin's alone, whatever older grants say.
+      : row.permissions.filter((p) => p !== 'manage_accounts'),
     profileImage: row.profile_image,
     jobTitle: row.job_title,
     createdBy: row.created_by,

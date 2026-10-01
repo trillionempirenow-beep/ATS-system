@@ -41,39 +41,27 @@ describe('job posting approval workflow', () => {
 });
 
 describe('accounts and seats', () => {
-  it('admin creates a recruiter that waits for Super Admin approval and uses a seat', async () => {
+  it('only the Super Admin creates HR/Recruiter accounts; Admins cannot be given that permission', async () => {
     const admin = await signIn(USERS.admin);
-    const before = await admin.agent.get('/api/v1/users');
-    const used = before.body.data.seats.used as number;
-    const created = await admin.agent.post('/api/v1/users').set('X-CSRF-Token', admin.csrf)
-      .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'temporary1', permissions: ['job_posting', 'manage_accounts'] });
-    expect(created.status).toBe(422);
-    const ok = await admin.agent.post('/api/v1/users').set('X-CSRF-Token', admin.csrf)
+    // Even an Admin who held the old grant no longer has it.
+    expect(admin.me.permissions).not.toContain('manage_accounts');
+    const denied = await admin.agent.post('/api/v1/users').set('X-CSRF-Token', admin.csrf)
       .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'temporary1', permissions: ['job_posting'] });
-    expect(ok.body.data.status).toBe('pending');
-    const after = await admin.agent.get('/api/v1/users');
-    expect(after.body.data.seats.used).toBe(used + 1);
+    expect(denied.status).toBe(403);
 
-    const approveOwn = await admin.agent.patch(`/api/v1/users/${ok.body.data.id}/status`).set('X-CSRF-Token', admin.csrf).send({ status: 'active' });
-    expect(approveOwn.status).toBe(403);
-
-    const sa = await signIn(USERS.superAdmin);
-    await sa.agent.patch(`/api/v1/users/${ok.body.data.id}/status`).set('X-CSRF-Token', sa.csrf).send({ status: 'active' }).expect(200);
-    const nina = await signIn('nina.park@acme.test', 'temporary1');
-    expect(nina.me.permissions).toEqual(['job_posting']);
-  });
-
-  it('refuses a seat past the limit', async () => {
     const sa = await signIn(USERS.superAdmin);
     const admins = await sa.agent.get('/api/v1/admin/admins');
     const alicia = admins.body.data.admins.find((a: { email: string }) => a.email === USERS.admin);
+    expect(alicia.permissions).not.toContain('manage_accounts');
+    // Granting it is ignored.
     await sa.agent.put(`/api/v1/admin/admins/${alicia.id}/permissions`).set('X-CSRF-Token', sa.csrf)
-      .send({ hrAccountLimit: alicia.seatsUsed, permissions: alicia.permissions }).expect(200);
-    const admin = await signIn(USERS.admin);
-    const full = await admin.agent.post('/api/v1/users').set('X-CSRF-Token', admin.csrf)
-      .send({ name: 'Extra Person', email: 'extra@acme.test', password: 'temporary1', permissions: [] });
-    expect(full.status).toBe(409);
-    expect(full.body.error.message).toMatch(/No available HR\/Recruiter seats/);
+      .send({ hrAccountLimit: alicia.hrAccountLimit, permissions: [...alicia.permissions, 'manage_accounts'] }).expect(200);
+    const again = await signIn(USERS.admin);
+    expect(again.me.permissions).not.toContain('manage_accounts');
+
+    const created = await sa.agent.post('/api/v1/users').set('X-CSRF-Token', sa.csrf)
+      .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'temporary1', permissions: ['job_posting'] });
+    expect(created.status, JSON.stringify(created.body)).toBeLessThan(300);
   });
 
   it('password reset: request, Super Admin approval issues a one-time link, link works once', async () => {

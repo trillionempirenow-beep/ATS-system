@@ -2,7 +2,7 @@ import { Router, type Request } from 'express';
 import { approvalDecisionSchema, departmentSchema, extractPdfSchema, jobStatusSchema, quickEditSchema, saveJobSchema } from '../../../shared/api/jobs.js';
 import { sql } from '../../db/client.js';
 import { body, idParam } from '../../http/validate.js';
-import { requireAnyPermission, requireAuth, requireCanPublish, requirePermission, requireRoles } from '../../middleware/guards.js';
+import { requireAnyPermission, requireAuth, requireCanPublish, requirePermission, requireRoles, requireStaff } from '../../middleware/guards.js';
 import * as service from './jobs.service.js';
 
 export const jobsRouter = Router();
@@ -15,7 +15,8 @@ jobsRouter.get('/jobs', ...jobManagement, async (req, res) => {
   res.json({ data: await service.overview(req.auth!.user) });
 });
 
-jobsRouter.get('/jobs/mine', requirePermission('job_management'), async (req, res) => {
+// Every staff member sees every posting (other people's drafts stay private).
+jobsRouter.get('/jobs/mine', requireStaff, async (req, res) => {
   res.json({ data: await service.mine(req.auth!.user) });
 });
 
@@ -29,6 +30,14 @@ jobsRouter.post('/jobs/extract-pdf', requirePermission('job_posting'), async (re
 
 jobsRouter.post('/jobs', requirePermission('job_posting'), async (req, res) => {
   res.status(201).json({ data: await service.save(null, body(req, saveJobSchema), ctx(req)) });
+});
+
+jobsRouter.get('/jobs/:id/overview', requireStaff, async (req, res) => {
+  res.json({ data: await service.view(idParam(req), req.auth!.user) });
+});
+
+jobsRouter.post('/jobs/:id/match', requireStaff, async (req, res) => {
+  res.json({ data: await service.runMatching(idParam(req), req.auth!.user) });
 });
 
 jobsRouter.get('/jobs/:id', jobEditors, async (req, res) => {

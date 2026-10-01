@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { JobRowDto } from '@shared/api/jobs';
 import { JOB_STATUSES, type JobStatus } from '@shared/domain/jobs';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -13,7 +13,7 @@ import { QueryErrorPage } from '@/app/system/StatusPages';
 import { ApiError, errorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { useCreateDepartment, useJobStatus, useJobsOverview, useQuickEdit } from './api';
-import { ApplicantsCell, RoleCell } from './JobCells';
+import { ApplicantsCell, CreatorCell, RoleCell } from './JobCells';
 import w from '../workspace.module.css';
 import s from './Jobs.module.css';
 
@@ -26,7 +26,7 @@ function StatusEditor({ job }: { job: JobRowDto }) {
   useEffect(() => setValue(job.status), [job.status]);
   const dirty = value !== job.status;
   return (
-    <div className={s.statusEdit} onClick={(e) => e.stopPropagation()}>
+    <div className={s.statusEdit} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
       <Select inputSize="sm" aria-label={`Status of ${job.title}`} value={value} onChange={(e) => setValue(e.target.value as JobStatus)}
         options={JOB_STATUSES.map((st) => ({ value: st, label: STATUS_LABELS[st] }))} />
       <Button size="sm" variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} loading={mutation.isPending}
@@ -106,6 +106,7 @@ export function JobsPage() {
   const q = useJobsOverview();
   const [editing, setEditing] = useState<JobRowDto | null>(null);
   const [addDept, setAddDept] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => { document.title = 'Job management · Acme People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
@@ -114,6 +115,7 @@ export function JobsPage() {
     { key: 'role', header: 'Role', cell: (j) => <RoleCell job={j} />, primary: true },
     { key: 'dept', header: 'Department', cell: (j) => j.department ?? '—', label: 'Department' },
     { key: 'apps', header: 'Applicants', cell: (j) => <ApplicantsCell job={j} />, label: 'Applicants' },
+    { key: 'creator', header: 'Created by', cell: (j) => <CreatorCell job={j} />, label: 'Created by' },
     { key: 'posted', header: 'Posted', cell: (j) => formatDate(j.publishedAt ?? j.createdAt, { month: 'short', day: 'numeric' }), label: 'Posted' },
     {
       key: 'status', header: 'Status', label: 'Status',
@@ -122,7 +124,7 @@ export function JobsPage() {
     {
       key: 'actions', header: 'Actions', align: 'right',
       cell: (j) => (
-        <div className={s.rowActions}>
+        <div className={s.rowActions} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <Button size="sm" variant="ghost" onClick={() => setEditing(j)}>Quick edit</Button>
           {j.state === 'published' ? <ButtonLink size="sm" variant="ghost" icon="external" to={`/jobs/${j.slug}`} target="_blank" rel="noopener noreferrer" aria-label={`View ${j.title} on the careers site`} /> : null}
         </div>
@@ -157,7 +159,7 @@ export function JobsPage() {
               <ButtonLink size="sm" icon="plus" to="/app/jobs/new">Create job posting</ButtonLink>
             </>} />
         </div>
-        <DataTable columns={columns} rows={d?.jobs ?? []} rowKey={(j) => j.id} loading={!d} caption="Job listings"
+        <DataTable columns={columns} rows={d?.jobs ?? []} rowKey={(j) => j.id} loading={!d} caption="Job listings" onRowClick={(j) => navigate(`/app/jobs/${j.id}`)}
           empty={<EmptyState compact icon="briefcase" title="No job listings yet" text="Create the first posting, or add departments to organise them." actions={<ButtonLink icon="plus" to="/app/jobs/new">Create job posting</ButtonLink>} />} />
       </Card>
       {d && d.departments.length ? (

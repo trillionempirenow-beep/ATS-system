@@ -21,3 +21,9 @@ export function ApplicantsCell({ job }: { job: Pick<JobRowDto, 'applications' | 
     </div>
   );
 }
+
+/** Workspace only: the careers site never shows who wrote a posting. */
+export function CreatorCell({ job }: { job: Pick<JobRowDto, 'creatorName' | 'mine'> }) {
+  if (job.mine) return <span className={s.creator}>You</span>;
+  return <span className={s.creator}>{job.creatorName ?? '—'}</span>;
+}

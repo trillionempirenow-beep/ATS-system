@@ -20,6 +20,7 @@ import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { extractDocumentText } from '../../parsers/text-extract.js';
 import { consumeUpload, type ConsumedUpload } from '../uploads/uploads.service.js';
 import { BUCKETS, storage } from '../../storage/storage.js';
+import { analyseApplicationOnce, inBackground } from '../matching/matching.service.js';
 import * as repo from './public.repository.js';
 
 export async function publicConfig(): Promise<PublicConfigDto> {
@@ -192,6 +193,8 @@ export async function apply(slug: string, input: z.infer<typeof applySchema>, ip
   } catch (e) {
     console.warn('[apply] resume text extraction failed', e);
   }
+  // Once, in the background: the AI analysis and this applicant's fit for every other open job.
+  inBackground(`application ${applicationId}`, () => analyseApplicationOnce(applicationId));
 
   const b = await brand();
   const emailResult = await sendEmail({
@@ -320,7 +323,9 @@ export async function statusLookup(email: string, applicationId?: number): Promi
     updatedAt: isoOrThrow(row.updated_at),
     timeline: steps.map((key) => ({ key, label: STAGE_LABELS[key], reached: stageRank(key) <= current, current: key === row.stage })),
     feedback,
-    suggestions: suggestions.map((sg) => ({ title: sg.title, slug: sg.status === 'open' ? sg.slug : null, note: sg.note, alreadyApplied: sg.already_applied })),
+    // An AI suggestion for a role that has since closed is only noise.
+    suggestions: suggestions.filter((sg) => !sg.from_ai || sg.status === 'open')
+      .map((sg) => ({ title: sg.title, slug: sg.status === 'open' ? sg.slug : null, note: sg.note, alreadyApplied: sg.already_applied, fromAi: sg.from_ai })),
     submission: {
       coverLetter: row.cover_letter,
       whyUs: row.why_us,

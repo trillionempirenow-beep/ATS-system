@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { AccountDto, AdminsOverviewDto } from '@shared/api/admin';
-import { ADMIN_PERMISSION_CATALOG, PERMISSIONS, type PermissionKey } from '@shared/domain/access';
+import { ADMIN_GRANTABLE_PERMISSIONS, ADMIN_PERMISSION_CATALOG, type PermissionKey } from '@shared/domain/access';
 import { JOB_APPROVAL_ACTION_LABELS, type JobApprovalAction } from '@shared/domain/jobs';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Avatar, StatusBadge } from '@/components/ui/Display';
@@ -34,12 +34,12 @@ function AdminCard({ admin, onConfirm }: { admin: AccountDto; onConfirm: (r: Con
     confirmLabel: 'Save permissions',
     body: (
       <ul className={s.confirmList}>
-        {PERMISSIONS.map((k) => <li key={k}>{ADMIN_PERMISSION_CATALOG[k].label}: <b>{perms.has(k) ? 'on' : 'off'}</b></li>)}
+        {ADMIN_GRANTABLE_PERMISSIONS.map((k) => <li key={k}>{ADMIN_PERMISSION_CATALOG[k].label}: <b>{perms.has(k) ? 'on' : 'off'}</b></li>)}
         <li>HR / Recruiter seat limit: <b>{n}</b>{n < admin.seatsUsed ? ` (below the ${admin.seatsUsed} seats in use; no one loses access, but no new accounts can be added)` : ''}</li>
       </ul>
     ),
     run: async () => {
-      await savePerms.mutateAsync({ hrAccountLimit: n, permissions: PERMISSIONS.filter((k) => perms.has(k)) });
+      await savePerms.mutateAsync({ hrAccountLimit: n, permissions: ADMIN_GRANTABLE_PERMISSIONS.filter((k) => perms.has(k)) });
       toast.success(`Permissions saved for ${admin.name}.`);
     },
   });
@@ -77,7 +77,7 @@ function AdminCard({ admin, onConfirm }: { admin: AccountDto; onConfirm: (r: Con
       </header>
       {admin.statusNote && admin.accountStatus !== 'active' ? <Notice tone="warning">{admin.statusNote}</Notice> : null}
       <div className={s.permGrid}>
-        {PERMISSIONS.map((k) => (
+        {ADMIN_GRANTABLE_PERMISSIONS.map((k) => (
           <Checkbox key={k} checked={perms.has(k)} label={ADMIN_PERMISSION_CATALOG[k].label} description={ADMIN_PERMISSION_CATALOG[k].description}
             onChange={(e) => setPerms((cur) => { const next = new Set(cur); if (e.target.checked) next.add(k); else next.delete(k); return next; })} />
         ))}
@@ -106,10 +106,10 @@ function CreateAdmin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [limit, setLimit] = useState('3');
-  const [perms, setPerms] = useState<Set<PermissionKey>>(new Set(['manage_accounts', 'job_management', 'job_posting']));
+  const [perms, setPerms] = useState<Set<PermissionKey>>(new Set(['job_management', 'job_posting']));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const create = useAdminMutation(() => api.post('/admin/admins', {
-    name: name.trim(), email: email.trim(), password, hrAccountLimit: Number(limit) || 0, permissions: PERMISSIONS.filter((k) => perms.has(k)),
+    name: name.trim(), email: email.trim(), password, hrAccountLimit: Number(limit) || 0, permissions: ADMIN_GRANTABLE_PERMISSIONS.filter((k) => perms.has(k)),
   }));
   const submit = () => {
     const next: Record<string, string> = {};
@@ -137,7 +137,7 @@ function CreateAdmin() {
         </Field>
         <fieldset className={s.fieldset}>
           <legend>Starting permissions</legend>
-          {PERMISSIONS.map((k) => (
+          {ADMIN_GRANTABLE_PERMISSIONS.map((k) => (
             <Checkbox key={k} checked={perms.has(k)} label={ADMIN_PERMISSION_CATALOG[k].label}
               onChange={(e) => setPerms((cur) => { const next = new Set(cur); if (e.target.checked) next.add(k); else next.delete(k); return next; })} />
           ))}

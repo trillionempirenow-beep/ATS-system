@@ -155,7 +155,7 @@ export const feedback = (applicationId: number) =>
 
 export const suggestions = (applicationId: number) =>
   sql<{ id: number; job_id: number; job_title: string; note: string | null; author: string | null; created_at: Date }[]>`
-    select s.id, s.suggested_job_id as job_id, j.title as job_title, s.note, u.name as author, s.created_at
+    select s.id, s.suggested_job_id as job_id, j.title as job_title, s.note, case when s.from_ai then 'AI match' else u.name end as author, s.created_at
     from candidate_role_suggestions s join jobs j on j.id = s.suggested_job_id left join users u on u.id = s.author_id
     where s.application_id = ${applicationId} order by s.created_at desc`;
 

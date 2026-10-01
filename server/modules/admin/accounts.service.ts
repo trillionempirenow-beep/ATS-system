@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import {
-  ACCOUNT_STATUS_LABELS, PERMISSIONS, RECRUITER_PERMISSION_KEYS, SEAT_HOLDING_STATUSES, hasPermission, isSuperAdmin,
+  ACCOUNT_STATUS_LABELS, ADMIN_GRANTABLE_PERMISSIONS, RECRUITER_PERMISSION_KEYS, SEAT_HOLDING_STATUSES, hasPermission, isSuperAdmin,
   type AccountStatus, type PermissionKey, type Role,
 } from '../../../shared/domain/access.js';
 import { jobState, type ApprovalStatus, type JobStatus } from '../../../shared/domain/jobs.js';
@@ -62,7 +62,7 @@ async function openRequests() {
 
 async function toAccount(r: AccountRow, user: CurrentUser, requests: Awaited<ReturnType<typeof openRequests>>): Promise<AccountDto> {
   return {
-    id: r.id, name: r.name, email: r.email, role: r.role, accountStatus: r.account_status, permissions: r.permissions, jobTitle: r.job_title,
+    id: r.id, name: r.name, email: r.email, role: r.role, accountStatus: r.account_status, permissions: r.permissions.filter((p) => p !== 'manage_accounts'), jobTitle: r.job_title,
     avatarUrl: avatarUrlForUser(r.id, r.profile_image), createdAt: isoOrThrow(r.created_at), createdByName: r.creator_name, createdById: r.created_by,
     seatReleased: r.seat_released, statusNote: r.status_note, hrAccountLimit: r.hr_account_limit,
     seatsUsed: r.role === 'admin' ? await seatsUsed(r.id) : 0, canManage: canManage(r, user), openRequest: requests.get(r.id) ?? null,
@@ -125,7 +125,7 @@ export async function createAdmin(input: z.infer<typeof createAdminSchema>, ctx:
       const [u] = await tx<{ id: number }[]>`
         insert into users (name, email, password_hash, role, active, account_status, created_by, hr_account_limit, approved_by, approved_at)
         values (${input.name}, ${input.email}, ${hash}, 'admin', true, 'active', ${ctx.user.id}, ${input.hrAccountLimit}, ${ctx.user.id}, now()) returning id`;
-      await setPermissions(tx, u!.id, input.permissions, PERMISSIONS, ctx.user.id);
+      await setPermissions(tx, u!.id, input.permissions, ADMIN_GRANTABLE_PERMISSIONS, ctx.user.id);
       await audit({ userId: ctx.user.id, action: 'admin_create', entityType: 'user', entityId: u!.id, details: { admin: input.name, seat_limit: input.hrAccountLimit }, ip: ctx.ip }, tx);
       return u!.id;
     });
@@ -147,7 +147,7 @@ export async function setAdminPermissions(adminId: number, input: z.infer<typeof
   const oldLimit = admin.hr_account_limit;
   const { added, removed } = await transaction(async (tx) => {
     if (oldLimit !== input.hrAccountLimit) await tx`update users set hr_account_limit = ${input.hrAccountLimit} where id = ${adminId}`;
-    const diff = await setPermissions(tx, adminId, input.permissions, PERMISSIONS, ctx.user.id);
+    const diff = await setPermissions(tx, adminId, input.permissions, ADMIN_GRANTABLE_PERMISSIONS, ctx.user.id);
     if (oldLimit !== input.hrAccountLimit || diff.added.length || diff.removed.length) {
       await audit({ userId: ctx.user.id, action: 'admin_permissions_update', entityType: 'user', entityId: adminId, details: {
         admin: admin.name, seat_limit: oldLimit !== input.hrAccountLimit ? `${oldLimit} → ${input.hrAccountLimit}` : '',

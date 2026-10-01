@@ -1,0 +1,133 @@
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.posting {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.panel {
+  position: sticky;
+  top: 88px;
+}
+
+.panelTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panelFoot {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.runBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.matches,
+.applicants {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matches {
+  display: flex;
+  flex-direction: column;
+}
+
+.match {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.match:first-child { padding-top: 4px; }
+.match:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.matchHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.matchHead > :nth-child(2) { flex: 1; }
+
+.matchName {
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.matchName:hover { color: var(--primary); }
+
+.score {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  color: var(--primary-subtle-fg);
+}
+
+.score[data-high] { color: var(--success-fg); }
+
+.score strong { font-size: 15px; line-height: 18px; }
+
+.scoreBar {
+  width: 52px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+.scoreBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+}
+
+.reason {
+  font-size: 13.5px;
+  line-height: 20px;
+  color: var(--text2);
+}
+
+.skills {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--text2);
+}
+
+.skills span {
+  margin-right: 6px;
+  font-weight: 600;
+  color: var(--success-fg);
+}
+
+.skills[data-missing] { color: var(--text3); }
+.skills[data-missing] span { color: var(--text3); }
+
+@media (max-width: 1100px) {
+  .panel { position: static; }
+}

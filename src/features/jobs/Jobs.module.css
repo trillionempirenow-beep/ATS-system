@@ -162,3 +162,9 @@
 .section ul {
   padding-left: 18px;
 }
+
+.creator {
+  font-size: 13.5px;
+  color: var(--text2);
+  white-space: nowrap;
+}
