@@ -1,4 +1,4 @@
-import { useEffect, useState, type DragEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PipelineCardDto } from '@shared/api/pipeline';
 import { STAGE_LABELS, STAGE_ORDER, type BoardStage, type Stage } from '@shared/domain/pipeline';
@@ -8,7 +8,7 @@ import { Select, TextInput } from '@/components/ui/Form';
 import { Skeleton } from '@/components/ui/Feedback';
 import { Drawer, Menu } from '@/components/ui/Overlay';
 import { Card, DescriptionList, PageHeader } from '@/components/ui/Surface';
-import { STAGE_CHART_COLORS } from '@/components/charts/Charts';
+import { STAGE_COLOR, StageTag, StageTicks } from '@/components/ui/Stage';
 import { QueryErrorPage } from '@/app/system/StatusPages';
 import { timeAgo } from '@/lib/format';
 import { cx } from '@/lib/cx';
@@ -88,19 +88,20 @@ export function PipelinePage() {
       </Card>
 
       <div className={s.board}>
-        {STAGE_ORDER.map((stage, i) => {
+        {STAGE_ORDER.map((stage) => {
           const cards = data?.columns[stage] ?? [];
           return (
             <section
               key={stage}
               className={cx(s.column, over === stage && dragging && dragging.stage !== stage && s.columnOver)}
+              style={{ '--c': STAGE_COLOR[stage] } as CSSProperties}
               aria-label={`${STAGE_LABELS[stage]}, ${cards.length} candidates`}
               onDragOver={(e) => { if (dragging) { e.preventDefault(); setOver(stage); } }}
               onDragLeave={() => setOver((o) => (o === stage ? null : o))}
               onDrop={(e) => { e.preventDefault(); setOver(null); if (dragging) requestMove(dragging, stage); setDragging(null); }}
             >
               <div className={s.colHead}>
-                <span className={s.colTitle}><span className={s.colDot} style={{ background: STAGE_CHART_COLORS[i] }} />{STAGE_LABELS[stage]}</span>
+                <span className={s.colTitle}><StageTicks stage={stage} size="sm" />{STAGE_LABELS[stage]}</span>
                 <span className={s.colCount}>{data ? cards.length : '–'}</span>
               </div>
               {!data ? Array.from({ length: 3 }, (_, k) => <Skeleton key={k} height={116} radius={12} />) : cards.length === 0 ? (
@@ -125,7 +126,7 @@ export function PipelinePage() {
               <div><div style={{ fontWeight: 600 }}>{preview.jobTitle}</div><div className={w.faint}>{preview.email}</div></div>
             </div>
             <DescriptionList items={[
-              ['Current stage', STAGE_LABELS[preview.stage]],
+              ['Current stage', <StageTag key="stage" stage={preview.stage} />],
               ['Applied', timeAgo(preview.appliedAt)],
               ['AI match score', preview.aiScore !== null ? `${preview.aiScore} / 100` : 'Not analysed'],
               ['Rating', preview.rating ? <Rating value={preview.rating} size={14} /> : 'Unrated'],

@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { DashboardDto } from '@shared/api/insights';
-import { STAGE_LABELS } from '@shared/domain/pipeline';
 import type { DisplayInterviewState } from '@shared/domain/interviews';
 import type { JobState } from '@shared/domain/jobs';
 import { ButtonLink } from '@/components/ui/Button';
 import { Avatar, Badge, StatusBadge } from '@/components/ui/Display';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
 import { Card, CardHeader, DataTable, PageHeader, StatCard, StatGrid } from '@/components/ui/Surface';
-import { AreaTrend, ChartEmpty, LabeledBars } from '@/components/charts/Charts';
+import { AreaTrend, ChartEmpty } from '@/components/charts/Charts';
+import { StageDistribution } from '@/components/ui/Stage';
 import { QueryErrorPage } from '@/app/system/StatusPages';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { api } from '@/lib/api';
@@ -59,7 +59,7 @@ export function DashboardPage() {
         </Card>
         <Card>
           <CardHeader title="Pipeline overview" subtitle="Active candidates by stage" actions={<ButtonLink to="/app/pipeline" size="sm" variant="ghost" iconRight="arrowr">Open pipeline</ButtonLink>} />
-          {!d ? <Skeleton height={200} /> : <LabeledBars ariaLabel="Active candidates by stage" items={d.funnel.map((f) => ({ label: STAGE_LABELS[f.stage], value: f.count }))} />}
+          {!d ? <Skeleton height={200} /> : <StageDistribution items={d.funnel} hrefFor={(st) => `/app/candidates?stage=${st}`} />}
         </Card>
       </div>
 

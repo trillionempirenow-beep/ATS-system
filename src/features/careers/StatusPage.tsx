@@ -11,7 +11,8 @@ import { Icon } from '@/components/icon/Icon';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge, StatusBadge } from '@/components/ui/Display';
 import { Field, TextInput } from '@/components/ui/Form';
-import { Notice, Skeleton, Stepper, Timeline } from '@/components/ui/Feedback';
+import { Notice, Skeleton, Timeline } from '@/components/ui/Feedback';
+import { StageRail, StageTag } from '@/components/ui/Stage';
 import { Modal } from '@/components/ui/Overlay';
 import { Card, CardHeader, DescriptionList } from '@/components/ui/Surface';
 import { useToast } from '@/components/ui/Toast';
@@ -147,13 +148,20 @@ function ApplicationView({ app, email }: { app: ApplicationStatusDto; email: str
           </div>
           {statusBadge}
         </div>
+        <Card>
+          <StageRail label="Your application progress"
+            steps={app.withdrawn || app.rejected
+              ? app.timeline.filter((t) => t.key === 'new' || (app.withdrawn && t.reached)).map((t) => ({ stage: t.key, reached: true }))
+              : app.timeline.map((t) => ({ stage: t.key, reached: t.reached }))}
+            current={app.withdrawn || app.rejected ? null : app.stage}
+            end={app.withdrawn ? { kind: 'withdrawn', label: 'Withdrawn', note: 'By you' }
+              : app.rejected ? { kind: 'rejected', label: 'Not moving forward', note: 'Application closed' } : null} />
+        </Card>
         {app.withdrawn ? (
           <Notice tone="info" title="Withdrawn">You withdrew this application. You can apply again at any time.</Notice>
         ) : app.rejected ? (
           <Notice tone="danger" title="Application closed">Thank you for your interest. We will not be moving forward with this application.</Notice>
-        ) : (
-          <Card><Stepper steps={app.timeline.map((t) => ({ key: t.key, label: t.label, done: t.reached, current: t.current }))} /></Card>
-        )}
+        ) : null}
         {app.rejected && app.feedback ? (
           <Card>
             <CardHeader title="Feedback from the team" subtitle={FEEDBACK_FIT_LABELS[app.feedback.fit as FeedbackFit] ?? undefined} />
@@ -248,7 +256,7 @@ export function StatusPage() {
                 <strong>{a.jobTitle}</strong>
                 <span style={{ fontSize: 13, color: 'var(--text3)' }}>Applied {formatDate(a.appliedAt)} · ID <span className="mono">{a.id}</span></span>
               </span>
-              {a.withdrawn ? <Badge tone="neutral">Withdrawn</Badge> : <StatusBadge kind="stage" value={a.stage} />}
+              {a.withdrawn ? <Badge tone="neutral">Withdrawn</Badge> : <StageTag stage={a.stage} label={a.stage === 'rejected' ? 'Not moving forward' : undefined} />}
             </Link>
           ))}
         </Card>

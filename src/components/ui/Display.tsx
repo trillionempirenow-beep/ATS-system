@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { STAGE_LABELS, STAGE_TONES, type Stage, type Tone } from '@shared/domain/pipeline';
+import { type Stage, type Tone } from '@shared/domain/pipeline';
 import { INTERVIEW_STATE_LABELS, INTERVIEW_STATE_TONES, type DisplayInterviewState } from '@shared/domain/interviews';
 import { JOB_STATE_LABELS, JOB_STATE_TONES, type JobState } from '@shared/domain/jobs';
 import { ACCOUNT_STATUS_LABELS, type AccountStatus } from '@shared/domain/access';
@@ -7,6 +7,7 @@ import { ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_TONES, EMPLOYEE_STATUS_LABE
 import { Icon, type IconName } from '../icon/Icon';
 import { cx } from '@/lib/cx';
 import { initials } from '@/lib/format';
+import { StageTag } from './Stage';
 import s from './Display.module.css';
 
 export function Badge({ tone = 'neutral', icon, dot, size = 'md', children }: { tone?: Tone; icon?: IconName; dot?: boolean; size?: 'sm' | 'md'; children: ReactNode }) {
@@ -32,14 +33,12 @@ type StatusBadgeProps =
 
 /** Status is never colour alone: the text always names it, and terminal states carry an icon. */
 export function StatusBadge(props: StatusBadgeProps & { size?: 'sm' | 'md' }) {
+  // A stage is drawn as the stage rail in miniature, the same everywhere.
+  if (props.kind === 'stage') return <StageTag stage={props.value} size={props.size} />;
   let label: string;
   let tone: Tone;
   let icon: IconName | undefined;
   switch (props.kind) {
-    case 'stage':
-      label = STAGE_LABELS[props.value]; tone = STAGE_TONES[props.value];
-      icon = props.value === 'hired' ? 'checkcircle' : props.value === 'rejected' ? 'xcircle' : undefined;
-      break;
     case 'interview':
       label = INTERVIEW_STATE_LABELS[props.value]; tone = INTERVIEW_STATE_TONES[props.value];
       icon = props.value === 'reviewed' ? 'checkcircle' : props.value === 'cancelled' || props.value === 'no_show' ? 'xcircle' : undefined;

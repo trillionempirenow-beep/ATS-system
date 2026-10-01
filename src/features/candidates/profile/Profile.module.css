@@ -6,12 +6,7 @@
 .headActions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .aiPill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: var(--radius-full); background: var(--purple-bg); color: var(--purple-fg); font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
 
-.track { display: grid; grid-template-columns: repeat(var(--steps, 6), minmax(0, 1fr)); gap: 4px; }
-@media (max-width: 640px) { .track { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.trackStep { height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-xs); background: var(--sunken); color: var(--text3); font-size: var(--fs-caption); font-weight: var(--fw-semibold); text-align: center; padding: 0 4px; }
-.trackDone { background: var(--primary-subtle); color: var(--primary-subtle-fg); }
-.trackCurrent { background: var(--primary); color: var(--primary-fg); }
-.trackRejected { background: var(--danger-solid); color: var(--danger-solid-fg); }
+.rail { margin: 0 -20px -20px; padding: 18px 20px 20px; border-top: 1px solid var(--border); }
 
 .tabBody { padding-top: 20px; }
 .chipRow { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -43,7 +38,6 @@
 .ivHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 @container workspace (max-width: 767px) {
-  .track { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .name { font-size: var(--fs-heading); line-height: 30px; }
   .preview { height: 70vh; min-height: 420px; }
   .catRow { grid-template-columns: 110px minmax(0, 1fr) 32px; }

@@ -153,7 +153,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, selectedKey, l
   );
 }
 
-export interface TabItem<K extends string> { key: K; label: string; count?: number }
+export interface TabItem<K extends string> { key: K; label: string; count?: number; lead?: ReactNode }
 
 export function Tabs<K extends string>({ items, value, onChange, label }: { items: TabItem<K>[]; value: K; onChange: (k: K) => void; label: string }) {
   return (
@@ -173,7 +173,7 @@ export function PillTabs<K extends string>({ items, value, onChange, label }: { 
     <div className={s.pills} role="group" aria-label={label}>
       {items.map((t) => (
         <button key={t.key} type="button" className={s.pill} aria-pressed={t.key === value} onClick={() => onChange(t.key)}>
-          {t.label}
+          {t.lead}{t.label}
           {typeof t.count === 'number' ? <span className={s.pillCount}>{t.count}</span> : null}
         </button>
       ))}

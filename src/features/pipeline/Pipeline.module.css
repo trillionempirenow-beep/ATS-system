@@ -1,10 +1,9 @@
 .board { display: grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
-.column { display: flex; flex-direction: column; gap: 10px; min-height: 420px; padding: 10px; border-radius: var(--radius-md); background: var(--sunken); border: 1px solid var(--border); scroll-snap-align: start; transition: background-color 0.12s var(--ease), border-color 0.12s var(--ease); }
-.columnOver { background: var(--primary-subtle); border-color: var(--primary); border-style: dashed; }
-.colHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 4px; }
-.colTitle { display: flex; align-items: center; gap: 8px; font-weight: var(--fw-semibold); font-size: var(--fs-body); }
-.colDot { width: 8px; height: 8px; border-radius: 50%; }
-.colCount { min-width: 22px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--surface); color: var(--text2); font-size: var(--fs-caption); font-weight: var(--fw-semibold); line-height: 20px; text-align: center; border: 1px solid var(--border); }
+.column { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 420px; padding: 10px; border-radius: var(--radius-md); background: var(--sunken); border: 1px solid var(--border); border-top: 2px solid var(--c, var(--border-strong)); border-top-left-radius: var(--radius-xs); border-top-right-radius: var(--radius-xs); scroll-snap-align: start; transition: background-color 0.12s var(--ease), border-color 0.12s var(--ease); }
+.columnOver { background: var(--primary-subtle); border-color: var(--c, var(--primary)); border-style: dashed; border-top-style: solid; }
+.colHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 2px 2px 4px; }
+.colTitle { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: var(--fw-semibold); font-size: var(--fs-body); white-space: nowrap; }
+.colCount { min-width: 22px; height: 20px; padding: 0 6px; border-radius: var(--radius-xs); background: var(--surface); color: var(--text2); font-size: var(--fs-caption); font-weight: var(--fw-semibold); line-height: 18px; text-align: center; border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .colEmpty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--text3); font-size: var(--fs-small); border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); }
 
 .card { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--sh-sm); cursor: grab; transition: box-shadow 0.12s var(--ease), transform 0.12s var(--ease), opacity 0.12s var(--ease); }

@@ -1,0 +1,80 @@
+/* The stage rail: one ordered scale from Applied (slate) to Hired (deep jade).
+   Rejected is outside the order and is the only place Ember appears. */
+
+/* A pip: one short bar in the stage's colour. */
+.pip { flex: none; width: 3px; height: 12px; border-radius: 1px; background: var(--c, var(--primary)); }
+
+/* Ticks: the rail in miniature, filled up to the stage. */
+.ticks { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.tick { width: 4px; height: 12px; border-radius: 1px; background: var(--border-strong); }
+.ticksSm .tick { width: 3px; height: 10px; }
+.tick[data-on] { background: var(--c, var(--primary)); }
+.ticksRejected .tick { background: color-mix(in srgb, var(--stage-rejected) 30%, transparent); }
+
+.tag { display: inline-flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; font-size: var(--fs-small); line-height: var(--lh-small); font-weight: var(--fw-medium); color: var(--text); }
+.tagSm { gap: 6px; font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.tagLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tagRejected .tagLabel { color: var(--danger-fg); }
+
+/* The full rail. Horizontal when there is room, a vertical list when there is not. */
+.rail { container-type: inline-size; min-width: 0; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 220px)); }
+.step { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; padding-right: 12px; }
+.step:last-child { padding-right: 0; }
+/* The connector runs from this node to the next one. */
+.step:not(:last-child)::before {
+  content: ''; position: absolute; top: 7px; left: 22px; right: 6px; height: 2px; border-radius: 1px; background: var(--border);
+}
+.linkOn:not(:last-child)::before { background: var(--c, var(--primary)); }
+.linkEnd:not(:last-child)::before, .linkQuiet:not(:last-child)::before { background: none; border-top: 2px dashed var(--stage-rejected); height: 0; }
+.linkQuiet:not(:last-child)::before { border-top-color: var(--border-strong); }
+
+.node {
+  position: relative; flex: none; width: 16px; height: 16px; border-radius: 50%; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--border-strong); background: var(--surface); color: var(--surface);
+}
+.done .node { background: var(--c, var(--primary)); border-color: var(--c, var(--primary)); }
+.current .node { border-color: var(--c, var(--primary)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c, var(--primary)) 22%, transparent); }
+.current .node::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--primary)); }
+.skipped .node { border-style: dashed; background: transparent; }
+.endRejected .node { background: var(--stage-rejected); border-color: var(--stage-rejected); box-shadow: 0 0 0 4px color-mix(in srgb, var(--stage-rejected) 18%, transparent); }
+.endWithdrawn .node { background: var(--neutral-solid); border-color: var(--neutral-solid); }
+
+.text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.label { font-size: var(--fs-small); line-height: var(--lh-small); font-weight: var(--fw-medium); color: var(--text); overflow-wrap: break-word; }
+.note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--text3); min-height: var(--lh-caption); }
+.todo .label, .skipped .label { color: var(--text3); }
+.current .label { font-weight: var(--fw-semibold); }
+.current .note { color: var(--text2); }
+.endRejected .label { color: var(--danger-fg); font-weight: var(--fw-semibold); }
+.endWithdrawn .label { color: var(--text2); font-weight: var(--fw-semibold); }
+
+@container (max-width: 460px) {
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .step { flex-direction: row; align-items: flex-start; gap: 12px; padding: 0 0 14px; }
+  .step:last-child { padding-bottom: 0; }
+  .step:not(:last-child)::before { top: 20px; bottom: 2px; left: 7px; right: auto; width: 2px; height: auto; }
+  .linkEnd:not(:last-child)::before, .linkQuiet:not(:last-child)::before { width: 0; height: auto; border-top: 0; border-left: 2px dashed var(--stage-rejected); }
+  .linkQuiet:not(:last-child)::before { border-left-color: var(--border-strong); }
+  .text { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; padding-top: 0; }
+  .label { line-height: 16px; }
+  .note { min-height: 0; }
+}
+
+/* Where everyone is: one proportional bar, then the count per stage. */
+.dist { container-type: inline-size; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.bar { display: flex; gap: 2px; height: 10px; border-radius: var(--radius-xs); overflow: hidden; background: var(--sunken); }
+.seg { flex: 1 1 0; min-width: 4px; background: var(--c, var(--primary)); }
+.cells { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 4px; }
+.cell {
+  display: flex; flex-direction: column; gap: 4px; min-height: 64px; padding: 10px 0 8px;
+  border-top: 1px solid var(--border); color: var(--text); text-decoration: none; transition: border-color .1s var(--ease);
+}
+a.cell:hover { border-top-color: var(--c, var(--primary)); box-shadow: inset 0 1px 0 var(--c, var(--primary)); }
+a.cell:hover .cellTop { color: var(--text); }
+a.cell:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; box-shadow: none; border-radius: var(--radius-xs); }
+.cellTop { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cellCount { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; padding-left: 11px; }
+.cellCount[data-zero] { color: var(--text3); font-weight: var(--fw-medium); }
+@container (min-width: 640px) { .cells { grid-template-columns: repeat(6, minmax(0, 1fr)); } }

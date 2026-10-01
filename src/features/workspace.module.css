@@ -29,6 +29,8 @@
 .personText { display: flex; flex-direction: column; min-width: 0; }
 .personName { font-weight: var(--fw-semibold); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .personSub { font-size: var(--fs-small); color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* In a table a long name is cut short, so the other columns keep their room. */
+@container workspace (min-width: 721px) { td .personText { max-width: 320px; } }
 
 .formActions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 /* Solid, so form text never shows through it while scrolling. */

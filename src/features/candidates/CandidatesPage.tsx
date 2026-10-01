@@ -7,6 +7,7 @@ import { Avatar, Rating, StatusBadge } from '@/components/ui/Display';
 import { Select, TextInput } from '@/components/ui/Form';
 import { EmptyState } from '@/components/ui/Feedback';
 import { Card, DataTable, PageHeader, Pagination, PillTabs } from '@/components/ui/Surface';
+import { StagePip } from '@/components/ui/Stage';
 import { QueryErrorPage } from '@/app/system/StatusPages';
 import { formatDate } from '@/lib/format';
 import { useDebouncedParam, useUrlParams } from '@/lib/urlState';
@@ -62,7 +63,7 @@ export function CandidatesPage() {
         label="Stage"
         value={(filters.stage ?? 'all') as Stage | 'all'}
         onChange={(k) => set({ stage: k === 'all' ? null : k, page: null })}
-        items={[{ key: 'all' as const, label: 'All', count: d ? total : undefined }, ...STAGES.map((st) => ({ key: st, label: STAGE_LABELS[st], count: d?.stageCounts[st] ?? (d ? 0 : undefined) }))]}
+        items={[{ key: 'all' as const, label: 'All', count: d ? total : undefined }, ...STAGES.map((st) => ({ key: st, label: STAGE_LABELS[st], lead: <StagePip stage={st} />, count: d?.stageCounts[st] ?? (d ? 0 : undefined) }))]}
       />
       <Card padding={0}>
         <div className={w.filterBar} role="search">
@@ -86,7 +87,7 @@ export function CandidatesPage() {
           }
           columns={[
             { key: 'c', header: 'Candidate', primary: true, cell: (r) => (
-              <span className={w.person}><Avatar name={r.name} src={r.avatarUrl} size={32} /><span className={w.personText}><span className={w.personName}>{r.name}</span><span className={w.personSub}>{r.email}</span></span></span>
+              <span className={w.person}><Avatar name={r.name} src={r.avatarUrl} size={32} /><span className={w.personText}><span className={w.personName} title={r.name}>{r.name}</span><span className={w.personSub}>{r.email}</span></span></span>
             ) },
             { key: 'r', header: 'Role', cell: (r) => r.jobTitle },
             { key: 's', header: 'Stage', cell: (r) => <StatusBadge kind="stage" value={r.stage} size="sm" /> },
