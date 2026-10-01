@@ -31,6 +31,9 @@ async function fakeAgent(body: { text: string; token: string }) {
       ? { action: 'schedule_interview', application_id: pick.applicationId, starts_at: new Date(Date.now() + 3 * 86_400_000).toISOString(), duration_minutes: 45, interview_type: 'video' }
       : { action: 'send_email', application_id: pick.applicationId, subject: 'Quick update', body: 'Hi,\nThanks for your patience.\n\nBest,\nAcme' };
     steps.push({ observation: JSON.stringify(await call('propose', args)) });
+  } else if (scenario === 'add') {
+    steps.push({ observation: JSON.stringify(await call('propose', { action: 'add_candidate', full_name: 'Bea  Assistant', email: 'bea.assistant@example.com', phone: '0917 555 0101', current_title: 'Data Analyst', experience_level: 'mid', skills: ['SQL', 'Power BI'], job: 'Senior Product Engineer' })) });
+    steps.push({ observation: JSON.stringify(await call('propose', { action: 'add_candidate', full_name: 'No Mail', email: 'not-an-email' })) });
   } else if (scenario === 'job') {
     steps.push({ observation: JSON.stringify(await call('propose', { action: 'create_job', title: 'Assistant Test Role', department: 'Engineering', description: 'Made by the assistant test.', publish: true })) });
   }
@@ -123,6 +126,24 @@ describe('Acme assistant', () => {
         expect(again.body.data.message).toBe('This email was already sent.');
       }
     }
+  });
+
+  it('adds an applicant with a preview, applied to the job, only on confirm', async () => {
+    const res = await say(hr, 'add');
+    // The second proposal had a bad email and was refused, so only one card.
+    expect(res.body.data.actions).toHaveLength(1);
+    const action = res.body.data.actions[0];
+    expect(action.kind).toBe('add_candidate');
+    expect(action.preview).toMatchObject({ type: 'candidate', fullName: 'Bea Assistant', experienceLevel: expect.any(String), skills: 'SQL, Power BI', job: 'Senior Product Engineer', existing: null });
+    const done = await hr.agent.post('/api/v1/assistant/actions/confirm').set('X-CSRF-Token', hr.csrf).send({ token: action.token });
+    expect(done.status, JSON.stringify(done.body)).toBe(200);
+    expect(done.body.data.message).toBe('Done. Added and applied for Senior Product Engineer.');
+    expect(done.body.data.link).toMatch(/^\/app\/candidates\/\d+$/);
+  });
+
+  it('shows a job posting preview', async () => {
+    const res = await say(admin, 'job');
+    expect(res.body.data.actions[0].preview).toMatchObject({ type: 'job', title: 'Assistant Test Role', department: 'Engineering', publish: true });
   });
 
   it('refuses tool calls without a valid run token', async () => {

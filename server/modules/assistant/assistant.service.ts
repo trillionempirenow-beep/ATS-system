@@ -4,7 +4,10 @@ import { STAGE_LABELS, type Stage } from '../../../shared/domain/pipeline.js';
 import { canPublishJobs, ROLE_LABELS, hasPermission, isAdminLevel } from '../../../shared/domain/access.js';
 import { scheduleInterviewSchema } from '../../../shared/api/interviews.js';
 import { saveJobSchema } from '../../../shared/api/jobs.js';
-import type { AssistantActionDto, AssistantConfirmDto, AssistantReplyDto, assistantMessageSchema } from '../../../shared/api/assistant.js';
+import { addCandidateSchema } from '../../../shared/api/candidates.js';
+import { EMPLOYMENT_TYPE_LABELS, type EmploymentType } from '../../../shared/domain/jobs.js';
+import { EXPERIENCE_LEVEL_LABELS, MANUAL_SOURCES, type ExperienceLevel, type ManualSource } from '../../../shared/domain/pipeline.js';
+import type { AssistantActionDto, AssistantConfirmDto, AssistantPreview, AssistantReplyDto, assistantMessageSchema } from '../../../shared/api/assistant.js';
 import { env } from '../../config/env.js';
 import { auditQuietly } from '../../core/audit.js';
 import type { CurrentUser } from '../../http/context.js';
@@ -16,6 +19,7 @@ import { describeError } from '../../parsers/resume-ai.js';
 import * as pipeline from '../pipeline/pipeline.service.js';
 import * as interviews from '../interviews/interviews.service.js';
 import * as jobs from '../jobs/jobs.service.js';
+import * as candidates from '../candidates/candidates.service.js';
 import { type ActionData, when } from './assistant.tools.js';
 import { TOKEN_PATTERN, readToken, signToken } from './assistant.tokens.js';
 
@@ -84,7 +88,7 @@ export async function message(input: z.infer<typeof assistantMessageSchema>, ctx
     if (seen.has(token)) continue;
     seen.add(token);
     const a = readToken<SignedAction>(token, 'action', user.id);
-    if (a) actions.push({ token, kind: a.kind, title: a.title, lines: a.lines, confirmLabel: a.confirmLabel });
+    if (a) actions.push({ token, kind: a.kind, title: a.title, lines: a.lines, confirmLabel: a.confirmLabel, preview: previewOf(a) });
   }
   const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
   return {
@@ -94,6 +98,30 @@ export async function message(input: z.infer<typeof assistantMessageSchema>, ctx
     audioMime: text(body.audioMime) ?? (text(body.audio) ? 'audio/mpeg' : null),
     actions: actions.slice(-5),
   };
+}
+
+/** What a new job posting or applicant will look like, for the card's Preview. */
+function previewOf(a: SignedAction): AssistantPreview | undefined {
+  const s = (v: unknown) => (typeof v === 'string' ? v : '');
+  if (a.kind === 'create_job') {
+    const f = a.fields;
+    return {
+      type: 'job', title: s(f.title), department: a.departmentName, location: s(f.location),
+      employmentType: EMPLOYMENT_TYPE_LABELS[s(f.employmentType) as EmploymentType] ?? s(f.employmentType), salary: s(f.salaryInfo),
+      description: s(f.description), responsibilities: s(f.responsibilities), qualifications: s(f.qualifications),
+      requirements: s(f.requirements), preferredSkills: s(f.preferredSkills), experience: s(f.experienceRequired),
+      education: s(f.educationRequired), publish: a.publish,
+    };
+  }
+  if (a.kind === 'add_candidate') {
+    const i = a.input;
+    return {
+      type: 'candidate', fullName: s(i.fullName), email: s(i.email), phone: s(i.phone), currentTitle: s(i.currentTitle),
+      experienceLevel: EXPERIENCE_LEVEL_LABELS[s(i.experienceLevel) as ExperienceLevel] ?? '', skills: s(i.skills),
+      education: s(i.education), source: MANUAL_SOURCES[s(i.source) as ManualSource] ?? '', job: a.jobTitle, notes: s(i.notes), existing: a.existing,
+    };
+  }
+  return undefined;
 }
 
 /** Runs a prepared change as the person confirming it. Their own permissions apply again here. */
@@ -144,6 +172,14 @@ async function run(a: SignedAction, token: string, ctx: Ctx): Promise<AssistantC
         message: action === 'publish' ? 'Done. The posting is live on the careers site.' : 'Done. The posting was saved and sent to an Admin for approval.',
         undoToken: null,
         link: `/app/jobs/${saved.jobId}`,
+      };
+    }
+    case 'add_candidate': {
+      const added = await candidates.addCandidate(addCandidateSchema.parse(a.input), ctx);
+      return {
+        message: a.existing ? 'Done. The applicant\'s record was updated.' : a.jobTitle ? `Done. Added and applied for ${a.jobTitle}.` : 'Done. The applicant was added.',
+        undoToken: null,
+        link: added.applicationId ? `/app/candidates/${added.applicationId}` : '/app/candidates',
       };
     }
     case 'approve_job':

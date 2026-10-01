@@ -8,6 +8,7 @@ import { Avatar, Badge } from '@/components/ui/Display';
 import { api, errorMessage } from '@/lib/api';
 import { cx } from '@/lib/cx';
 import { useMe } from '@/app/providers/AuthProvider';
+import { ActionPreview } from './ActionPreview';
 import s from './AssistantDock.module.css';
 
 /**
@@ -83,16 +84,29 @@ function ActionCard({ action, state, onConfirm, onCancel, onUndo }: {
   onConfirm: () => void; onCancel: () => void; onUndo: () => void;
 }) {
   const [main, ...rest] = action.lines;
+  const [previewing, setPreviewing] = useState(false);
+  const pending = !state || state.status === 'busy';
   return (
     <div className={cx(s.card, s.action)}>
+      {action.preview ? (
+        <ActionPreview
+          preview={action.preview}
+          confirmLabel={action.confirmLabel}
+          open={previewing}
+          busy={state?.status === 'busy'}
+          onClose={() => setPreviewing(false)}
+          onConfirm={() => { setPreviewing(false); onConfirm(); }}
+        />
+      ) : null}
       <div className={s.actionBody}>
         <div className={s.actionTitle}>{action.title}</div>
         {main ? <div className={s.actionLine}>{main}</div> : null}
         {rest.map((l, i) => <div key={i} className={cx(s.actionLine, s.actionMuted)}>{l}</div>)}
       </div>
       <div className={s.actionFoot}>
-        {!state || state.status === 'busy' ? (
+        {pending ? (
           <>
+            {action.preview ? <Button size="sm" variant="ghost" icon="eye" onClick={() => setPreviewing(true)} className={s.actionPreviewBtn}>Preview</Button> : null}
             <Button size="sm" variant="ghost" onClick={onCancel} disabled={state?.status === 'busy'}>Cancel</Button>
             <Button size="sm" onClick={onConfirm} loading={state?.status === 'busy'}>{action.confirmLabel}</Button>
           </>

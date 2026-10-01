@@ -1,12 +1,14 @@
 import { STAGES, STAGE_LABELS, isStageSkip, type Stage } from '../../../shared/domain/pipeline.js';
 import { canPublishJobs, hasPermission, isAdminLevel } from '../../../shared/domain/access.js';
 import { EMPLOYMENT_TYPES } from '../../../shared/domain/jobs.js';
+import { EXPERIENCE_LEVELS, MANUAL_SOURCES } from '../../../shared/domain/pipeline.js';
 import type { AssistantActionKind } from '../../../shared/api/assistant.js';
 import { env } from '../../config/env.js';
 import { sql } from '../../db/client.js';
 import type { CurrentUser } from '../../http/context.js';
 import { fullName } from '../../lib/format.js';
 import * as interviews from '../interviews/interviews.service.js';
+import { requiredFields } from '../candidates/candidates.service.js';
 import { signToken } from './assistant.tokens.js';
 
 /**
@@ -152,7 +154,8 @@ export type ActionData =
   | { kind: 'move_stage'; applicationId: number; stage: Stage; notify: boolean; override: boolean }
   | { kind: 'schedule_interview'; applicationId: number; startsAt: string; endsAt: string; meetingType: 'screening' | 'interview'; interviewType: 'phone' | 'video' | 'onsite' | 'panel'; interviewerId: number; final: boolean; location: string }
   | { kind: 'send_email'; candidateId: number; to: string; name: string; subject: string; body: string }
-  | { kind: 'create_job'; fields: Record<string, unknown>; publish: boolean }
+  | { kind: 'create_job'; fields: Record<string, unknown>; publish: boolean; departmentName: string }
+  | { kind: 'add_candidate'; input: Record<string, unknown>; jobTitle: string | null; existing: string | null }
   | { kind: 'approve_job' | 'reject_job'; jobId: number; note: string };
 
 export interface Proposal { kind: AssistantActionKind; title: string; lines: string[]; confirmLabel: string; data: ActionData }
@@ -265,7 +268,48 @@ async function prepare(user: CurrentUser, args: Args): Promise<Proposal> {
         ...(fields.salaryInfo ? [`Salary: ${fields.salaryInfo}`] : []),
         publish ? 'Goes live on the careers site.' : 'Saved and sent to an Admin for approval. It is not published until approved.',
       ],
-      data: { kind: 'create_job', fields, publish },
+      data: { kind: 'create_job', fields, publish, departmentName: dept!.name },
+    };
+  }
+
+  if (action === 'add_candidate') {
+    const name = str(args.full_name ?? args.name).replace(/\s+/g, ' ').slice(0, 160);
+    if (!name) refuse('Give the applicant\'s full name.');
+    const email = str(args.email).toLowerCase().slice(0, 190);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) refuse(`"${email}" is not a valid email address. Ask for the right one.`);
+    const phone = str(args.phone).slice(0, 30);
+    if (phone && !/^[\d\s()+.-]{7,20}$/.test(phone)) refuse(`"${phone}" does not look like a phone number. Ask for the right one.`);
+    const required = await requiredFields();
+    if (required.includes('email') && !email) refuse('An email address is required to add an applicant. Ask for it.');
+    // Which open role they apply for, by id or by title.
+    const jobId = num(args.job_id);
+    const jobText = str(args.job);
+    let job: { id: number; title: string } | undefined;
+    if (jobId || jobText) {
+      [job] = await sql<{ id: number; title: string }[]>`
+        select id, title from jobs where status = 'open' and ${jobId ? sql`id = ${jobId}` : sql`title ilike ${`%${jobText}%`}`} order by created_at desc limit 1`;
+      if (!job) refuse(`No open job matches "${jobText || jobId}". Use lookup jobs and pick an open one, or add them without a job.`);
+    }
+    const [existing] = email ? await sql<{ first_name: string; last_name: string }[]>`select first_name, last_name from candidates where email = ${email} order by id desc limit 1` : [];
+    const level = str(args.experience_level).toLowerCase();
+    const source = str(args.source).toLowerCase().replace(/[\s-]+/g, '_');
+    const skills = Array.isArray(args.skills) ? args.skills.map(str).filter(Boolean).join(', ') : str(args.skills);
+    const input = {
+      action: 'submit', fullName: name, email, phone, currentTitle: str(args.current_title).slice(0, 160),
+      experienceLevel: (EXPERIENCE_LEVELS as readonly string[]).includes(level) ? level : '',
+      skills: skills.slice(0, 500), education: str(args.education).slice(0, 300),
+      source: source in MANUAL_SOURCES ? source : 'direct', jobId: job?.id ?? null, notes: str(args.notes).slice(0, 5000),
+    };
+    const existingName = existing ? fullName(existing.first_name, existing.last_name) : null;
+    return {
+      kind: 'add_candidate', confirmLabel: existingName ? 'Update applicant' : 'Add applicant',
+      title: `${existingName ? 'Update' : 'Add'} applicant: ${name}`,
+      lines: [
+        [email, phone].filter(Boolean).join(' · ') || 'No contact details yet',
+        job ? `Applies for ${job.title} (starts in Applied)` : 'Not linked to a job yet',
+        ...(existingName ? [`${email} already belongs to ${existingName}; their record will be updated.`] : []),
+      ],
+      data: { kind: 'add_candidate', input, jobTitle: job?.title ?? null, existing: existingName },
     };
   }
 
@@ -285,7 +329,7 @@ async function prepare(user: CurrentUser, args: Args): Promise<Proposal> {
     };
   }
 
-  return refuse('Unknown action. Use move_stage, schedule_interview, send_email, create_job, approve_job or reject_job.');
+  return refuse('Unknown action. Use move_stage, schedule_interview, send_email, create_job, add_candidate, approve_job or reject_job.');
 }
 
 export const canUseAssistant = (user: CurrentUser) => ['admin', 'recruiter', 'hiring_manager', 'super_admin'].includes(user.role) || isAdminLevel(user);

@@ -210,7 +210,8 @@ flow fails, the built-in reader fills the form and the page says why.
 
 The robot in the bottom-right corner is an agent: ask it things ("sino nasa
 screening?") or tell it what to do ("move Maria to final interview", "schedule
-Paolo bukas 2pm", "draft a rejection email", "make a job posting for…"). It runs
+Paolo bukas 2pm", "draft a rejection email", "make a job posting for…",
+"add Bea Santos, bea@…, for Data Analyst"). It runs
 in the **ats-assistant** n8n workflow (Claude through n8n's AI credits) and reads
 and prepares changes through the ATS's own rules, as the person chatting.
 
@@ -219,6 +220,8 @@ and prepares changes through the ATS's own rules, as the person chatting.
   the Audit trail as `assistant_action`.
 - HR / Recruiters: a job posting they ask for is saved and **sent for approval**;
   they cannot approve, reject or publish, or skip stages. Admins can.
+- Job postings and new applicants have a **Preview** button that shows how they
+  will look (the posting as on the careers site) before anything is saved.
 - Hold the mic to talk, let go to send; slide away to cancel. Spoken questions
   get a spoken answer.
 

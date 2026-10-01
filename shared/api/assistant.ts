@@ -23,9 +23,26 @@ export interface AssistantActionDto {
   title: string;
   lines: string[];
   confirmLabel: string;
+  /** What the result will look like, for the Preview button (job postings and new applicants). */
+  preview?: AssistantPreview;
 }
 
-export type AssistantActionKind = 'move_stage' | 'schedule_interview' | 'send_email' | 'create_job' | 'approve_job' | 'reject_job';
+export type AssistantActionKind = 'move_stage' | 'schedule_interview' | 'send_email' | 'create_job' | 'approve_job' | 'reject_job' | 'add_candidate';
+
+export type AssistantPreview =
+  | {
+      type: 'job';
+      title: string; department: string; location: string; employmentType: string; salary: string;
+      description: string; responsibilities: string; qualifications: string; requirements: string; preferredSkills: string;
+      experience: string; education: string; publish: boolean;
+    }
+  | {
+      type: 'candidate';
+      fullName: string; email: string; phone: string; currentTitle: string; experienceLevel: string;
+      skills: string; education: string; source: string; job: string | null; notes: string;
+      /** Set when the email already belongs to a candidate, whose record will be updated. */
+      existing: string | null;
+    };
 
 export interface AssistantReplyDto {
   reply: string;
