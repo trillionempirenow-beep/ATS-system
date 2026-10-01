@@ -32,7 +32,7 @@ type Pool = ReturnType<typeof connect>;
  * function times out. So after a quiet spell the next request starts on a new
  * pool, and the old one is closed in the background.
  */
-const STALE_AFTER_MS = 10_000;
+const STALE_AFTER_MS = 5_000;
 let pool: Pool = connect();
 let lastActivity = Date.now();
 let inFlight = 0;
@@ -48,9 +48,15 @@ function swapPool(graceSeconds: number): void {
  * always stuck on a dead connection. Replace the pool now, so the requests that
  * follow get fresh connections instead of queueing behind the dead ones.
  */
+let lastReset = 0;
 export function resetDbPool(): void {
+  // Several requests stuck together need one fresh pool, not one each.
+  if (Date.now() - lastReset < 5_000) return;
+  lastReset = Date.now();
   console.warn('[db] a request got stuck; starting fresh connections');
-  swapPool(2);
+  // The old pool keeps serving the requests already running on it; only
+  // connections still busy after 30s (the stuck ones) are closed.
+  swapPool(30);
 }
 
 /** Call at the start of each request; call the returned function when it finishes. */

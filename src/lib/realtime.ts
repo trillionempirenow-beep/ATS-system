@@ -83,8 +83,11 @@ function supabaseChannel<M>(name: string, presenceKey: string): Channel<M> {
       if (s === 'CLOSED' && !closed && reopenTimer === undefined) {
         // The server closed the channel (for example over a rate limit) and the SDK
         // will not rejoin a closed channel by itself: open a fresh one after a pause.
-        void sb.removeChannel(channel);
+        // Detach first: removeChannel reports CLOSED again synchronously, and that
+        // second report must hit the guards above, not start another removal.
+        ch = null;
         reopenTimer = window.setTimeout(() => { reopenTimer = undefined; open(sb); }, Math.min(15_000, 1000 * 2 ** retries++));
+        void sb.removeChannel(channel).catch(() => undefined);
         return;
       }
       if (current !== 'connected') return;
