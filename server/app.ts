@@ -22,6 +22,8 @@ export function createApp(): express.Express {
     res.set('X-Content-Type-Options', 'nosniff');
     next();
   });
+  // Hold-to-talk recordings for the assistant are larger than any form.
+  app.use('/api/v1/assistant/message', express.json({ limit: '2mb' }));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 

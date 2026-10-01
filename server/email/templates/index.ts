@@ -131,3 +131,12 @@ export function passwordResetRejected(brand: Brand, v: { name: string; note: str
     ...(v.note ? [{ kind: 'paragraph' as const, text: `Note from the Super Admin: ${v.note}` }] : []),
   ]);
 }
+
+/** A message a recruiter wrote (or had the assistant draft) to one applicant. */
+export function recruiterMessage(brand: Brand, v: { candidateName: string; subject: string; body: string; senderName: string }): RenderedEmail {
+  const paragraphs = v.body.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  return renderEmail(brand, v.subject, paragraphs[0]?.slice(0, 90) ?? v.subject, [
+    ...paragraphs.map((text) => ({ kind: 'paragraph' as const, text })),
+    { kind: 'note', text: `Sent by ${v.senderName}, ${brand.company} recruiting team.` },
+  ]);
+}

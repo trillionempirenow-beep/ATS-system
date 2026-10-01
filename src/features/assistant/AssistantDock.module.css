@@ -164,32 +164,38 @@
 .suggestArrow { opacity: 0; transform: translateX(-4px); transition: opacity .15s ease, transform .2s var(--dock-ease); }
 .suggestion:hover .suggestArrow { opacity: 1; transform: none; }
 
-/* Sample result card */
+/* A change the assistant prepared, waiting for Confirm. */
 .card {
   margin-top: 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
   font-size: 13px;
+  background: var(--surface);
 }
-.row {
+.action { animation: rise .35s var(--dock-ease) both; }
+.actionBody { padding: 10px 12px; display: grid; gap: 3px; }
+.actionTitle { font-weight: 600; font-size: 13.5px; }
+.actionLine { color: var(--text2); line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.actionMuted { color: var(--text3); font-size: 12.5px; max-height: 120px; overflow: auto; }
+.actionFoot {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--border);
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
 }
-.rowTime { width: 58px; flex: none; font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums; }
-.rowMain { flex: 1; min-width: 0; display: grid; }
-.rowMain strong { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rowMain span { color: var(--text3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.score { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.score small { font-size: 11px; font-weight: 500; color: var(--text3); }
-.age { font-size: 12px; color: var(--text3); }
-.draft { padding: 10px 12px; border-bottom: 1px solid var(--border); }
-.draftSubject { font-weight: 600; margin-bottom: 4px; }
-.draft p { margin: 0; color: var(--text2); line-height: 1.5; }
-.cardFoot { padding: 6px 12px; font-size: 11.5px; color: var(--text3); background: var(--surface2); }
+.actionNote { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text3); }
+.actionDone { color: var(--success-fg); }
+.actionError { color: var(--danger-fg); }
+.actionLink { font-size: 12.5px; font-weight: 600; color: var(--primary); text-decoration: none; padding: 0 4px; }
+.actionLink:hover { text-decoration: underline; }
+
+.metaIcon { color: var(--text3); align-self: center; }
+.textError { color: var(--danger-fg); }
+.textPending { color: var(--text3); font-style: italic; }
 
 /* ---------- Composer ---------- */
 .composer {
@@ -232,6 +238,58 @@
 }
 .send:hover:not(:disabled) { background: var(--primary-hover); }
 .send:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Hold to talk */
+.mic {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  touch-action: none; /* holding must not scroll or open the long-press menu */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .2s var(--dock-ease);
+}
+.mic:hover:not(:disabled) { color: var(--text); border-color: var(--border-strong); }
+.mic:disabled { opacity: .4; cursor: not-allowed; }
+.micOn {
+  background: var(--danger-solid);
+  border-color: var(--danger-solid);
+  color: var(--danger-solid-fg);
+  transform: scale(1.08);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--danger-solid) 18%, transparent);
+}
+.micOn:hover:not(:disabled) { color: var(--danger-solid-fg); }
+
+.recBar {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  font-size: 13px;
+  animation: rise .2s var(--dock-ease) both;
+}
+.recDot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger-solid); animation: blink 1s infinite ease-in-out; }
+.recTime { font-variant-numeric: tabular-nums; font-weight: 600; }
+.recLevel { display: flex; align-items: center; gap: 3px; height: 18px; }
+.recLevel i { width: 3px; height: 100%; border-radius: 2px; background: var(--primary); transform-origin: 50% 50%; transition: transform .08s linear; }
+.recHint { flex: 1; text-align: right; color: var(--text3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recCancel { border-color: var(--danger-solid); }
+.recCancel .recHint { color: var(--danger-fg); }
+.recCancel .recLevel i { background: var(--text3); }
 
 /* ---------- Phones ---------- */
 @media (max-width: 640px) {

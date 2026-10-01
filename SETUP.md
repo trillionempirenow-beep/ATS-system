@@ -206,6 +206,32 @@ Set `JD_N8N_WEBHOOK_URL` = `https://<your-n8n>/webhook/ats-parse-jd` in Vercel
 (it uses the same secret as the CV reader) and redeploy. Without it, or if the
 flow fails, the built-in reader fills the form and the page says why.
 
+## Acme assistant (n8n agent, voice)
+
+The robot in the bottom-right corner is an agent: ask it things ("sino nasa
+screening?") or tell it what to do ("move Maria to final interview", "schedule
+Paolo bukas 2pm", "draft a rejection email", "make a job posting for…"). It runs
+in the **ats-assistant** n8n workflow (Claude through n8n's AI credits) and reads
+and prepares changes through the ATS's own rules, as the person chatting.
+
+- Nothing changes until the person presses the button on the card (Move,
+  Schedule, Send email…). Stage moves can be undone. Confirmed actions are in
+  the Audit trail as `assistant_action`.
+- HR / Recruiters: a job posting they ask for is saved and **sent for approval**;
+  they cannot approve, reject or publish, or skip stages. Admins can.
+- Hold the mic to talk, let go to send; slide away to cancel. Spoken questions
+  get a spoken answer.
+
+Setup:
+1. Vercel: set `ASSISTANT_N8N_WEBHOOK_URL` = `https://<your-n8n>/webhook/ats-assistant`
+   and redeploy. It uses the same `X-ATS-Secret` as the other n8n flows
+   (`CV_N8N_SECRET` or `EMAIL_N8N_SECRET`). `APP_URL` must be the public site
+   address: the workflow calls back to `APP_URL/api/v1/assistant/tools`.
+2. Voice replies: in n8n open **ats-assistant** → **ElevenLabs voice**, add an
+   ElevenLabs credential (your API key from elevenlabs.io → API keys), turn the
+   node on, and publish. Until then the assistant answers in text only. Change
+   the voice in the same node.
+
 ## Video calls across networks (TURN relay)
 
 The interview room connects people directly. On many mobile networks and home

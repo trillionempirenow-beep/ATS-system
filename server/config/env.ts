@@ -74,6 +74,8 @@ const schema = z.object({
   // Create job posting > upload a job description: the ATS-system workflow's JD reader.
   JD_N8N_WEBHOOK_URL: optionalUrl,
   CV_N8N_SECRET: optionalString,
+  // Acme assistant: the "ats-assistant" n8n workflow's webhook (same shared secret as the other flows).
+  ASSISTANT_N8N_WEBHOOK_URL: optionalUrl,
   GEMINI_API_KEY: optionalString,
   GEMINI_MODEL: optionalString,
   ANTHROPIC_API_KEY: optionalString,

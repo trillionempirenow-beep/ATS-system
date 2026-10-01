@@ -1,5 +1,6 @@
 import type { Router } from 'express';
 import { adminRouter } from './modules/admin/admin.routes.js';
+import { assistantRouter } from './modules/assistant/assistant.routes.js';
 import { candidatesRouter } from './modules/candidates/candidates.routes.js';
 import { cronRouter } from './modules/cron/cron.routes.js';
 import { insightsRouter } from './modules/insights/insights.routes.js';
@@ -21,5 +22,6 @@ export const featureRouters: Router[] = [
   jobsRouter,
   peopleRouter,
   adminRouter,
+  assistantRouter,
   cronRouter,
 ];
