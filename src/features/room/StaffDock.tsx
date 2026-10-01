@@ -3,11 +3,9 @@ import type { AiNoteDto, StaffRoomDto } from '@shared/api/interviews';
 import { Icon } from '@/components/icon/Icon';
 import { api, errorMessage } from '@/lib/api';
 import { mmss, timeAgo } from '@/lib/format';
-import { scoreBand, suggestedScore } from '../interviews/ReviewForm';
-import { useSaveScorecard } from '../interviews/api';
 import s from './Room.module.css';
 
-export type DockTab = 'assist' | 'score' | 'notes';
+export type DockTab = 'assist' | 'notes';
 export type SaveState = { kind: 'idle' | 'saving' | 'saved' | 'error'; at?: string; message?: string };
 
 /** Debounced autosave of the interviewer's live notes. flush() saves immediately (used before ending). */
@@ -43,31 +41,11 @@ export function useLiveNotes(interviewId: number, initial: string | null) {
   return { text, change, save, flush: persist, current: () => latest.current };
 }
 
-export function useScorecardDraft(interviewId: number, initial: Record<string, number | null>) {
-  const [ratings, setRatings] = useState(initial);
-  const mutation = useSaveScorecard(interviewId);
-  const pending = useRef<Record<string, number | null>>({});
-  const timer = useRef<number>();
-  const rate = (criterion: string, value: number | null) => {
-    setRatings((r) => ({ ...r, [criterion]: value }));
-    pending.current[criterion] = value;
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => {
-      const batch = pending.current;
-      pending.current = {};
-      mutation.mutate(batch);
-    }, 500);
-  };
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-  return { ratings, rate };
-}
-
 interface Props {
   room: StaffRoomDto;
   tab: DockTab;
   onTab: (t: DockTab) => void;
   notes: ReturnType<typeof useLiveNotes>;
-  scorecard: ReturnType<typeof useScorecardDraft>;
   moments: StaffRoomDto['moments'];
   onFlag: (label: string) => Promise<void>;
   elapsedSeconds: () => number;
@@ -84,11 +62,9 @@ export interface AiNotesPanel {
   lastAt: string | null;
 }
 
-export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag, elapsedSeconds, ai }: Props) {
-  const live = suggestedScore(scorecard.ratings);
+export function StaffDock({ room, tab, onTab, notes, moments, onFlag, elapsedSeconds, ai }: Props) {
   const [flagLabel, setFlagLabel] = useState('');
   const [flagging, setFlagging] = useState(false);
-  const criteria = room.scorecard.criteria;
 
   const flag = async () => {
     setFlagging(true);
@@ -102,7 +78,6 @@ export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag,
 
   const tabs: Array<{ key: DockTab; label: string }> = [
     { key: 'assist', label: 'AI notes' },
-    { key: 'score', label: 'Scorecard' },
     { key: 'notes', label: 'My notes' },
   ];
 
@@ -120,7 +95,7 @@ export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag,
             <span><Icon name="sparkle" size={20} /></span>
             <div>
               <strong>{!room.assistant.canUse ? 'AI notes are the interviewer\'s' : !room.assistant.configured ? 'AI notes are not connected' : ai.on ? 'AI notes are on' : 'AI notes are off'}</strong>
-              <small>{!room.assistant.canUse ? 'Only the interviewer sees them. Use My notes and the scorecard.'
+              <small>{!room.assistant.canUse ? 'Only the interviewer sees them. Use My notes; you score in the review after the meeting.'
                 : !room.assistant.configured ? 'Ask your admin to connect the "Interview notes" flow (SETUP.md). Type your own notes meanwhile.'
                   : ai.on ? (ai.lastAt ? `Listening · last update ${timeAgo(ai.lastAt)}` : 'Listening · first notes in about 30 seconds')
                     : 'Understands Tagalog, English and Taglish. Notes are written in English. Everyone in the room sees that it is on.'}</small>
@@ -149,32 +124,8 @@ export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag,
           </div>
           <div className={s.darkCard}>
             <span className={s.overline}>Who can read the notes</span>
-            <p>Only the hiring team on this interview. Notes, flags and your scorecard draft are saved with it.</p>
+            <p>Only the hiring team on this interview. Notes and flags are saved with it. Scoring happens in the review after the meeting.</p>
           </div>
-        </div>
-      ) : null}
-
-      {tab === 'score' ? (
-        <div className={s.sideBody} role="tabpanel">
-          <div className={s.liveScore}>
-            <strong>{live.score ?? '—'}</strong>
-            <div>
-              <span>out of 100 · <b>{scoreBand(live.score)}</b></span>
-              <small>{live.count} of {criteria.length} criteria rated. Updates as you rate.</small>
-            </div>
-          </div>
-          {criteria.map((c) => (
-            <div key={c} className={s.rate} role="radiogroup" aria-label={c}>
-              <span>{c}</span>
-              <span className={s.rateScale}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button key={n} type="button" role="radio" aria-checked={scorecard.ratings[c] === n} className={s.rateBtn}
-                    onClick={() => scorecard.rate(c, scorecard.ratings[c] === n ? null : n)}>{n}</button>
-                ))}
-              </span>
-            </div>
-          ))}
-          <p className={s.sideEmpty}>Draft only you can see. Score = 20 × average rating. The final score comes from the review form.</p>
         </div>
       ) : null}
 

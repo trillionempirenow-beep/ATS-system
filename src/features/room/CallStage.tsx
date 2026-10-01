@@ -70,6 +70,10 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
   // "John Doe - Tech Lead": the full text stays readable on hover when the pill truncates it.
   const label = position ? `${name} - ${position}` : name;
   const ref = useRef<HTMLVideoElement>(null);
+  // Whether pictures are really arriving. Browsers can leave an incoming camera
+  // flagged "muted" on slow or relayed connections while frames still play, so the
+  // tile trusts frames drawn rather than that flag.
+  const [painting, setPainting] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;
@@ -78,12 +82,33 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
     const play = () => { if (el.srcObject) void el.play().catch(() => undefined); };
     play();
     stream?.addEventListener('addtrack', play);
-    return () => stream?.removeEventListener('addtrack', play);
+    const tracks = stream?.getVideoTracks() ?? [];
+    tracks.forEach((tr) => tr.addEventListener('unmute', play));
+
+    let last = 0;
+    let handle = 0;
+    const video = el as HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number; cancelVideoFrameCallback?: (h: number) => void };
+    const onFrame = () => { last = Date.now(); handle = video.requestVideoFrameCallback?.(onFrame) ?? 0; };
+    if (video.requestVideoFrameCallback) handle = video.requestVideoFrameCallback(onFrame);
+    let lastTime = -1;
+    const check = window.setInterval(() => {
+      // Without frame callbacks (older Safari), a moving clock with a picture size counts.
+      if (!video.requestVideoFrameCallback && el.videoWidth > 0 && el.currentTime !== lastTime) { lastTime = el.currentTime; last = Date.now(); }
+      setPainting(Date.now() - last < 2500);
+    }, 700);
+    return () => {
+      window.clearInterval(check);
+      if (handle) video.cancelVideoFrameCallback?.(handle);
+      stream?.removeEventListener('addtrack', play);
+      tracks.forEach((tr) => tr.removeEventListener('unmute', play));
+    };
   }, [stream]);
+  // Your own preview (muted) shows at once; other people once their pictures arrive.
+  const showVideo = hasVideo && (painting || Boolean(muted));
   return (
     <div className={cx(s.tile, small && s.tileSmall, highlight && s.tileSpeaking)}>
-      <video ref={ref} autoPlay playsInline muted={muted} className={cx(s.tileVideo, mirrored && s.mirrored)} style={{ opacity: hasVideo ? 1 : 0 }} />
-      {!hasVideo ? (
+      <video ref={ref} autoPlay playsInline muted={muted} className={cx(s.tileVideo, mirrored && s.mirrored)} style={{ opacity: showVideo ? 1 : 0 }} />
+      {!showVideo ? (
         <div className={s.tileEmpty}><span className={s.glow} /><Avatar name={name} size={small ? 48 : 104} /></div>
       ) : null}
       <div className={s.tileName} title={role ? `${label} · ${role}` : label}>

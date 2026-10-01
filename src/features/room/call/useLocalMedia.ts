@@ -104,16 +104,16 @@ export function useLocalMedia(): LocalMedia {
     }
   }, [replaceStream]);
 
-  const request = useCallback(() => open({ audio: true, video: { width: { ideal: 1280 }, height: { ideal: 720 } } }), [open]);
+  const request = useCallback(() => open({ audio: true, video: { width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 24, max: 30 } } }), [open]);
 
   const selectCamera = useCallback(async (id: string) => {
     setCameraId(id);
-    await open({ audio: microphoneId ? { deviceId: { exact: microphoneId } } : true, video: { deviceId: { exact: id }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+    await open({ audio: microphoneId ? { deviceId: { exact: microphoneId } } : true, video: { deviceId: { exact: id }, width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 24, max: 30 } } });
   }, [open, microphoneId]);
 
   const selectMicrophone = useCallback(async (id: string) => {
     setMicrophoneId(id);
-    await open({ audio: { deviceId: { exact: id } }, video: cameraId ? { deviceId: { exact: cameraId }, width: { ideal: 1280 }, height: { ideal: 720 } } : true });
+    await open({ audio: { deviceId: { exact: id } }, video: cameraId ? { deviceId: { exact: cameraId }, width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 24, max: 30 } } : true });
   }, [open, cameraId]);
 
   const toggleMic = useCallback(() => {

@@ -133,6 +133,20 @@ async function logMedia(id: string, pc: RTCPeerConnection, remote: MediaStream, 
   } catch { /* stats are best effort */ }
 }
 
+/**
+ * A camera at a modest bitrate keeps flowing on mobile data and relayed (TURN)
+ * connections, where full HD often stalls while the voice gets through.
+ */
+async function capVideo(sender: RTCRtpSender): Promise<void> {
+  try {
+    const params = sender.getParameters();
+    if (!params.encodings?.length) params.encodings = [{}];
+    params.encodings[0]!.maxBitrate = 900_000;
+    params.degradationPreference = 'balanced';
+    await sender.setParameters(params);
+  } catch { /* not supported here, or not negotiated yet: the browser's defaults apply */ }
+}
+
 const nonce = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 16);
 
 /**
@@ -190,6 +204,7 @@ export function useCall(opts: CallOptions): Call {
         if (sender.track !== track) void sender.replaceTrack(track).catch(() => undefined);
       } else if (track) {
         entry.senders[kind] = entry.pc.addTrack(track, outStream.current);
+        if (kind === 'video') void capVideo(entry.senders.video!);
       }
     }
   }, []);
@@ -500,7 +515,9 @@ export function useCall(opts: CallOptions): Call {
     return {
       meta,
       stream,
-      hasVideo: Boolean(videoTrack && videoTrack.readyState === 'live' && !videoTrack.muted && (meta.cam || meta.screen)),
+      // Not gated on track.muted: that flag can stick on poor connections while frames
+      // flow. The tile itself checks that pictures are being drawn.
+      hasVideo: Boolean(videoTrack && videoTrack.readyState === 'live' && (meta.cam || meta.screen)),
       state: entry?.pc.connectionState ?? 'new',
     };
   });

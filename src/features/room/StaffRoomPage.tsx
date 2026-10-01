@@ -17,11 +17,10 @@ import { formatTime, formatWeekday, plural } from '@/lib/format';
 import { joinChannel } from '@/lib/realtime';
 import { interviewKeys, useInterview } from '../interviews/api';
 import { FORMAT_LABELS } from '../interviews/ScheduleDrawer';
-import { suggestedScore } from '../interviews/ReviewForm';
 import { CallStage, type SidePanel } from './CallStage';
 import { DeviceCheck } from './DeviceCheck';
 import { GuestAdmissions, copyText, type GuestDecision } from './GuestAdmissions';
-import { StaffDock, useLiveNotes, useScorecardDraft, type DockTab } from './StaffDock';
+import { StaffDock, useLiveNotes, type DockTab } from './StaffDock';
 import { useAiNotes } from './call/useAiNotes';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
@@ -113,7 +112,7 @@ function PreCall({ room, media, phase, onPhase }: { room: StaffRoomDto; media: M
             ['Interviewer', iv.interviewerName ?? '—'],
             ['Room', 'Built-in Acme Room'],
             ['Room code', <span key="c" className="mono">{iv.roomCode}</span>],
-            ['Notes', 'Your own notes and scorecard, hiring team only'],
+            ['Notes', 'Your own notes, hiring team only. You score in the review after the meeting.'],
           ]} />
           <p className={w.faint} style={{ marginTop: 16 }}>You will check your camera and microphone before entering.</p>
         </Card>
@@ -169,7 +168,6 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   const [moments, setMoments] = useState(room.moments);
   const [startedAt, setStartedAt] = useState(iv.startedAt ?? new Date().toISOString());
   const notes = useLiveNotes(iv.id, iv.liveNotes);
-  const scorecard = useScorecardDraft(iv.id, room.scorecard.myRatings);
   const endedRef = useRef(false);
   // The parent passes a new onEnded on every render. Reading it through a ref keeps
   // finish/beat stable, so re-renders do not rejoin channels or post leave + presence.
@@ -329,7 +327,6 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
     }
   };
 
-  const live = suggestedScore(scorecard.ratings).score;
   const { title, subtitle } = roomTitle(room);
 
   return (
@@ -339,7 +336,6 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       since={startedAt}
       pills={<>
         {aiOn ? <span className={`${s.pill} ${s.pillAi}`}><Icon name="sparkle" size={15} />AI notes on</span> : null}
-        {live !== null ? <span className={`${s.pill} ${s.pillScore}`}><Icon name="star" size={15} />Score {live}</span> : null}
       </>}
       headerAction={<>
         {room.guests.link ? <button type="button" className={s.topLink} onClick={() => void copyGuestLink()}><Icon name="link" size={14} />Copy guest link</button> : null}
@@ -366,7 +362,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
           <span>{pending ? 'Admit them from the banner above when you are ready.' : 'They will appear here once they join and you let them in.'}</span>
         </div>
       )}
-      dock={<StaffDock room={room} tab={tab} onTab={setTab} notes={notes} scorecard={scorecard} moments={moments} onFlag={flag} elapsedSeconds={elapsed}
+      dock={<StaffDock room={room} tab={tab} onTab={setTab} notes={notes} moments={moments} onFlag={flag} elapsedSeconds={elapsed}
         ai={{ on: aiOn, toggling: aiToggling, onToggle: () => void toggleAi(), notes: ai.notes, state: ai.state, error: ai.error, lastAt: ai.lastAt }} />}
       panel={panel}
       onPanel={setPanel}
@@ -381,7 +377,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
           </>}>
           <ul className={s.steps}>
             <li><span><Icon name="close" size={14} /></span><span><strong>The room closes{candidateInCall ? ` and ${iv.candidateName} is disconnected` : ''}{admittedGuests.length ? `. Guests are disconnected too` : ''}</strong></span></li>
-            <li><span><Icon name="check" size={14} /></span><span><strong>Your notes and scorecard draft are saved</strong></span></li>
+            <li><span><Icon name="check" size={14} /></span><span><strong>Your notes are saved</strong></span></li>
             <li><span><Icon name="edit" size={14} /></span><span><strong>You score and review the interview next</strong></span></li>
           </ul>
         </Modal>
@@ -395,7 +391,6 @@ function EndedScreen({ room, endedAt }: { room: StaffRoomDto; endedAt: string | 
   const fresh = qc.getQueryData<StaffRoomDto>(interviewKeys.detail(room.interview.id)) ?? room;
   const iv = fresh.interview;
   const minutes = iv.startedAt && endedAt ? Math.max(1, Math.round((Date.parse(endedAt) - Date.parse(iv.startedAt)) / 60_000)) : null;
-  const rated = Object.values(fresh.scorecard.myRatings).filter((v) => v !== null).length;
   const noteLines = (iv.liveNotes ?? '').split('\n').filter((l) => l.trim()).length;
   const reviewed = iv.state === 'reviewed';
   return createPortal(
@@ -411,7 +406,6 @@ function EndedScreen({ room, endedAt }: { room: StaffRoomDto; endedAt: string | 
           <ul className={s.endedList}>
             <li><Icon name="checkcircle" size={18} /><span>Room closed for everyone<small>{endedAt ? formatTime(endedAt) : ''}</small></span></li>
             <li><Icon name="checkcircle" size={18} /><span>Notes saved<small>{noteLines ? plural(noteLines, 'line') : 'No notes'} of your own · {plural(fresh.moments.length, 'flagged moment')}</small></span></li>
-            <li><Icon name="checkcircle" size={18} /><span>Scorecard draft saved<small>{rated} of {fresh.scorecard.criteria.length} criteria rated</small></span></li>
           </ul>
           <div className={s.actions}>
             <Link className={s.darkBtn} to={`/app/candidates/${iv.applicationId}`}>Open candidate</Link>
