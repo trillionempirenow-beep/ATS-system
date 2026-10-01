@@ -71,7 +71,7 @@ export function ApprovalReviewPage() {
       <div className={w.aside340}>
         <Card>
           <div className={s.jobHead}>
-            <div className={w.row} style={{ gap: 8, flexWrap: 'wrap' }}>
+            <div className={`${w.row} ${w.gap8} ${w.wrapRow}`}>
               {job.department ? <Badge tone="neutral">{job.department}</Badge> : null}
               <Badge tone="info">{EMPLOYMENT_TYPE_LABELS[job.employmentType]}</Badge>
               {job.isUrgent ? <Badge tone="danger">Urgent</Badge> : null}
@@ -118,7 +118,7 @@ export function ApprovalReviewPage() {
               ['Salary', job.salaryInfo || 'Not stated'],
               ['Applicant limit', job.applicantLimit ? String(job.applicantLimit) : 'Unlimited'],
             ]} />
-            {job.sourcePdf ? <p className={w.faint} style={{ marginTop: 12 }}>Generated from an uploaded job description. <a className={w.link} href={`/api/v1/jobs/${job.id}/source-pdf`} target="_blank" rel="noopener noreferrer">Open the PDF</a></p> : null}
+            {job.sourcePdf ? <p className={`${w.faint} ${w.mt12}`}>Generated from an uploaded job description. <a className={w.link} href={`/api/v1/jobs/${job.id}/source-pdf`} target="_blank" rel="noopener noreferrer">Open the PDF</a></p> : null}
           </Card>
           <Card>
             <CardHeader title="History" />

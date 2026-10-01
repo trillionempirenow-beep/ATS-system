@@ -120,7 +120,7 @@ function ManageDrawer({ account, onClose, onConfirm, iAmSuper }: { account: Acco
         {a.accountStatus === 'active' ? (
           <div className={s.dangerZone}>
             <span className={w.overline}>Account status</span>
-            <div className={w.row} style={{ gap: 8 }}>
+            <div className={`${w.row} ${w.gap8}`}>
               <Button size="sm" variant="secondary" onClick={() => status('suspended')}>Suspend</Button>
               <Button size="sm" variant="dangerGhost" onClick={() => status('disabled')}>Disable</Button>
             </div>

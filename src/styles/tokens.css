@@ -86,6 +86,22 @@
   --video: #141C2B;
   --video-tile: #1E2839;
   --call-bar: #0D1320;
+  /* The interview room is a dark stage in both themes: its own text, lines and accents on ink. */
+  --call-text: #FFFFFF;
+  --call-text-2: rgba(255, 255, 255, 0.78);
+  --call-text-3: rgba(255, 255, 255, 0.6);
+  --call-fill: rgba(255, 255, 255, 0.06);
+  --call-fill-2: rgba(255, 255, 255, 0.1);
+  --call-line: rgba(255, 255, 255, 0.16);
+  --call-accent: #3DBB9B;
+  --call-accent-fg: #06221B;
+  --call-danger: #C2410C;
+  --call-danger-hover: #A8380A;
+  --call-danger-text: #F0804F;
+  --call-ai: #C4B5FD;
+  --call-warn: #FCD34D;
+  --call-ink: #05080F;
+  --call-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 
   /* Type: IBM Plex Sans throughout; Plex Mono only for codes and IDs. */
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -153,6 +169,13 @@
   --brand-panel-faint: #A7B2C4;
   --brand-panel-accent: #7FD3BD;
   --brand-panel-chip: rgba(255, 255, 255, 0.10);
+  /* The stage scale as it reads on ink (the dark-theme values, in both themes). */
+  --brand-panel-stage-1: #7E8AA0;
+  --brand-panel-stage-2: #6FA4A6;
+  --brand-panel-stage-3: #4FAE98;
+  --brand-panel-stage-4: #3DBB9B;
+  --brand-panel-stage-5: #5CCBAE;
+  --brand-panel-stage-6: #8FDCC6;
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 

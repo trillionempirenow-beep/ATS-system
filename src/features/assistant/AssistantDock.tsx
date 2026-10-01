@@ -18,9 +18,7 @@ import s from './AssistantDock.module.css';
  * Hold the mic to talk; letting go sends the recording, and the reply is spoken.
  */
 
-/** Idle robot, and the wave it plays on hover. The idle image is the video's first frame, so they line up. */
-const BOT_SRC = '/acme-assistant-idle.webp';
-const WAVE_SRC = '/acme-assistant-wave.webm';
+/** The robot's head: the assistant's mark on its top-bar button and in the panel. */
 const HEAD_SRC = '/acme-assistant-head.webp';
 /** Shorter than this is a tap, not speech. */
 const MIN_RECORDING_MS = 600;
@@ -129,6 +127,28 @@ function ActionCard({ action, state, onConfirm, onCancel, onUndo }: {
   );
 }
 
+const ASSISTANT_TOGGLE = 'acme:assistant-toggle';
+const ASSISTANT_STATE = 'acme:assistant-state';
+
+/** The assistant's launcher, placed in the top bar so it never sits on top of page content. */
+export function AssistantButton({ className, labelClassName }: { className?: string; labelClassName?: string }) {
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const onState = (e: Event) => setOpen(Boolean((e as CustomEvent<boolean>).detail));
+    window.addEventListener(ASSISTANT_STATE, onState);
+    return () => window.removeEventListener(ASSISTANT_STATE, onState);
+  }, []);
+  if (/\/interviews\/[^/]+\/room/.test(location.pathname)) return null;
+  return (
+    <button type="button" className={className} aria-expanded={open} aria-label="Acme assistant"
+      onClick={(e) => window.dispatchEvent(new CustomEvent(ASSISTANT_TOGGLE, { detail: e.currentTarget }))}>
+      <img src={HEAD_SRC} alt="" width={24} height={24} draggable={false} />
+      <span className={labelClassName}>Assistant</span>
+    </button>
+  );
+}
+
 export function AssistantDock() {
   const me = useMe();
   const location = useLocation();
@@ -144,17 +164,13 @@ export function AssistantDock() {
   const [level, setLevel] = useState(0);
   const [micNote, setMicNote] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const launcherRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const micRef = useRef<HTMLButtonElement>(null);
-  const waveRef = useRef<HTMLVideoElement>(null);
   const voiceRef = useRef<HTMLAudioElement | null>(null);
   const rec = useRef<Recording | null>(null);
   const turn = useRef(0);
-  const [waving, setWaving] = useState(false);
-  // Safari cannot draw the transparent video, and some people ask for less motion: they keep the still robot.
-  const [canWave] = useState(() => !/^((?!chrome|android).)*safari/i.test(navigator.userAgent) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const canRecord = typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
   const firstName = me.name.trim().split(/\s+/)[0] ?? '';
 
@@ -197,27 +213,23 @@ export function AssistantDock() {
   // Let go of the mic and the speaker when the dock goes away.
   useEffect(() => () => { releaseMic(); voiceRef.current?.pause(); }, []);
 
+  // The launcher lives in the top bar (AssistantButton); it asks the dock to open or close.
+  useEffect(() => {
+    const onToggle = (e: Event) => {
+      openerRef.current = (e as CustomEvent<HTMLElement | null>).detail ?? null;
+      setOpen((v) => !v);
+    };
+    window.addEventListener(ASSISTANT_TOGGLE, onToggle);
+    return () => window.removeEventListener(ASSISTANT_TOGGLE, onToggle);
+  }, []);
+  useEffect(() => { window.dispatchEvent(new CustomEvent(ASSISTANT_STATE, { detail: open })); }, [open]);
+
   if (hidden) return null;
-
-  function startWave() {
-    const v = waveRef.current;
-    if (!v) return;
-    v.currentTime = 0;
-    v.play().catch(() => { /* not loaded or not allowed: the still robot stays */ });
-  }
-
-  function stopWave() {
-    const v = waveRef.current;
-    setWaving(false);
-    if (!v) return;
-    v.pause();
-    v.currentTime = 0;
-  }
 
   function close() {
     setOpen(false);
     voiceRef.current?.pause();
-    launcherRef.current?.focus();
+    openerRef.current?.focus();
   }
 
   function reset() {
@@ -402,7 +414,7 @@ export function AssistantDock() {
   const botHead = <img className={s.head} src={HEAD_SRC} alt="" />;
 
   return (
-    <div className={cx(s.dock, open && s.dockOpen)}>
+    <div className={cx(s.dock, open && s.dockOpen)} data-assistant-dock>
       <section ref={panelRef} id={panelId} className={s.panel} role="dialog" aria-label="Acme assistant" aria-hidden={!open}>
         <header className={s.top}>
           <img className={s.topHead} src={HEAD_SRC} alt="" />
@@ -462,7 +474,6 @@ export function AssistantDock() {
                 <button key={q.label} type="button" className={s.suggestion} onClick={() => send(q.label)}>
                   <Icon name={q.icon} size={16} />
                   <span>{q.label}</span>
-                  <Icon name="arrowr" size={14} className={s.suggestArrow} />
                 </button>
               ))}
             </div>
@@ -517,34 +528,6 @@ export function AssistantDock() {
         </form>
       </section>
 
-      <button
-        ref={launcherRef}
-        type="button"
-        className={s.launcher}
-        onClick={() => { stopWave(); setOpen(true); }}
-        onPointerEnter={(e) => { if (e.pointerType === 'mouse') startWave(); }}
-        onPointerLeave={stopWave}
-        aria-expanded={open}
-        aria-controls={panelId}
-        aria-label="Open Acme assistant"
-        tabIndex={open ? -1 : 0}
-      >
-        <img className={s.robot} src={BOT_SRC} alt="" draggable={false} />
-        {canWave ? (
-          <video
-            ref={waveRef}
-            className={cx(s.wave, waving && s.waveOn)}
-            src={WAVE_SRC}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-hidden="true"
-            onPlaying={() => setWaving(true)}
-          />
-        ) : null}
-        <img className={s.chipHead} src={HEAD_SRC} alt="" draggable={false} />
-      </button>
     </div>
   );
 }

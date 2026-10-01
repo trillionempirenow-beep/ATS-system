@@ -114,16 +114,16 @@ function PreCall({ room, media, phase, onPhase }: { room: StaffRoomDto; media: M
             ['Room code', <span key="c" className="mono">{iv.roomCode}</span>],
             ['Notes', 'Your own notes, hiring team only. You score in the review after the meeting.'],
           ]} />
-          <p className={w.faint} style={{ marginTop: 16 }}>You will check your camera and microphone before entering.</p>
+          <p className={`${w.faint} ${w.mt16}`}>You will check your camera and microphone before entering.</p>
         </Card>
         <Card>
           <div className={w.person}>
             <Avatar name={iv.candidateName} src={iv.avatarUrl} size={44} />
             <div className={w.personText}><span className={w.personName}>{iv.candidateName}</span><span className={w.personSub}>{iv.jobTitle} applicant</span></div>
           </div>
-          {iv.candidateWaiting ? <Notice tone="info" style={{ marginTop: 16 }}>{iv.candidateName} is in the waiting room.</Notice> : null}
-          {iv.notes ? <div className={w.noteCard} style={{ marginTop: 16 }}><div className={w.overline}>Scheduling notes</div><p className={w.pre} style={{ marginTop: 6 }}>{iv.notes}</p></div> : null}
-          <ButtonLink variant="secondary" to={`/app/candidates/${iv.applicationId}`} style={{ marginTop: 16 }}>View candidate</ButtonLink>
+          {iv.candidateWaiting ? <Notice tone="info" className={w.mt16}>{iv.candidateName} is in the waiting room.</Notice> : null}
+          {iv.notes ? <div className={`${w.noteCard} ${w.mt16}`}><div className={w.overline}>Scheduling notes</div><p className={`${w.pre} ${w.mt6}`}>{iv.notes}</p></div> : null}
+          <ButtonLink variant="secondary" to={`/app/candidates/${iv.applicationId}`} className={w.mt16}>View candidate</ButtonLink>
         </Card>
         {room.guests.link ? <GuestLinkCard link={room.guests.link} /> : null}
       </div>
@@ -142,7 +142,7 @@ function GuestLinkCard({ link }: { link: string }) {
     <Card>
       <CardHeader title="Guest link" />
       <p className={w.faint}>Share it with department heads or clients joining this final interview. Guests give their name and position, then wait until someone in the room admits them. Do not send it to the candidate: they have their own link.</p>
-      <div className={w.row} style={{ gap: 8, marginTop: 12 }}>
+      <div className={`${w.row} ${w.gap8} ${w.mt12}`}>
         <TextInput readOnly value={link} aria-label="Guest link" onFocus={(e) => e.currentTarget.select()} />
         <Button variant="secondary" icon="copy" onClick={() => void copy()}>Copy</Button>
       </div>

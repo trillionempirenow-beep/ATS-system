@@ -93,7 +93,7 @@ export function ResumeTab({ c }: { c: CandidateProfileDto }) {
                 actions={<a href={docUrl(d.id)} className={w.link} aria-label={`Download ${d.originalName}`}><Icon name="download" size={16} /></a>} />
             ))}
           </div>
-          <p className={w.faint} style={{ marginTop: 12 }}>Older versions are kept rather than overwritten, so the history stays intact.</p>
+          <p className={`${w.faint} ${w.mt12}`}>Older versions are kept rather than overwritten, so the history stays intact.</p>
         </Card>
         <Card>{uploader}</Card>
       </div>

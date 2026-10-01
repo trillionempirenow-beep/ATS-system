@@ -173,7 +173,7 @@ export function JobViewPage() {
               <ul className={cx(w.list, s.applicants)}>
                 {d.applicants.map((a) => (
                   <li key={a.applicationId} className={w.listItem}>
-                    <Link to={`/app/candidates/${a.applicationId}`} className={w.person} style={{ flex: 1 }}>
+                    <Link to={`/app/candidates/${a.applicationId}`} className={`${w.person} ${w.grow}`}>
                       <Avatar name={a.name} size={32} />
                       <span className={w.personText}>
                         <span className={w.personName}>{a.name}</span>

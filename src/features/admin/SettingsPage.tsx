@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SettingsDto, SettingsInput } from '@shared/api/admin';
-import { BrandMark } from '@/components/icon/Icon';
+import { BrandMark, Icon } from '@/components/icon/Icon';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Display';
 import { Field, TextInput, Textarea, formStyles } from '@/components/ui/Form';
 import { Notice, Skeleton } from '@/components/ui/Feedback';
 import { Card, CardHeader, DescriptionList, PageHeader } from '@/components/ui/Surface';
 import { useToast } from '@/components/ui/Toast';
 import { QueryErrorPage } from '@/app/system/StatusPages';
 import { ApiError, api, errorMessage } from '@/lib/api';
+import { cx } from '@/lib/cx';
 import { adminKeys, useAdminMutation } from './api';
 import w from '../workspace.module.css';
 import s from './Admin.module.css';
@@ -122,7 +122,9 @@ function SettingsForm({ data }: { data: SettingsDto }) {
           </Field>
         </Card>
         <div className={w.stickyActions}>
-          {saved && !dirty ? <Badge tone="success" icon="checkcircle">Settings saved.</Badge> : null}
+          <span className={cx(w.stickyStatus, saved && !dirty && w.stickyStatusOk)} role="status">
+            {save.isPending ? 'Saving…' : dirty ? 'You have unsaved changes.' : saved ? <><Icon name="checkcircle" size={14} />All changes saved.</> : 'No changes yet.'}
+          </span>
           <Button variant="ghost" disabled={!dirty} onClick={() => { setF(initial); setErrors({}); }}>Discard</Button>
           <Button disabled={!dirty} loading={save.isPending} onClick={submit}>Save settings</Button>
         </div>
@@ -136,7 +138,7 @@ function SettingsForm({ data }: { data: SettingsDto }) {
           ['Realtime', data.integrations.realtime],
         ]} />
         {data.integrations.email === 'log' || data.integrations.email === 'none'
-          ? <Notice tone="info" style={{ marginTop: 12 }}>Emails are not delivered to real inboxes in this environment.</Notice> : null}
+          ? <Notice tone="info" className={w.mt12}>Emails are not delivered to real inboxes in this environment.</Notice> : null}
       </Card>
     </div>
   );

@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Overlay';
 import c from '@/features/careers/Careers.module.css';
 import { Bullets, Tags } from '@/features/careers/PostingSections';
 import s from './AssistantDock.module.css';
+import w from '../workspace.module.css';
 
 /**
  * What a job posting or new applicant the assistant prepared will look like,
@@ -80,7 +81,7 @@ function JobPreview({ p }: { p: Extract<AssistantPreview, { type: 'job' }> }) {
           <Badge tone="neutral">{p.department}</Badge>
           {p.employmentType ? <Badge tone="info">{p.employmentType}</Badge> : null}
         </div>
-        <h1 className={c.displayS} style={{ fontSize: 28, lineHeight: '36px' }}>{p.title}</h1>
+        <h1 className={c.statusTitle}>{p.title}</h1>
         <div className={c.detailMeta}>
           <span><Icon name="pin" size={15} />{p.location || 'Location flexible'}</span>
           {p.salary ? <span className={c.salary}>{p.salary}</span> : null}
@@ -124,7 +125,7 @@ function CandidatePreview({ p }: { p: Extract<AssistantPreview, { type: 'candida
         <div>
           <div className={s.previewName}>{p.fullName}</div>
           <div className={s.previewSub}>{p.currentTitle || 'No current title'}</div>
-          <div className={c.cardBadges} style={{ marginTop: 8 }}>
+          <div className={`${c.cardBadges} ${w.mt8}`}>
             <Badge tone="neutral">Applied</Badge>
             {p.experienceLevel ? <Badge tone="info">{p.experienceLevel}</Badge> : null}
           </div>

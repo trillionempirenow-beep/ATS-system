@@ -4,7 +4,7 @@
 .name { font-size: var(--fs-heading); line-height: 34px; font-weight: var(--fw-semibold); letter-spacing: -0.015em; }
 .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--text2); }
 .headActions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.aiPill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: var(--radius-full); background: var(--purple-bg); color: var(--purple-fg); font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+.aiPill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: var(--radius-xs); background: var(--purple-bg); color: var(--purple-fg); font-size: var(--fs-caption); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
 
 .rail { margin: 0 -20px -20px; padding: 18px 20px 20px; border-top: 1px solid var(--border); }
 
@@ -16,8 +16,14 @@
 .scoreRow input[type='range'] { flex: 1; accent-color: var(--primary); }
 .scoreOut { min-width: 48px; text-align: right; font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
 
-.stageHistory { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.stageHistory li { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-body); }
+.stageHistory { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.stageHistory li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 10px 0; font-size: var(--fs-body); }
+.stageHistory li + li { border-top: 1px solid var(--border); }
+.stageHistory li:first-child { padding-top: 0; }
+.stageHistory li > span:first-child { margin-top: 4px; }
+.histText { display: flex; flex-direction: column; min-width: 0; }
+.histTitle { font-weight: var(--fw-medium); }
+.histDate { font-size: var(--fs-small); color: var(--text3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 
 /* Fixed-height stage: the empty state centres in it, and the PDF iframe fills it edge to edge with no second scrollbar. */

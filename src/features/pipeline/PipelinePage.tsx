@@ -26,14 +26,14 @@ function PipelineCard({ card, onMove, onPreview, onDragStart, dragging }: {
     <article className={cx(s.card, dragging && s.cardDragging)} draggable onDragStart={onDragStart} aria-label={`${card.name}, ${card.jobTitle}`}>
       <div className={s.cardTop}>
         <Avatar name={card.name} src={card.avatarUrl} size={32} />
-        <div style={{ minWidth: 0, flex: 1 }}>
+        <div className={w.grow}>
           <div className={s.cardName}>{card.name}</div>
           <div className={s.cardRole}>{card.jobTitle}</div>
         </div>
         <Menu
           trigger={(p) => <IconButton icon="more" label={`Move ${card.name}`} size={32} {...p} />}
           items={[
-            ...STAGE_ORDER.filter((st) => st !== card.stage).map((st) => ({ label: `Move to ${STAGE_LABELS[st]}`, icon: 'arrowr' as const, onSelect: () => onMove(st) })),
+            ...STAGE_ORDER.filter((st) => st !== card.stage).map((st) => ({ label: `Move to ${STAGE_LABELS[st]}`, onSelect: () => onMove(st) })),
             { label: 'Reject', icon: 'xcircle', danger: true, separatorBefore: true, onSelect: () => onMove('rejected') },
           ]}
         />
@@ -123,7 +123,7 @@ export function PipelinePage() {
           <div className={s.previewSection}>
             <div className={s.previewHead}>
               <Avatar name={preview.name} src={preview.avatarUrl} size={48} />
-              <div><div style={{ fontWeight: 600 }}>{preview.jobTitle}</div><div className={w.faint}>{preview.email}</div></div>
+              <div><div className={w.strong}>{preview.jobTitle}</div><div className={w.faint}>{preview.email}</div></div>
             </div>
             <DescriptionList items={[
               ['Current stage', <StageTag key="stage" stage={preview.stage} />],
@@ -135,7 +135,7 @@ export function PipelinePage() {
               ['Resume', preview.primaryDocumentId ? <a href={`/api/v1/documents/${preview.primaryDocumentId}/download?inline=1`} target="_blank" rel="noopener noreferrer" className={w.link}>View resume</a> : preview.hasResume ? 'Legacy upload' : 'Not uploaded'],
             ]} />
             <div>
-              <div className={w.overline} style={{ marginBottom: 6 }}>Recruiter notes ({preview.noteCount})</div>
+              <div className={`${w.overline} ${w.mb6}`}>Recruiter notes ({preview.noteCount})</div>
               <p className={w.muted}>{preview.latestNote ?? 'No notes yet.'}</p>
             </div>
           </div>

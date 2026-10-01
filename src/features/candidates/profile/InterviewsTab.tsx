@@ -23,29 +23,29 @@ export function InterviewsTab({ c }: { c: CandidateProfileDto }) {
             return (
               <article key={iv.id} className={s.ivCard}>
                 <div className={s.ivHead}>
-                  <div className={w.stack8} style={{ gap: 2 }}>
+                  <div className={`${w.stack8} ${w.gap2}`}>
                     <strong>{iv.meetingType === 'screening' ? 'Screening' : 'Interview'} · {iv.interviewType.charAt(0).toUpperCase() + iv.interviewType.slice(1)}</strong>
                     <span className={w.faint}>{formatWeekday(iv.startsAt)} · {formatTime(iv.startsAt)}{iv.interviewerName ? ` · with ${iv.interviewerName}` : ''}{iv.jobTitle !== c.job.title ? ` · ${iv.jobTitle}` : ''}</span>
                   </div>
-                  <div className={w.row} style={{ gap: 8 }}>
+                  <div className={`${w.row} ${w.gap8}`}>
                     <StatusBadge kind="interview" value={iv.state} size="sm" />
                     {iv.score !== null ? <strong className="num">{iv.score} / 100</strong> : null}
                   </div>
                 </div>
                 {live || iv.state === 'review_pending' ? (
-                  <div className={w.row} style={{ gap: 8, flexWrap: 'wrap' }}>
+                  <div className={`${w.row} ${w.gap8} ${w.wrapRow}`}>
                     {iv.roomCode && live ? <ButtonLink to={`/app/interviews/${iv.id}/room`} size="sm" icon="video">Open room</ButtonLink> : null}
                     {iv.state === 'review_pending' ? <ButtonLink to={`/app/interviews/${iv.id}/review`} size="sm">Score and review</ButtonLink> : null}
                     {live ? <ButtonLink to={`/app/interviews?focus=${iv.id}`} size="sm" variant="secondary">Reschedule</ButtonLink> : null}
                     {iv.roomCode ? <span className={w.faint}>Room code <span className="mono">{iv.roomCode}</span></span> : null}
                   </div>
                 ) : null}
-                {iv.liveNotes ? <div className={w.noteCard}><div className={w.overline}>Notes recorded during the meeting</div><p className={w.pre} style={{ marginTop: 6 }}>{iv.liveNotes}</p></div> : null}
+                {iv.liveNotes ? <div className={w.noteCard}><div className={w.overline}>Notes recorded during the meeting</div><p className={`${w.pre} ${w.mt6}`}>{iv.liveNotes}</p></div> : null}
                 {iv.feedback || iv.recommendation ? (
                   <div className={w.noteCard}>
                     <div className={w.overline}>Final review{iv.reviewerName ? ` · Submitted by ${iv.reviewerName}` : ''}</div>
-                    {iv.feedback ? <p className={w.pre} style={{ marginTop: 6 }}>{iv.feedback}</p> : null}
-                    {iv.recommendation ? <p className={w.strong} style={{ marginTop: 6 }}>Recommendation: {RECOMMENDATIONS[iv.recommendation]}</p> : null}
+                    {iv.feedback ? <p className={`${w.pre} ${w.mt6}`}>{iv.feedback}</p> : null}
+                    {iv.recommendation ? <p className={`${w.strong} ${w.mt6}`}>Recommendation: {RECOMMENDATIONS[iv.recommendation]}</p> : null}
                   </div>
                 ) : null}
               </article>

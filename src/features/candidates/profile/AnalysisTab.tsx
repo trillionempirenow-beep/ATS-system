@@ -69,8 +69,8 @@ export function AnalysisTab({ c }: { c: CandidateProfileDto }) {
                 ))}
               </div>
               <div className={w.cols11}>
-                <div><div className={w.overline} style={{ marginBottom: 6 }}>Strengths</div><ul className={w.muted} style={{ margin: 0, paddingLeft: 18 }}>{a.strengths.map((x) => <li key={x}>{x}</li>)}</ul></div>
-                <div><div className={w.overline} style={{ marginBottom: 6 }}>Concerns</div><ul className={w.muted} style={{ margin: 0, paddingLeft: 18 }}>{a.concerns.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                <div><div className={`${w.overline} ${w.mb6}`}>Strengths</div><ul className={`${w.muted} ${w.bulletList}`}>{a.strengths.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                <div><div className={`${w.overline} ${w.mb6}`}>Concerns</div><ul className={`${w.muted} ${w.bulletList}`}>{a.concerns.map((x) => <li key={x}>{x}</li>)}</ul></div>
               </div>
             </div>
           )}
@@ -78,7 +78,7 @@ export function AnalysisTab({ c }: { c: CandidateProfileDto }) {
         <Card>
           <CardHeader title="Fit assessment" subtitle="Shared with the applicant if they are not moving forward." />
           <div className={formStyles.stack}>
-            <div className={w.row} role="radiogroup" aria-label="Fit" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <div className={`${w.row} ${w.gap8} ${w.wrapRow}`} role="radiogroup" aria-label="Fit">
               {FEEDBACK_FITS.map((f) => (
                 <Button key={f} size="sm" variant={fit === f ? 'subtle' : 'secondary'} aria-pressed={fit === f} onClick={() => setFit(f)}>{FEEDBACK_FIT_LABELS[f]}</Button>
               ))}
@@ -92,7 +92,7 @@ export function AnalysisTab({ c }: { c: CandidateProfileDto }) {
             {c.feedback.map((f) => (
               <div key={f.id} className={w.noteCard}>
                 <div className={w.rowBetween}><Badge tone={f.fit === 'strong-fit' ? 'success' : f.fit === 'potential-fit' ? 'info' : 'danger'} size="sm">{FEEDBACK_FIT_LABELS[f.fit]}</Badge><span className={w.faint}>{f.author ?? 'Former user'} · {formatDateTime(f.createdAt)}</span></div>
-                {f.notes ? <p className={w.pre} style={{ marginTop: 8 }}>{f.notes}</p> : null}
+                {f.notes ? <p className={`${w.pre} ${w.mt8}`}>{f.notes}</p> : null}
               </div>
             ))}
           </div>
@@ -111,7 +111,7 @@ export function AnalysisTab({ c }: { c: CandidateProfileDto }) {
           {c.suggestions.map((sg) => (
             <div key={sg.id} className={w.noteCard}>
               <strong>{sg.jobTitle}</strong>
-              {sg.note ? <p className={w.muted} style={{ marginTop: 4 }}>{sg.note}</p> : null}
+              {sg.note ? <p className={`${w.muted} ${w.mt4}`}>{sg.note}</p> : null}
               <div className={w.noteMeta}>{sg.author ?? 'Former user'} · {formatDateTime(sg.createdAt)}</div>
             </div>
           ))}

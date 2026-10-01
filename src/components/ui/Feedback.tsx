@@ -7,9 +7,9 @@ import s from './Feedback.module.css';
 type NoticeTone = 'info' | 'success' | 'warning' | 'danger';
 const NOTICE_ICONS: Record<NoticeTone, IconName> = { info: 'info', success: 'checkcircle', warning: 'alert', danger: 'xcircle' };
 
-export function Notice({ tone = 'info', title, children, action, style }: { tone?: NoticeTone; title?: ReactNode; children?: ReactNode; action?: ReactNode; style?: CSSProperties }) {
+export function Notice({ tone = 'info', title, children, action, className }: { tone?: NoticeTone; title?: ReactNode; children?: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div className={cx(s.notice, s[tone])} role={tone === 'danger' ? 'alert' : 'status'} style={style}>
+    <div className={cx(s.notice, s[tone], className)} role={tone === 'danger' ? 'alert' : 'status'}>
       <Icon name={NOTICE_ICONS[tone]} size={18} />
       <div className={s.noticeText}>
         {title ? <div className={s.noticeTitle}>{title}</div> : null}

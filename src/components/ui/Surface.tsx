@@ -33,20 +33,25 @@ export function CardHeader({ title, subtitle, actions, flush, as: Tag = 'h2' }: 
 
 export interface Crumb { label: string; to?: string }
 
+/** Where a page sits: group / section / page, slash separated. The last item is the current page. */
+export function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav className={s.crumbs} aria-label="Breadcrumb">
+      {items.map((c, i) => (
+        <Fragment key={`${c.label}-${i}`}>
+          {i > 0 ? <span className={s.crumbSep} aria-hidden>/</span> : null}
+          {c.to && i < items.length - 1 ? <Link to={c.to}>{c.label}</Link> : <span className={i === items.length - 1 ? s.crumbCurrent : undefined} aria-current={i === items.length - 1 ? 'page' : undefined}>{c.label}</span>}
+        </Fragment>
+      ))}
+    </nav>
+  );
+}
+
 export function PageHeader({ title, description, crumbs, actions }: { title: ReactNode; description?: ReactNode; crumbs?: Crumb[]; actions?: ReactNode }) {
   return (
     <header className={s.pageHeader}>
       <div className={s.pageHeadText}>
-        {crumbs?.length ? (
-          <nav className={s.crumbs} aria-label="Breadcrumb">
-            {crumbs.map((c, i) => (
-              <Fragment key={`${c.label}-${i}`}>
-                {i > 0 ? <span className={s.crumbSep} aria-hidden>/</span> : null}
-                {c.to && i < crumbs.length - 1 ? <Link to={c.to}>{c.label}</Link> : <span className={i === crumbs.length - 1 ? s.crumbCurrent : undefined}>{c.label}</span>}
-              </Fragment>
-            ))}
-          </nav>
-        ) : null}
+        {crumbs?.length ? <Breadcrumbs items={crumbs} /> : null}
         <h1 className={s.pageTitle}>{title}</h1>
         {description ? <p className={s.pageDesc}>{description}</p> : null}
       </div>

@@ -80,7 +80,7 @@ export function AuditPage() {
             <Button type="button" variant="ghost" onClick={clear} disabled={!filtered && !Object.values(draft).some(Boolean)}>Clear</Button>
           </div>
         </form>
-        {invalidRange ? <Notice tone="warning" style={{ marginTop: 12 }}>The start date must be on or before the end date.</Notice> : null}
+        {invalidRange ? <Notice tone="warning" className={w.mt12}>The start date must be on or before the end date.</Notice> : null}
       </Card>
       <Card padding={0}>
         <div className={s.tableHead}><CardHeader title="Activity history" subtitle={d ? `${d.total.toLocaleString()} matching event${d.total === 1 ? '' : 's'}` : undefined} /></div>

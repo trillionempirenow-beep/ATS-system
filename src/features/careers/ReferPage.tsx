@@ -3,11 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { referralSchema } from '@shared/api/public';
-import { Icon } from '@/components/icon/Icon';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Field, Select, TextInput, Textarea, formStyles } from '@/components/ui/Form';
 import { Notice } from '@/components/ui/Feedback';
-import { Card } from '@/components/ui/Surface';
 import { api } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { usePublicJobs } from './api';
@@ -21,25 +19,26 @@ export function ReferPage() {
   const [error, setError] = useState<string | null>(null);
   const jobs = usePublicJobs({});
   useEffect(() => { document.title = 'Refer someone · Careers'; }, []);
-  const { register, handleSubmit, setError: setFieldError, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(formSchema) });
+  const { register, handleSubmit, reset, setError: setFieldError, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(formSchema) });
 
   if (sent) {
     return (
-      <div className={s.result} role="status">
-        <span className={s.resultIcon}><Icon name="checkcircle" size={28} /></span>
-        <h1 className={s.resultTitle}>Thanks for the referral!</h1>
-        <p style={{ color: 'var(--text2)' }}>We appreciate you helping us find great people. We will reach out to them soon.</p>
-        <ButtonLink to="/jobs">Back to jobs</ButtonLink>
+      <div className={s.narrow} role="status">
+        <header className={s.intro}>
+          <h1 className={s.title}>Referral sent</h1>
+          <p className={s.lead}>Thank you. A recruiter will contact them about the role.</p>
+        </header>
+        <div className={s.actions}><ButtonLink to="/jobs">See open roles</ButtonLink><Button variant="secondary" onClick={() => { reset(); setSent(false); }}>Refer someone else</Button></div>
       </div>
     );
   }
   return (
     <div className={s.narrow}>
-      <header className={s.pageHead} style={{ alignItems: 'center', textAlign: 'center' }}>
-        <h1 className={s.statusTitle} style={{ fontSize: 36, lineHeight: '44px' }}>Know someone great?</h1>
-        <p className={s.lead}>Send them a role that could be the start of something meaningful.</p>
+      <header className={s.intro}>
+        <h1 className={s.title}>Refer someone</h1>
+        <p className={s.lead}>Know someone who would do well here? Send us their details and a recruiter will get in touch with them.</p>
       </header>
-      <Card padding={24}>
+      <div className={s.formCard}>
         <form className={formStyles.stack} noValidate onSubmit={handleSubmit(async (v) => {
           setError(null);
           try {
@@ -57,12 +56,12 @@ export function ReferPage() {
             <Field label="Friend’s email" required error={errors.candidateEmail?.message}><TextInput type="email" {...register('candidateEmail')} /></Field>
           </div>
           <Field label="Position they’re a fit for">
-            <Select {...register('jobId')} placeholder="General / not sure" options={(jobs.data?.jobs ?? []).map((j) => ({ value: j.id, label: j.title }))} />
+            <Select {...register('jobId')} placeholder="Not sure yet" options={(jobs.data?.jobs ?? []).map((j) => ({ value: j.id, label: j.title }))} />
           </Field>
           <Field label="Note" optional error={errors.note?.message}><Textarea rows={4} maxLength={2000} {...register('note')} /></Field>
-          <Button type="submit" fullWidth loading={isSubmitting} icon="send">Send referral</Button>
+          <Button type="submit" loading={isSubmitting}>Send referral</Button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }

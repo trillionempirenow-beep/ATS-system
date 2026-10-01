@@ -88,7 +88,7 @@ export function PasswordResetsPage() {
         ) : (
           <div className={w.stack}>{d.pending.map((r) => <PendingRequest key={r.id} r={r} onIssued={(name, result) => setIssued({ name, result })} />)}</div>
         )}
-        {d ? <p className={w.faint} style={{ marginTop: 12 }}>Approved links stay valid for {d.windowHours} hours.</p> : null}
+        {d ? <p className={`${w.faint} ${w.mt12}`}>Approved links stay valid for {d.windowHours} hours.</p> : null}
       </Card>
       <Card padding={0}>
         <div className={s.tableHead}><CardHeader title="Recent decisions" /></div>

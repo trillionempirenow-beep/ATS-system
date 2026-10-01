@@ -111,7 +111,7 @@ export function StageMoveDialog({ move, onClose }: { move: PendingMove | null; o
     return (
       <Modal open title={kind === 'reject' ? 'Reject candidate?' : 'Move candidate?'} onClose={onClose}
         footer={<>
-          <Link to={`/app/candidates/${move.applicationId}`} className={w.link} style={{ marginRight: 'auto', alignSelf: 'center' }}>View candidate profile</Link>
+          <Link to={`/app/candidates/${move.applicationId}`} className={`${w.link} ${w.pushLeft}`}>View candidate profile</Link>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button onClick={() => setStep('confirm')}>Continue</Button>
         </>}>
@@ -133,7 +133,7 @@ export function StageMoveDialog({ move, onClose }: { move: PendingMove | null; o
         </Button>
       </>}>
       <div className={s.dialogBody}>
-        <div className={w.row} style={{ gap: 8 }}><span className={w.faint}>Candidate:</span><strong>{move.name}</strong></div>
+        <div className={`${w.row} ${w.gap8}`}><span className={w.faint}>Candidate:</span><strong>{move.name}</strong></div>
         <StageArrow from={move.from} to={move.to} />
         {move.to !== 'new' ? (
           <Checkbox checked={notify} onChange={(e) => setNotify(e.target.checked)} label="Email the applicant about this update" description="Sends a short, branded status email. Leave unticked to update the record only." />

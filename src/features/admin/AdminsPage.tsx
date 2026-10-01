@@ -198,7 +198,7 @@ export function AdminsPage() {
               <div><strong className="num">{jobs.published ?? 0}</strong><span>Published</span></div>
             </div>
             {d?.recentActivity.length ? (
-              <ul className={w.list} style={{ marginTop: 16 }}>
+              <ul className={`${w.list} ${w.mt16}`}>
                 {d.recentActivity.map((a) => (
                   <li key={a.id} className={w.listItem}>
                     <span>{a.actorName ?? 'Someone'} {activityVerb(a.action)} “{a.jobTitle}”{a.note ? <span className={w.faint}> · {a.note}</span> : null}</span>
@@ -206,7 +206,7 @@ export function AdminsPage() {
                   </li>
                 ))}
               </ul>
-            ) : <p className={w.faint} style={{ marginTop: 12 }}>No approval activity yet.</p>}
+            ) : <p className={`${w.faint} ${w.mt12}`}>No approval activity yet.</p>}
           </Card>
         </div>
         <div className={w.stack}>

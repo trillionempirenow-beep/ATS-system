@@ -128,7 +128,7 @@ export function InterviewReviewPage() {
                   <div key={i} className={s.assistNote}><small>{mmss(n.atSecond)}{n.topic ? ` · ${n.topic}` : ''}</small>{n.text}</div>
                 ))}
                 {!reviewed && iv.acceptsReview ? (
-                  <Button variant="secondary" size="sm" icon="plus" style={{ alignSelf: 'flex-start' }}
+                  <Button variant="secondary" size="sm" icon="plus" className={w.selfStart}
                     onClick={() => setPrefill(assistNotes.map((n) => `${n.topic ? `${n.topic}: ` : ''}${n.text}`).join('\n'))}>Use in my review</Button>
                 ) : null}
               </div>
@@ -166,7 +166,7 @@ export function InterviewReviewPage() {
                   ['Recommendation', iv.recommendation ? RECOMMENDATIONS[iv.recommendation] : '—'],
                   ['Submitted', iv.reviewedAt ? formatDateTime(iv.reviewedAt) : '—'],
                 ]} />
-                {iv.feedback ? <div className={w.noteCard}><div className={w.overline}>Review</div><p className={w.pre} style={{ marginTop: 6 }}>{iv.feedback}</p></div> : null}
+                {iv.feedback ? <div className={w.noteCard}><div className={w.overline}>Review</div><p className={`${w.pre} ${w.mt6}`}>{iv.feedback}</p></div> : null}
               </div>
             ) : iv.acceptsReview ? (
               <ReviewForm room={data} prefillReview={prefill} onSubmitted={() => { setJustSubmitted(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
@@ -186,7 +186,7 @@ export function InterviewReviewPage() {
                 <li><span><Icon name="checkcircle" size={18} /></span><span><strong>Candidate stays in the {iv.meetingType === 'screening' ? 'Screening' : 'Interview'} stage</strong><small>Nothing moves on its own</small></span></li>
                 <li><span><Icon name="checkcircle" size={18} /></span><span><strong>Move them when you are ready</strong><small>Use the pipeline, then confirm the move</small></span></li>
               </ul>
-              <div className={w.row} style={{ marginTop: 16, gap: 8, flexWrap: 'wrap' }}>
+              <div className={`${w.row} ${w.mt16} ${w.gap8} ${w.wrapRow}`}>
                 <ButtonLink to={`/app/candidates/${iv.applicationId}`}>Open candidate</ButtonLink>
                 <ButtonLink variant="secondary" to="/app/interviews">Back to interviews</ButtonLink>
               </div>

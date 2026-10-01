@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { api, errorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { useCandidateAction } from '../api';
+import w from '../../workspace.module.css';
 
 /** R37: a hired candidate becomes an employee record linked to this application. */
 export function ConvertEmployeeCard({ c }: { c: CandidateProfileDto }) {
@@ -35,7 +36,7 @@ export function ConvertEmployeeCard({ c }: { c: CandidateProfileDto }) {
           ['Start date', formatDate(c.employee.startDate)],
           ['Status', EMPLOYEE_STATUS_LABELS[c.employee.status]],
         ]} />
-        <div style={{ marginTop: 12 }}><Link to="/app/employees" style={{ color: 'var(--primary)', fontWeight: 600 }}>Open Employees</Link></div>
+        <div className={w.mt12}><Link to="/app/employees" className={w.link}>Open Employees</Link></div>
       </Card>
     );
   }
@@ -50,7 +51,7 @@ export function ConvertEmployeeCard({ c }: { c: CandidateProfileDto }) {
           <Field label="Department"><Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} placeholder="Unassigned" options={c.departments.map((d) => ({ value: d.id, label: d.name }))} /></Field>
           <Field label="Start date"><TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div className={w.endRow}>
           <Button icon="employees" loading={convert.isPending} onClick={() => { setError(null); convert.mutate(undefined, {
             onSuccess: () => toast.success(`${c.name} was added to Employees.`),
             onError: (e) => setError(errorMessage(e)),

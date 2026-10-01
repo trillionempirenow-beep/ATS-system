@@ -184,7 +184,7 @@
   aspect-ratio: 16 / 10;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  background: linear-gradient(160deg, var(--video-tile), var(--video));
+  background: var(--video-tile);
 }
 
 .previewVideo {
@@ -310,7 +310,7 @@
   display: flex;
   flex-direction: column;
   background: var(--video);
-  color: #fff;
+  color: var(--call-text);
 }
 
 .topbar {
@@ -322,7 +322,7 @@
   gap: 24px;
   padding: 0 24px;
   background: var(--call-bar);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--call-fill-2);
 }
 
 .titleBlock {
@@ -343,7 +343,7 @@
 .titleBlock span {
   font-size: var(--fs-small);
   line-height: 16px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--call-text-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -362,9 +362,9 @@
   gap: 8px;
   height: 32px;
   padding: 0 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-sm);
+  background: var(--call-fill-2);
+  border: 1px solid var(--call-line);
   font-size: var(--fs-small);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
@@ -372,19 +372,19 @@
 
 .timer {
   font-variant-numeric: tabular-nums;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--call-fill-2);
   border-color: transparent;
   font-size: var(--fs-body);
 }
 
 .pillAssist {
-  background: rgba(167, 139, 250, 0.16);
-  border-color: rgba(167, 139, 250, 0.34);
-  color: #c4b5fd;
+  background: color-mix(in srgb, var(--call-ai) 16%, transparent);
+  border-color: color-mix(in srgb, var(--call-ai) 34%, transparent);
+  color: var(--call-ai);
 }
 
 .pillScore svg {
-  color: #7da6ff;
+  color: var(--call-accent);
 }
 
 .topLink {
@@ -394,15 +394,15 @@
   height: 32px;
   padding: 0 12px;
   border-radius: 8px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--call-text);
+  background: var(--call-fill-2);
   font-size: var(--fs-small);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
 .topLink:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--call-line);
 }
 
 .banner,
@@ -417,14 +417,14 @@
 }
 
 .banner {
-  background: rgba(125, 166, 255, 0.14);
-  border-bottom: 1px solid rgba(125, 166, 255, 0.3);
+  background: color-mix(in srgb, var(--call-accent) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--call-accent) 30%, transparent);
 }
 
 .bannerWarn {
-  background: rgba(251, 191, 36, 0.14);
-  border-bottom: 1px solid rgba(251, 191, 36, 0.32);
-  color: #fde68a;
+  background: color-mix(in srgb, var(--call-warn) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--call-warn) 32%, transparent);
+  color: var(--call-warn);
 }
 
 .bannerText {
@@ -435,7 +435,7 @@
 }
 
 .bannerText span {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--call-text-2);
   font-size: var(--fs-small);
 }
 
@@ -454,19 +454,19 @@
 }
 
 .darkBtn {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border: 1px solid var(--call-line);
+  background: var(--call-fill-2);
+  color: var(--call-text);
 }
 
 .darkBtn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--call-line);
 }
 
 .lightBtn {
   border: 0;
-  background: #fff;
-  color: #0b1220;
+  background: var(--call-text);
+  color: var(--call-accent-fg);
 }
 
 .darkBtn:disabled,
@@ -506,18 +506,18 @@
   position: relative;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(160deg, var(--video-tile), #0f1626);
+  background: var(--video-tile);
 }
 
 .tileSpeaking {
-  box-shadow: 0 0 0 3px #7da6ff;
+  box-shadow: 0 0 0 3px var(--call-accent);
 }
 
 .tileSmall {
   width: 232px;
   height: 146px;
   border-radius: 14px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  box-shadow: var(--call-shadow), inset 0 0 0 1px var(--call-line);
 }
 
 .tileVideo {
@@ -526,7 +526,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #05080f;
+  background: var(--call-ink);
 }
 
 .tileSmall .tileVideo {
@@ -555,7 +555,7 @@
   aspect-ratio: 1;
   max-width: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, rgba(111, 155, 255, 0.26), rgba(111, 155, 255, 0) 70%);
+  background: none;
   pointer-events: none;
 }
 
@@ -573,7 +573,7 @@
 
 .stageNote span {
   font-size: var(--fs-body);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--call-text-2);
 }
 
 .tileName {
@@ -585,15 +585,15 @@
   gap: 8px;
   height: 34px;
   padding: 0 12px;
-  border-radius: 999px;
-  background: rgba(6, 10, 18, 0.66);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--call-ink) 66%, transparent);
   font-size: var(--fs-small);
   font-weight: var(--fw-semibold);
   max-width: calc(100% - 32px);
 }
 
 .tileName span {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--call-text-2);
   font-weight: var(--fw-medium);
 }
 
@@ -632,7 +632,7 @@
   display: flex;
   flex-direction: column;
   background: var(--call-bar);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--call-fill-2);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -647,15 +647,15 @@
   border-radius: 8px;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--call-text-2);
   display: grid;
   place-items: center;
   cursor: pointer;
 }
 
 .sideClose:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--call-fill-2);
+  color: var(--call-text);
 }
 
 .sideHead {
@@ -664,18 +664,18 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--call-fill-2);
 }
 
 .sideHead span {
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .sideEmpty {
   margin: 0;
   font-size: var(--fs-small);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .sideTabs {
@@ -685,7 +685,7 @@
   margin: 12px 56px 0 20px;
   padding: 4px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--call-fill);
 }
 
 .sideTab {
@@ -699,7 +699,7 @@
   border-radius: 9px;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--call-text-2);
   font: inherit;
   font-size: var(--fs-small);
   font-weight: var(--fw-semibold);
@@ -708,8 +708,8 @@
 }
 
 .sideTab[aria-selected='true'] {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  background: var(--call-line);
+  color: var(--call-text);
 }
 
 .sideBody {
@@ -727,7 +727,7 @@
   line-height: 16px;
   font-weight: var(--fw-semibold);
 
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .darkCard {
@@ -736,10 +736,10 @@
   gap: 10px;
   padding: 16px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--call-fill);
+  border: 1px solid var(--call-fill-2);
   font-size: var(--fs-small);
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--call-text-2);
 }
 
 .darkCard p {
@@ -752,8 +752,8 @@
   gap: 14px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(167, 139, 250, 0.1);
-  border: 1px solid rgba(167, 139, 250, 0.3);
+  background: color-mix(in srgb, var(--call-ai) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--call-ai) 30%, transparent);
 }
 
 .assistState > span:first-child {
@@ -763,8 +763,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  color: #c4b5fd;
+  background: var(--call-fill-2);
+  color: var(--call-ai);
 }
 
 .assistState strong {
@@ -774,7 +774,7 @@
 
 .assistState small {
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--call-text-2);
 }
 
 .notesArea {
@@ -784,9 +784,9 @@
   resize: none;
   padding: 14px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  border: 1px solid var(--call-line);
+  background: var(--call-fill);
+  color: var(--call-text);
   font: inherit;
   font-size: var(--fs-body);
   line-height: 21px;
@@ -794,8 +794,8 @@
 
 .notesArea:focus {
   outline: none;
-  border-color: #7da6ff;
-  box-shadow: 0 0 0 3px rgba(125, 166, 255, 0.25);
+  border-color: var(--call-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--call-accent) 25%, transparent);
 }
 
 .notesMeta {
@@ -804,7 +804,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .moment {
@@ -819,7 +819,7 @@
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
   line-height: 20px;
-  color: #c4b5fd;
+  color: var(--call-ai);
 }
 
 .liveScore {
@@ -828,7 +828,7 @@
   gap: 16px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--call-fill);
 }
 
 .liveScore > strong {
@@ -840,7 +840,7 @@
 .liveScore small {
   display: block;
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .rate {
@@ -861,9 +861,9 @@
   width: 34px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--call-line);
+  background: var(--call-fill);
+  color: var(--call-text-2);
   font: inherit;
   font-size: var(--fs-small);
   font-weight: var(--fw-semibold);
@@ -871,9 +871,9 @@
 }
 
 .rateBtn[aria-checked='true'] {
-  background: #7da6ff;
-  border-color: #7da6ff;
-  color: #0b1220;
+  background: var(--call-accent);
+  border-color: var(--call-accent);
+  color: var(--call-accent-fg);
 }
 
 .chatList {
@@ -897,7 +897,7 @@
   margin: 0;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--call-fill-2);
   font-size: var(--fs-body);
   line-height: 20px;
   white-space: pre-wrap;
@@ -910,19 +910,19 @@
 }
 
 .chatMine p {
-  background: rgba(125, 166, 255, 0.24);
+  background: color-mix(in srgb, var(--call-accent) 24%, transparent);
 }
 
 .chatWho {
   font-size: var(--fs-caption);
   font-weight: var(--fw-semibold);
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--call-text-2);
 }
 
 .chatWho time {
   margin-left: 6px;
   font-weight: var(--fw-medium);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--call-text-3);
 }
 
 .chatForm {
@@ -930,7 +930,7 @@
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--call-fill-2);
 }
 
 .chatInput {
@@ -939,16 +939,16 @@
   height: 40px;
   padding: 0 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  border: 1px solid var(--call-line);
+  background: var(--call-fill);
+  color: var(--call-text);
   font: inherit;
   font-size: var(--fs-body);
 }
 
 .chatInput:focus {
   outline: none;
-  border-color: #7da6ff;
+  border-color: var(--call-accent);
 }
 
 .chatSend {
@@ -956,8 +956,8 @@
   height: 40px;
   border-radius: 10px;
   border: 0;
-  background: #7da6ff;
-  color: #0b1220;
+  background: var(--call-accent);
+  color: var(--call-accent-fg);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -990,7 +990,7 @@
 
 .person small {
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--call-text-3);
 }
 
 .controls {
@@ -1002,7 +1002,7 @@
   gap: 16px;
   padding: 0 24px;
   background: var(--call-bar);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--call-fill-2);
 }
 
 .ctrl {
@@ -1018,8 +1018,8 @@
   height: 52px;
   border-radius: 50%;
   border: 0;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: var(--call-line);
+  color: var(--call-text);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -1027,14 +1027,14 @@
 }
 
 .ctrlBtn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--call-text) 24%, transparent);
 }
 
 .ctrlBtn:focus-visible,
 .endBtn:focus-visible,
 .darkBtn:focus-visible,
 .lightBtn:focus-visible {
-  outline: 2px solid #7da6ff;
+  outline: 2px solid var(--call-accent);
   outline-offset: 2px;
 }
 
@@ -1045,27 +1045,27 @@
 
 .ctrlOff,
 .ctrlOff:hover:not(:disabled) {
-  background: #ef4444;
+  background: var(--call-danger);
 }
 
 .ctrlActive,
 .ctrlActive:hover:not(:disabled) {
-  background: #fff;
-  color: #0b1220;
+  background: var(--call-text);
+  color: var(--call-accent-fg);
 }
 
 .ctrlLabel {
   font-size: var(--fs-caption);
   line-height: 14px;
   font-weight: var(--fw-semibold);
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--call-text-2);
   white-space: nowrap;
 }
 
 .ctrlSep {
   width: 1px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--call-line);
   margin: 0 4px;
 }
 
@@ -1077,8 +1077,8 @@
   padding: 0 20px;
   border-radius: 999px;
   border: 0;
-  background: #ef4444;
-  color: #fff;
+  background: var(--call-danger);
+  color: var(--call-text);
   font: inherit;
   font-size: var(--fs-body);
   font-weight: var(--fw-semibold);
@@ -1087,7 +1087,7 @@
 }
 
 .endBtn:hover {
-  background: #dc2626;
+  background: var(--call-danger-hover);
 }
 
 .endBtn svg {
@@ -1109,7 +1109,7 @@
   padding: 28px;
   border-radius: 16px;
   background: var(--call-bar);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--call-fill-2);
 }
 
 .endedCard h1 {
@@ -1119,7 +1119,7 @@
 
 .endedCard > p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--call-text-2);
 }
 
 .endedList {
@@ -1140,13 +1140,13 @@
 
 .endedList li > svg {
   flex: none;
-  color: #6ee7b7;
+  color: var(--call-accent);
   margin-top: 2px;
 }
 
 .endedList small {
   display: block;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
   font-size: var(--fs-small);
 }
 
@@ -1168,11 +1168,12 @@
   .stage { padding: 12px; }
   .pip { right: 10px; bottom: 10px; }
   .tileSmall { width: 120px; height: 160px; }
-  .controls { gap: 6px; padding: 0 8px; height: 76px; overflow-x: auto; justify-content: flex-start; }
+  .controls { gap: 6px; padding: 0 8px; height: 76px; overflow-x: auto; justify-content: center; }
   .ctrl { min-width: 48px; }
   .ctrlBtn { width: 44px; height: 44px; }
   .ctrlLabel, .ctrlSep { display: none; }
-  .endBtn { height: 44px; padding: 0 14px; }
+  .endBtn { height: 44px; padding: 0 16px; flex: none; }
+  .endText { display: none; }
   .side { padding: 8px; }
   .facts { grid-template-columns: 1fr; }
 }
@@ -1234,18 +1235,18 @@ button.topLink {
   font-size: var(--fs-caption);
   font-weight: var(--fw-semibold);
 
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .peopleTitle span {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-xs);
   display: inline-grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--call-fill-2);
+  color: var(--call-text);
   letter-spacing: 0;
 }
 
@@ -1254,7 +1255,7 @@ button.topLink {
   font-style: normal;
   font-size: var(--fs-small);
   font-weight: var(--fw-semibold);
-  color: #c7d7ff;
+  color: var(--call-text-2);
 }
 
 /* Host admission toasts: one card per guest at the door, newest at the bottom. */
@@ -1273,8 +1274,8 @@ button.topLink {
   padding: 14px 16px;
   border-radius: 14px;
   background: var(--call-bar);
-  border: 1px solid rgba(125, 166, 255, 0.4);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid color-mix(in srgb, var(--call-accent) 40%, transparent);
+  box-shadow: var(--call-shadow);
   animation: admitIn 180ms ease-out;
 }
 
@@ -1310,7 +1311,7 @@ button.topLink {
 
 .admitText small {
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--call-text-3);
 }
 
 .admitActions {
@@ -1321,17 +1322,17 @@ button.topLink {
 }
 
 .denyBtn:hover {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.5);
+  background: color-mix(in srgb, var(--call-danger-text) 18%, transparent);
+  border-color: color-mix(in srgb, var(--call-danger-text) 50%, transparent);
 }
 
 .admitMore {
   align-self: flex-end;
   padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(6, 10, 18, 0.8);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--call-ink) 80%, transparent);
   font-size: var(--fs-caption);
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--call-text-2);
 }
 
 @media (max-width: 720px) {
@@ -1364,7 +1365,7 @@ button.topLink {
 }
 
 .pillAi svg {
-  color: #c4b5fd;
+  color: var(--call-ai);
 }
 
 .assistState > div {
@@ -1375,7 +1376,7 @@ button.topLink {
 .assistError {
   margin: 0;
   font-size: var(--fs-caption);
-  color: #fcd34d;
+  color: var(--call-warn);
 }
 
 .noteTopic {
@@ -1383,5 +1384,5 @@ button.topLink {
   font-size: var(--fs-micro);
   font-weight: var(--fw-semibold);
 
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--call-text-3);
 }

@@ -104,7 +104,7 @@ export function InterviewsPage() {
     { key: 'interviewer', header: 'Interviewer', cell: (iv) => iv.interviewerName ?? '—', label: 'Interviewer' },
     {
       key: 'status', header: 'Status', label: 'Status',
-      cell: (iv) => <span className={w.row} style={{ gap: 6 }}><StatusBadge kind="interview" value={iv.state} size="sm" />{iv.candidateWaiting ? <Badge tone="warning" size="sm" dot>Waiting</Badge> : null}</span>,
+      cell: (iv) => <span className={`${w.row} ${w.gap6}`}><StatusBadge kind="interview" value={iv.state} size="sm" />{iv.candidateWaiting ? <Badge tone="warning" size="sm" dot>Waiting</Badge> : null}</span>,
     },
   ];
   const upcomingColumns: Column<InterviewListItemDto>[] = [
@@ -126,7 +126,7 @@ export function InterviewsPage() {
 
   return (
     <div className={w.page}>
-      <PageHeader title="Interviews" description="Today’s conversations, what is coming up, and which interviews still need a score." actions={scheduleButton} />
+      <PageHeader title="Interviews" crumbs={[{ label: 'Recruiting' }, { label: 'Interviews' }]} description="Today’s conversations, what is coming up, and which interviews still need a score." actions={scheduleButton} />
 
       <StatGrid>
         <StatCard icon="calendar" label="Today" value={d?.counts.today ?? 0} loading={!d} />
@@ -204,7 +204,7 @@ function ReviewDrawerBody({ id, onClose }: { id: number; onClose: () => void }) 
         <StatusBadge kind="interview" value={iv.state} size="sm" />
       </div>
       {iv.liveNotes ? (
-        <div className={w.noteCard}><div className={w.overline}>Notes recorded during the meeting</div><p className={w.pre} style={{ marginTop: 6 }}>{iv.liveNotes}</p></div>
+        <div className={w.noteCard}><div className={w.overline}>Notes recorded during the meeting</div><p className={`${w.pre} ${w.mt6}`}>{iv.liveNotes}</p></div>
       ) : null}
       {iv.acceptsReview ? (
         <ReviewForm room={room.data} onCancel={onClose} onSubmitted={() => { toast.success('Interview review saved to the candidate profile.', 'Review submitted'); onClose(); }} />

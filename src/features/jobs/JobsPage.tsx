@@ -134,7 +134,7 @@ export function JobsPage() {
 
   return (
     <div className={w.page}>
-      <PageHeader title="Job management" description="Every listing, its applicants and its status in one place." crumbs={[{ label: 'Jobs' }, { label: 'Jobs' }]}
+      <PageHeader title="Job management" description="Every listing, its applicants and its status in one place." crumbs={[{ label: 'Jobs' }, { label: 'Job management' }]}
         actions={<>
           <ButtonLink variant="secondary" to="/app/admin/audit">Audit trail</ButtonLink>
           <ButtonLink variant="secondary" to="/app/admin/settings">Workspace settings</ButtonLink>

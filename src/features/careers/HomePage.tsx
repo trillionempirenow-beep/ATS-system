@@ -1,23 +1,43 @@
-import { useEffect } from 'react';
-import type { IconName } from '@/components/icon/Icon';
-import { Icon } from '@/components/icon/Icon';
-import { ButtonLink } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Display';
-import { EmptyState, ErrorState, Skeleton } from '@/components/ui/Feedback';
-import { surfaceStyles as surface } from '@/components/ui/Surface';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { STAGE_LABELS, type Stage } from '@shared/domain/pipeline';
+import { Button } from '@/components/ui/Button';
+import { Field, TextInput } from '@/components/ui/Form';
+import { StageTicks } from '@/components/ui/Stage';
 import { usePublicConfig } from '@/app/layouts/PublicLayout';
 import { usePublicHome } from './api';
-import { JobCard } from './JobCard';
+import { RoleBoard } from './RolesPage';
 import s from './Careers.module.css';
 
-const STEPS: Array<[IconName, string, string]> = [
-  ['edit', '1. Apply in minutes', 'Submit your details and resume. No account required to get started.'],
-  ['video', '2. Meet the team, built-in', 'Interviews run right inside Acme, with no external links or extra apps to install.'],
-  ['checkcircle', '3. Fast, transparent decisions', 'Track your application status and hear back quickly at every stage.'],
+/** What happens after someone applies: the same stages the hiring team works in. */
+const PROCESS: Array<[Stage, string]> = [
+  ['new', 'Send your CV and a short cover letter. No account needed. We email you an application ID.'],
+  ['screening', 'A recruiter reads your application against the role and decides whether to invite you to talk.'],
+  ['interview', 'Interviews happen in your browser, from a link on your status page. Some roles add a final round.'],
+  ['offer', 'If it is a match, we make you an offer and go through the details together.'],
+  ['hired', 'You join the team. Your application closes and your onboarding starts.'],
 ];
 
-function CardsSkeleton({ count = 3 }: { count?: number }) {
-  return <div className={s.grid}>{Array.from({ length: count }, (_, i) => <Skeleton key={i} height={208} radius={14} />)}</div>;
+function StatusEntry() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [id, setId] = useState('');
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const q = new URLSearchParams({ email: email.trim(), ...(id.trim() ? { id: id.trim() } : {}) });
+    navigate(`/status?${q.toString()}`);
+  };
+  return (
+    <form className={s.statusEntry} onSubmit={submit}>
+      <Field label="Email you applied with" required>
+        <TextInput type="email" icon="mail" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      </Field>
+      <Field label="Application ID" optional>
+        <TextInput inputMode="numeric" pattern="\d*" value={id} onChange={(e) => setId(e.target.value)} />
+      </Field>
+      <Button type="submit" variant="secondary">Check status</Button>
+    </form>
+  );
 }
 
 export function HomePage() {
@@ -26,84 +46,44 @@ export function HomePage() {
   const company = config.data?.companyName ?? 'Acme';
   useEffect(() => { document.title = `Careers · ${company}`; }, [company]);
   const stats = home.data?.stats;
+  const headline = config.data?.careersHeadline?.trim();
 
   return (
     <div className={s.container}>
-      <section className={s.hero} aria-labelledby="hero-title">
-        <div className={s.heroCopy}>
-          {stats && stats.openRoles > 0 ? (
-            <span className={s.kicker}><span className={s.kickerDot} />Now hiring across {stats.openRoles} open role{stats.openRoles === 1 ? '' : 's'}</span>
-          ) : null}
-          <h1 id="hero-title" className={s.display}>{config.data?.careersHeadline || 'Small teams. Big ownership.'}</h1>
-          <p className={s.lead}>Join a company where interviews run inside {company} and every application is visible to you, start to finish.</p>
-          <div className={s.heroActions}>
-            <ButtonLink to="/jobs" size="lg" iconRight="arrowr">Explore open roles</ButtonLink>
-            <ButtonLink to="/#why" size="lg" variant="secondary" iconRight="chevron">Why {company}</ButtonLink>
-          </div>
-          <div className={s.heroBadges}>
-            {stats && stats.remoteRoles > 0 ? <Badge tone="success" icon="public">Remote-friendly</Badge> : null}
-            <Badge tone="info" icon="video">Interviews built in</Badge>
-          </div>
-        </div>
-        <aside className={s.principle} aria-label="How we hire">
-          <span className={surface.eyebrow} style={{ color: 'var(--text3)' }}>Our operating principle</span>
-          <p className={s.principleQuote}>Decide fast. Give feedback. Keep candidates informed.</p>
-          <div className={s.facts}>
-            <div className={s.fact}><span className={s.factValue}>{stats ? stats.openRoles : '—'}</span><span className={s.factLabel}>Open roles right now</span></div>
-            <div className={s.fact}><span className={s.factValue}>{stats ? stats.departmentsHiring : '—'}</span><span className={s.factLabel}>Teams hiring</span></div>
-            <div className={s.fact}><span className={s.factValue}>{stats ? stats.remoteRoles : '—'}</span><span className={s.factLabel}>Remote-friendly roles</span></div>
-            <div className={s.fact}><span className={s.factValue}>Live</span><span className={s.factLabel}>Status tracking for every application</span></div>
-          </div>
-        </aside>
-      </section>
+      <header className={s.intro}>
+        <h1 id="roles-title" className={s.title}>
+          {stats ? (stats.openRoles === 0 ? `${company} has no open roles right now` : `${company} is hiring for ${stats.openRoles} ${stats.openRoles === 1 ? 'role' : 'roles'}`) : `Open roles at ${company}`}
+        </h1>
+        <p className={s.lead}>
+          {headline ? <>{headline} </> : null}
+          Apply with your CV, interview in your browser, and check where your application stands at any time.
+        </p>
+      </header>
 
-      <section aria-labelledby="steps-title">
-        <div className={s.sectionHead}><h2 id="steps-title" className={s.h2}>Three simple steps.</h2></div>
-        <div className={s.steps}>
-          {STEPS.map(([icon, title, text]) => (
-            <div key={title} className={s.step}>
-              <span className={s.stepIcon}><Icon name={icon} size={18} /></span>
-              <h3 className={s.stepTitle}>{title}</h3>
-              <p className={s.stepText}>{text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <RoleBoard headingId="roles-title" />
 
-      {home.data && home.data.urgent.length > 0 ? (
-        <section aria-labelledby="urgent-title">
-          <div className={s.sectionHead}>
-            <h2 id="urgent-title" className={s.h2}>We need these roles filled fast.</h2>
-            <Badge tone="warning" icon="flag">Urgent hiring</Badge>
-          </div>
-          <div className={s.grid}>{home.data.urgent.slice(0, 3).map((j) => <JobCard key={j.id} job={j} />)}</div>
-        </section>
-      ) : null}
-
-      <section aria-labelledby="roles-title">
+      <section id="how" className={s.section} aria-labelledby="how-title">
         <div className={s.sectionHead}>
-          <h2 id="roles-title" className={s.h2}>Find your next move.</h2>
-          {home.data && home.data.featured.length > 0 ? <ButtonLink to="/jobs" variant="secondary" size="sm" iconRight="arrowr">View all jobs</ButtonLink> : null}
+          <h2 id="how-title" className={s.h2}>What happens after you apply</h2>
+          <p className={s.sectionText}>The same stages our hiring team works in. Your status page shows which one you are at.</p>
         </div>
-        {home.isLoading ? <CardsSkeleton count={6} /> : null}
-        {home.isError ? <ErrorState onRetry={() => void home.refetch()} /> : null}
-        {home.data && home.data.featured.length === 0 ? (
-          <EmptyState icon="briefcase" title="No open roles yet." text="New opportunities will appear here when the recruiting team publishes them." />
-        ) : null}
-        {home.data && home.data.featured.length > 0 ? <div className={s.grid}>{home.data.featured.map((j) => <JobCard key={j.id} job={j} />)}</div> : null}
+        <ol className={s.process}>
+          {PROCESS.map(([stage, text]) => (
+            <li key={stage} className={s.processStep}>
+              <StageTicks stage={stage} />
+              <h3 className={s.processTitle}>{STAGE_LABELS[stage]}</h3>
+              <p className={s.processText}>{text}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      <section id="why" className={s.why} aria-labelledby="why-title">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <span className={surface.eyebrow}>How we work</span>
-          <h2 id="why-title" className={s.h2}>Small teams. Big ownership.</h2>
-          <p className={s.lead}>We value clear thinking, generous collaboration, and momentum over meetings. Everyone has a voice in the room.</p>
+      <section id="status" className={s.section} aria-labelledby="status-title">
+        <div className={s.sectionHead}>
+          <h2 id="status-title" className={s.h2}>Already applied?</h2>
+          <p className={s.sectionText}>Use the email you applied with. Add your application ID to go straight to one application.</p>
         </div>
-        <ul className={s.whyList}>
-          <li><Icon name="users" size={20} /><span><strong>Small teams</strong>Own meaningful work end to end, with room to shape how it gets done.</span></li>
-          <li><Icon name="video" size={20} /><span><strong>Interviews without friction</strong>Meet the team in the browser. No external links or apps to install.</span></li>
-          <li><Icon name="eye" size={20} /><span><strong>Transparent hiring</strong>Check where your application stands at any time with your email and application ID.</span></li>
-        </ul>
+        <StatusEntry />
       </section>
     </div>
   );

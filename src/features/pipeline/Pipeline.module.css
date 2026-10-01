@@ -6,14 +6,14 @@
 .colCount { min-width: 22px; height: 20px; padding: 0 6px; border-radius: var(--radius-xs); background: var(--surface); color: var(--text2); font-size: var(--fs-caption); font-weight: var(--fw-semibold); line-height: 18px; text-align: center; border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .colEmpty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--text3); font-size: var(--fs-small); border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); }
 
-.card { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--sh-sm); cursor: grab; transition: box-shadow 0.12s var(--ease), transform 0.12s var(--ease), opacity 0.12s var(--ease); }
-.card:hover { box-shadow: var(--sh-md); }
+.card { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--border); cursor: grab; transition: border-color 0.12s var(--ease), transform 0.12s var(--ease), opacity 0.12s var(--ease); }
+.card:hover { border-color: var(--border-strong); }
 .cardDragging { opacity: 0.45; transform: rotate(-1deg); }
 .cardTop { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
 .cardName { font-weight: var(--fw-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cardRole { font-size: var(--fs-caption); color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cardMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--fs-caption); color: var(--text3); }
-.aiBadge { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: var(--radius-xs); background: var(--purple-bg); color: var(--purple-fg); font-size: var(--fs-micro); font-weight: var(--fw-semibold); }
+.aiBadge { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: var(--radius-xs); background: var(--purple-bg); color: var(--purple-fg); font-size: var(--fs-caption); font-weight: var(--fw-medium); }
 .cardActions { display: flex; gap: 6px; }
 .moveBtn { margin-left: auto; }
 

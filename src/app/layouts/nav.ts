@@ -48,7 +48,6 @@ export function navFor(user: MeDto): NavGroup[] {
       { to: '/app', label: 'Overview', icon: 'overview', end: true },
       { to: '/app/pipeline', label: 'Hiring pipeline', icon: 'pipeline' },
       { to: '/app/candidates', label: 'Candidates', icon: 'candidates', end: true, match: ['/app/candidates/'] },
-      { to: '/app/candidates/new', label: 'Add candidate', icon: 'plus', end: true },
       { to: '/app/interviews', label: 'Interviews', icon: 'interviews' },
       { to: '/app/analytics', label: 'Analytics', icon: 'analytics' },
     ],

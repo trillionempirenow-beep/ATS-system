@@ -34,7 +34,15 @@
 
 .formActions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 /* Solid, so form text never shows through it while scrolling. */
-.stickyActions { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; margin: 0 -16px -16px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -8px 16px -12px rgba(23, 35, 58, .18); flex-wrap: wrap; }
+.stickyActions {
+  position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--sh-sm);
+}
+/* Inside a card the bar becomes the card's own footer. */
+.stickyInCard { margin: 0 -20px -20px; bottom: 0; border-width: 1px 0 0; border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: none; }
+.stickyStatus { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--text2); }
+.stickyStatusOk { color: var(--success-fg); }
+@media (max-width: 520px) { .stickyActions > button { flex: 1 1 auto; } .stickyStatus { flex-basis: 100%; } }
 
 .kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: var(--fs-body); }
 .kv dt { color: var(--text3); }
@@ -46,6 +54,18 @@
 .filterBar { display: flex; align-items: center; gap: 8px; padding: 12px; flex-wrap: wrap; }
 .filterSearch { flex: 1 1 240px; min-width: 200px; }
 .filterSelect { flex: 0 1 200px; min-width: 150px; }
+/* A filter grid for a fixed set of controls: search, four selects, then Clear. Clear always has its own cell. */
+.filterGrid { display: grid; grid-template-columns: minmax(200px, 1fr) repeat(4, minmax(0, 160px)) 72px; align-items: center; gap: 8px; padding: 12px; }
+.filterGrid .filterSearch, .filterGrid .filterSelect { min-width: 0; }
+.filterClear { justify-self: start; }
+@container workspace (max-width: 960px) {
+  .filterGrid { grid-template-columns: repeat(4, minmax(0, 1fr)) 72px; }
+  .filterGrid .filterSearch { grid-column: 1 / -1; }
+}
+@container workspace (max-width: 600px) {
+  .filterGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filterGrid .filterClear { grid-column: 1 / -1; }
+}
 
 /* Container queries: the sidebar takes space, so the content width, not the viewport, decides the layout. */
 @container workspace (max-width: 880px) {
@@ -59,3 +79,26 @@
 .overline { font-size: var(--fs-caption); line-height: 16px; font-weight: var(--fw-semibold);color: var(--text3); }
 .link { color: var(--primary); font-weight: var(--fw-semibold); }
 .link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.filterClear:empty { display: none; }
+.up { color: var(--success-fg); font-weight: var(--fw-medium); }
+.down { color: var(--danger-fg); font-weight: var(--fw-medium); }
+
+/* Small layout adjustments shared by feature pages (instead of one-off inline styles). */
+.mt4 { margin-top: 4px; }
+.mt6 { margin-top: 6px; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.mb6 { margin-bottom: 6px; }
+.mb8 { margin-bottom: 8px; }
+.mb16 { margin-bottom: 16px; }
+.gap2 { gap: 2px; }
+.gap6 { gap: 6px; }
+.gap8 { gap: 8px; }
+.wrapRow { flex-wrap: wrap; }
+.grow { flex: 1; min-width: 0; }
+.selfStart { align-self: flex-start; }
+.pushLeft { margin-right: auto; align-self: center; }
+.pad16 { padding: 16px; }
+.bulletList { margin: 0; padding-left: 18px; }
+.endRow { display: flex; justify-content: flex-end; }

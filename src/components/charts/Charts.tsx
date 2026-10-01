@@ -25,17 +25,11 @@ export function AreaTrend({ data, height = 220, unit, ariaLabel }: { data: Array
     <div role="img" aria-label={ariaLabel} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <RArea data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-          <defs>
-            <linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
           <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey="label" {...axis} interval="preserveStartEnd" minTickGap={24} />
           <YAxis {...axis} allowDecimals={false} width={40} domain={[0, empty ? 4 : 'auto']} />
           <Tooltip cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1 }} content={<ChartTooltip unit={unit} color="var(--chart-1)" />} />
-          <Area type="monotone" dataKey="value" stroke="var(--chart-1)" strokeWidth={2} fill="url(#areaFill)"
+          <Area type="linear" dataKey="value" stroke="var(--chart-1)" strokeWidth={2} fill="var(--chart-1)" fillOpacity={0.08}
             dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)', fill: 'var(--chart-1)' }} />
         </RArea>
       </ResponsiveContainer>

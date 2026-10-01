@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { CandidateProfileDto } from '@shared/api/candidates';
 import { STAGE_LABELS, STAGE_ORDER, stageRank, type Stage } from '@shared/domain/pipeline';
 import { Icon } from '@/components/icon/Icon';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Avatar, Rating, StatusBadge } from '@/components/ui/Display';
 import { Notice, Skeleton } from '@/components/ui/Feedback';
 import { Menu } from '@/components/ui/Overlay';
-import { Card, Tabs } from '@/components/ui/Surface';
+import { Breadcrumbs, Card, Tabs } from '@/components/ui/Surface';
 import { StageRail, type RailStep } from '@/components/ui/Stage';
 import { useToast } from '@/components/ui/Toast';
 import { QueryErrorPage } from '@/app/system/StatusPages';
@@ -80,7 +80,7 @@ export function CandidateProfilePage() {
 
   return (
     <div className={w.page}>
-      <Link to="/app/candidates" className={w.link} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="arrowl" size={16} />Back to candidates</Link>
+      <Breadcrumbs items={[{ label: 'Recruiting' }, { label: 'Candidates', to: '/app/candidates' }, { label: c.name }]} />
       {withdrawn ? <Notice tone="info" title="The applicant withdrew this application.">It no longer appears in the pipeline. The record is kept for reference.</Notice> : null}
       {c.recordStatus === 'draft' ? <Notice tone="warning" title="Draft record">This candidate was saved as a draft from Add candidate.</Notice> : null}
       <Card padding={0}>
@@ -101,7 +101,7 @@ export function CandidateProfilePage() {
                 <Menu
                   trigger={(p) => <Button variant="secondary" iconRight="chevron" {...p}>Update stage</Button>}
                   items={[
-                    ...STAGE_ORDER.filter((st) => st !== c.stage).map((st) => ({ label: `Move to ${STAGE_LABELS[st]}`, icon: 'arrowr' as const, onSelect: () => openMove(st) })),
+                    ...STAGE_ORDER.filter((st) => st !== c.stage).map((st) => ({ label: `Move to ${STAGE_LABELS[st]}`, onSelect: () => openMove(st) })),
                     ...(c.stage !== 'rejected' ? [{ label: 'Reject', icon: 'xcircle' as const, danger: true, separatorBefore: true, onSelect: () => openMove('rejected') }] : []),
                   ]}
                 />

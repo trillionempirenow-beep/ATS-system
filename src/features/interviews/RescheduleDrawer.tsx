@@ -64,7 +64,7 @@ export function RescheduleDrawer({ interview, onClose }: { interview: InterviewL
     <Drawer open onClose={onClose} width={500} title="Reschedule interview" subtitle="Changes are saved to the interview and the candidate’s history."
       footer={<>
         <Button variant="dangerGhost" onClick={() => run({ status: 'cancelled' }, 'Interview cancelled.')} disabled={update.isPending}>Cancel interview</Button>
-        <span style={{ flex: 1 }} />
+        <span className={w.grow} />
         <Button variant="ghost" onClick={onClose}>Close</Button>
         <Button onClick={save} loading={update.isPending}>Save changes</Button>
       </>}>
@@ -93,7 +93,7 @@ export function RescheduleDrawer({ interview, onClose }: { interview: InterviewL
         {type === 'onsite' ? <Field label="Address" required><TextInput value={location} onChange={(e) => setLocation(e.target.value)} /></Field> : null}
         <Checkbox checked={notify} onChange={(e) => setNotify(e.target.checked)} label="Email the candidate about this change" />
         {interview.state !== 'no_show' && new Date(interview.startsAt).getTime() < Date.now() ? (
-          <Button variant="secondary" size="sm" style={{ alignSelf: 'flex-start' }} onClick={() => run({ status: 'no_show' }, 'Marked as a no-show.')} disabled={update.isPending}>Mark as no-show</Button>
+          <Button variant="secondary" size="sm" className={w.selfStart} onClick={() => run({ status: 'no_show' }, 'Marked as a no-show.')} disabled={update.isPending}>Mark as no-show</Button>
         ) : null}
       </div>
     </Drawer>

@@ -6,13 +6,14 @@ import { z } from 'zod';
 import type { CandidateProfileDto, StageReviewDto } from '@shared/api/candidates';
 import { profileUpdateSchema } from '@shared/api/candidates';
 import { EMPLOYMENT_TYPE_LABELS } from '@shared/domain/jobs';
-import { EXPERIENCE_LEVEL_LABELS, EXPERIENCE_LEVELS, REVIEW_STAGE_LABELS, STAGE_LABELS, STAGE_ORDER, stageRank, type ReviewStage } from '@shared/domain/pipeline';
+import { EXPERIENCE_LEVEL_LABELS, EXPERIENCE_LEVELS, REVIEW_STAGE_LABELS, STAGE_LABELS, stageRank, type ReviewStage, type Stage } from '@shared/domain/pipeline';
 import { Button } from '@/components/ui/Button';
 import { Avatar, Badge, Chip } from '@/components/ui/Display';
 import { Field, Select, TextInput, Textarea, formStyles } from '@/components/ui/Form';
 import { Notice } from '@/components/ui/Feedback';
 import { Drawer } from '@/components/ui/Overlay';
 import { Card, CardHeader, DescriptionList } from '@/components/ui/Surface';
+import { StagePip } from '@/components/ui/Stage';
 import { useToast } from '@/components/ui/Toast';
 import { api, errorMessage } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
@@ -43,7 +44,7 @@ function StageReviewCard({ c, type, review, locked }: { c: CandidateProfileDto; 
             <span className={s.scoreOut}>{rating ?? '—'}</span>
           </div>
         </Field>
-        {review?.notes ? <div className={w.noteCard}><div className={w.overline}>Notes from the meeting</div><p className={w.pre} style={{ marginTop: 6 }}>{review.notes}</p></div> : null}
+        {review?.notes ? <div className={w.noteCard}><div className={w.overline}>Notes from the meeting</div><p className={`${w.pre} ${w.mt6}`}>{review.notes}</p></div> : null}
         {review ? <span className={w.faint}>Last saved by {review.reviewer ?? 'a team member'} · {formatDateTime(review.updatedAt)}</span> : null}
         <div className={w.formActions}>
           <Button variant="secondary" loading={save.isPending} disabled={locked}
@@ -67,7 +68,7 @@ function NotesCard({ c }: { c: CandidateProfileDto }) {
         {c.notes.length === 0 ? <p className={w.faint}>No notes yet.</p> : c.notes.map((n) => (
           <div key={n.id} className={w.noteCard}>
             <div className={w.rowBetween}><span className={w.person}><Avatar name={n.author ?? 'Former user'} size={24} /><strong>{n.author ?? 'Former user'}</strong></span><span className={w.faint}>{formatDateTime(n.createdAt)}</span></div>
-            <p className={w.pre} style={{ marginTop: 8 }}>{n.note}</p>
+            <p className={`${w.pre} ${w.mt8}`}>{n.note}</p>
           </div>
         ))}
         <Field label="Add a note">
@@ -124,7 +125,6 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
   const [editing, setEditing] = useState(false);
   const rank = stageRank(c.stage);
   const moves = c.activity.filter((a) => a.action === 'pipeline_stage_move').reverse();
-  const reachedAt = (st: string) => moves.find((m) => (m.details as { to?: string } | null)?.to === st);
   const skills = (c.skills ?? '').split(',').map((x) => x.trim()).filter(Boolean);
 
   return (
@@ -143,14 +143,14 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
             ['Portfolio', c.portfolioUrl ? <a key="p" href={c.portfolioUrl} target="_blank" rel="noopener noreferrer" className={w.link}>{c.portfolioUrl}</a> : '—'],
             ['Consent given', c.consentAt ? `Yes · ${formatDate(c.consentAt)}` : 'Not recorded'],
           ]} />
-          {skills.length ? <div style={{ marginTop: 16 }}><div className={w.overline} style={{ marginBottom: 8 }}>Skills</div><div className={s.chipRow}>{skills.map((sk) => <Chip key={sk}>{sk}</Chip>)}</div></div> : null}
+          {skills.length ? <div className={w.mt16}><div className={`${w.overline} ${w.mb8}`}>Skills</div><div className={s.chipRow}>{skills.map((sk) => <Chip key={sk}>{sk}</Chip>)}</div></div> : null}
         </Card>
         {c.coverLetter || c.whyUs ? (
           <Card>
             <CardHeader title="Application answers" />
             <div className={w.stack}>
-              {c.coverLetter ? <div><div className={w.overline} style={{ marginBottom: 6 }}>Cover letter</div><p className={w.pre}>{c.coverLetter}</p></div> : null}
-              {c.whyUs ? <div><div className={w.overline} style={{ marginBottom: 6 }}>Why they want to work here</div><p className={w.pre}>{c.whyUs}</p></div> : null}
+              {c.coverLetter ? <div><div className={`${w.overline} ${w.mb6}`}>Cover letter</div><p className={w.pre}>{c.coverLetter}</p></div> : null}
+              {c.whyUs ? <div><div className={`${w.overline} ${w.mb6}`}>Why they want to work here</div><p className={w.pre}>{c.whyUs}</p></div> : null}
             </div>
           </Card>
         ) : null}
@@ -176,21 +176,31 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
           </dl>
         </Card>
         <Card>
-          <CardHeader title="Stage history" />
-          <ul className={s.stageHistory}>
-            {STAGE_ORDER.map((st) => {
-              const r = stageRank(st);
-              const hit = st === 'new' ? { createdAt: c.appliedAt, actor: null } : reachedAt(st);
-              const reached = st === 'new' || (c.stage !== 'rejected' && r <= rank) || Boolean(hit);
+          <CardHeader title="Stage changes" subtitle="Each move, when it happened and who made it." />
+          <ol className={s.stageHistory}>
+            <li>
+              <StagePip stage="new" />
+              <span className={s.histText}><span className={s.histTitle}>Applied</span><span className={w.faint}>{c.sourceLabel}</span></span>
+              <span className={s.histDate}>{formatDate(c.appliedAt)}</span>
+            </li>
+            {moves.map((m) => {
+              const d = (m.details ?? {}) as { from?: string; to?: string };
+              const to = d.to as Stage | undefined;
+              if (!to || !(to in STAGE_LABELS)) return null;
+              const from = d.from && d.from in STAGE_LABELS ? STAGE_LABELS[d.from as Stage] : null;
+              const back = d.from && d.from in STAGE_LABELS && to !== 'rejected' && stageRank(to) < stageRank(d.from as Stage);
               return (
-                <li key={st}>
-                  <span style={reached ? { fontWeight: 600 } : { color: 'var(--text3)' }}>{STAGE_LABELS[st]}</span>
-                  <span className={w.faint}>{hit ? `${formatDate(hit.createdAt)}${hit.actor ? ` · ${hit.actor}` : st === 'new' ? ` · ${c.sourceLabel}` : ''}` : reached ? 'Reached' : 'Not reached'}</span>
+                <li key={m.id}>
+                  <StagePip stage={to} />
+                  <span className={s.histText}>
+                    <span className={s.histTitle}>{to === 'rejected' ? 'Rejected' : `${back ? 'Moved back to' : 'Moved to'} ${STAGE_LABELS[to]}`}</span>
+                    <span className={w.faint}>{[from ? `From ${from}` : null, m.actor ? `by ${m.actor}` : null].filter(Boolean).join(', ')}</span>
+                  </span>
+                  <span className={s.histDate}>{formatDate(m.createdAt)}</span>
                 </li>
               );
             })}
-            {c.stage === 'rejected' ? <li><span style={{ fontWeight: 600, color: 'var(--danger-fg)' }}>Rejected</span><span className={w.faint}>{reachedAt('rejected') ? formatDate(reachedAt('rejected')!.createdAt) : ''}</span></li> : null}
-          </ul>
+          </ol>
         </Card>
         {c.otherApplications.length ? (
           <Card>
@@ -198,7 +208,7 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
             <div className={w.list}>
               {c.otherApplications.map((o) => (
                 <Link key={o.applicationId} to={`/app/candidates/${o.applicationId}`} className={`${w.listItem} ${w.listItemLink}`}>
-                  <span className={w.strong} style={{ flex: 1 }}>{o.jobTitle}</span>
+                  <span className={`${w.strong} ${w.grow}`}>{o.jobTitle}</span>
                   {o.withdrawn ? <Badge tone="neutral">Withdrawn</Badge> : <Badge tone="info">{STAGE_LABELS[o.stage]}</Badge>}
                 </Link>
               ))}

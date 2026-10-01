@@ -66,13 +66,13 @@ export function CandidatesPage() {
         items={[{ key: 'all' as const, label: 'All', count: d ? total : undefined }, ...STAGES.map((st) => ({ key: st, label: STAGE_LABELS[st], lead: <StagePip stage={st} />, count: d?.stageCounts[st] ?? (d ? 0 : undefined) }))]}
       />
       <Card padding={0}>
-        <div className={w.filterBar} role="search">
-          <div className={w.filterSearch}><TextInput icon="search" placeholder="Search name, email, skills or resume text…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search candidates" /></div>
+        <div className={w.filterGrid} role="search">
+          <div className={w.filterSearch}><TextInput icon="search" placeholder="Search name, email, skills or CV text" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search candidates" /></div>
           <div className={w.filterSelect}><Select aria-label="Role" value={filters.job ?? ''} onChange={(e) => set({ job: e.target.value || null, page: null })} placeholder="All roles" options={(d?.options.jobs ?? []).map((j) => ({ value: j.id, label: j.title }))} /></div>
           <div className={w.filterSelect}><Select aria-label="Assigned to" value={filters.owner ?? ''} onChange={(e) => set({ owner: e.target.value || null, page: null })} placeholder="Anyone" options={(d?.options.owners ?? []).map((o) => ({ value: o.id, label: o.name }))} /></div>
           <div className={w.filterSelect}><Select aria-label="Rating" value={filters.rating ?? ''} onChange={(e) => set({ rating: e.target.value || null, page: null })} options={RATINGS} /></div>
           <div className={w.filterSelect}><Select aria-label="Sort" value={filters.sort ?? 'recent'} onChange={(e) => set({ sort: e.target.value === 'recent' ? null : e.target.value })} options={SORTS} /></div>
-          {anyFilter ? <Button variant="ghost" onClick={clear}>Clear</Button> : null}
+          <span className={w.filterClear}>{anyFilter ? <Button variant="ghost" onClick={clear}>Clear</Button> : null}</span>
         </div>
         <DataTable
           caption="Candidates"

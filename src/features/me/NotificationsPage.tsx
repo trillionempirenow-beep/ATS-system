@@ -49,7 +49,7 @@ export function NotificationsPage() {
       <PillTabs label="Filter notifications" value={tab} onChange={(k) => setParams(k === 'all' ? {} : { filter: k }, { replace: true })} items={tabs} />
       <Card padding={0}>
         {!list.data ? (
-          <div className={w.stack8} style={{ padding: 16 }}>{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={56} />)}</div>
+          <div className={`${w.stack8} ${w.pad16}`}>{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={56} />)}</div>
         ) : items.length === 0 ? (
           <EmptyState icon="bell" title="Nothing here." text="New applications, interview reminders and approval decisions will show up here." />
         ) : (

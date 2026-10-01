@@ -5,7 +5,7 @@ import type { DashboardDto } from '@shared/api/insights';
 import type { DisplayInterviewState } from '@shared/domain/interviews';
 import type { JobState } from '@shared/domain/jobs';
 import { ButtonLink } from '@/components/ui/Button';
-import { Avatar, Badge, StatusBadge } from '@/components/ui/Display';
+import { Avatar, StatusBadge } from '@/components/ui/Display';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
 import { Card, CardHeader, DataTable, PageHeader, StatCard, StatGrid } from '@/components/ui/Surface';
 import { AreaTrend, ChartEmpty } from '@/components/charts/Charts';
@@ -48,8 +48,10 @@ export function DashboardPage() {
 
       <div className={w.cols21}>
         <Card>
-          <CardHeader title="Applications received" subtitle="Last 14 days · this week vs. the previous 7 days"
-            actions={change !== null && !trendEmpty ? <Badge tone={change >= 0 ? 'success' : 'danger'} size="sm">{change >= 0 ? `+${change}` : change}%</Badge> : null} />
+          <CardHeader title="Applications received"
+            subtitle={change !== null && !trendEmpty
+              ? <>Last 14 days. This week is <span className={change >= 0 ? w.up : w.down}>{change >= 0 ? `up ${change}%` : `down ${Math.abs(change)}%`}</span> on the week before.</>
+              : 'Last 14 days'} />
           {!d ? <Skeleton height={220} /> : trendEmpty ? (
             <ChartEmpty>Applications from the careers site will chart here once a role is published.</ChartEmpty>
           ) : (
@@ -58,14 +60,14 @@ export function DashboardPage() {
           )}
         </Card>
         <Card>
-          <CardHeader title="Pipeline overview" subtitle="Active candidates by stage" actions={<ButtonLink to="/app/pipeline" size="sm" variant="ghost" iconRight="arrowr">Open pipeline</ButtonLink>} />
+          <CardHeader title="Pipeline overview" subtitle="Active candidates by stage" actions={<ButtonLink to="/app/pipeline" size="sm" variant="ghost">Open pipeline</ButtonLink>} />
           {!d ? <Skeleton height={200} /> : <StageDistribution items={d.funnel} hrefFor={(st) => `/app/candidates?stage=${st}`} />}
         </Card>
       </div>
 
       <div className={w.cols11}>
         <Card>
-          <CardHeader title="Upcoming interviews" actions={<ButtonLink to="/app/interviews" size="sm" variant="ghost" iconRight="arrowr">See all</ButtonLink>} />
+          <CardHeader title="Upcoming interviews" actions={<ButtonLink to="/app/interviews" size="sm" variant="ghost">See all</ButtonLink>} />
           {!d ? <Skeleton height={200} /> : d.upcoming.length === 0 ? (
             <EmptyState compact icon="calendar" title="No interviews scheduled" text="Schedule a screening or interview from a candidate's profile or the Interviews page." />
           ) : (
@@ -75,7 +77,7 @@ export function DashboardPage() {
                 return (
                   <Link key={u.id} to="/app/interviews" className={`${w.listItem} ${w.listItemLink}`}>
                     <span className={w.dateChip}><span>{date.toLocaleDateString('en-US', { month: 'short' })}</span><strong>{date.getDate()}</strong></span>
-                    <span className={w.personText} style={{ flex: 1 }}>
+                    <span className={`${w.personText} ${w.grow}`}>
                       <span className={`${w.personName} ${w.strong}`}>{u.candidateName}</span>
                       <span className={w.personSub}>{formatTime(u.startsAt)} · {u.meetingType === 'screening' ? 'Screening' : 'Interview'} · {u.interviewType.charAt(0).toUpperCase() + u.interviewType.slice(1)}</span>
                     </span>
@@ -94,11 +96,11 @@ export function DashboardPage() {
             <div className={w.list}>
               {d.jobsToReview.map((j) => (
                 <div key={j.id} className={w.listItem}>
-                  <span className={w.personText} style={{ flex: 1 }}>
-                    <span className={w.row} style={{ gap: 8 }}><span className={`${w.personName} ${w.strong}`}>{j.title}</span><StatusBadge kind="job" value={j.state as JobState} size="sm" /></span>
+                  <span className={`${w.personText} ${w.grow}`}>
+                    <span className={`${w.row} ${w.gap8}`}><span className={`${w.personName} ${w.strong}`}>{j.title}</span><StatusBadge kind="job" value={j.state as JobState} size="sm" /></span>
                     <span className={w.personSub}>{j.department ?? 'No department'} · {j.applications} new</span>
                   </span>
-                  <ButtonLink size="sm" variant="ghost" iconRight="arrowr" to={`/app/candidates?job=${j.id}&stage=new`}>Review</ButtonLink>
+                  <ButtonLink size="sm" variant="ghost" to={`/app/candidates?job=${j.id}&stage=new`}>Review</ButtonLink>
                 </div>
               ))}
             </div>
@@ -107,7 +109,7 @@ export function DashboardPage() {
       </div>
 
       <Card padding={0}>
-        <CardHeader flush title="Recent applications" actions={<ButtonLink to="/app/candidates" size="sm" variant="ghost" iconRight="arrowr">See all candidates</ButtonLink>} />
+        <CardHeader flush title="Recent applications" actions={<ButtonLink to="/app/candidates" size="sm" variant="ghost">See all candidates</ButtonLink>} />
         <DataTable
           loading={!d}
           rows={d?.recent ?? []}

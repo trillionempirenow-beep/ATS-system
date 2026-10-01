@@ -1,14 +1,16 @@
+/* Error pages read like a note on the case: what happened, then where to go. Left aligned, no hero number. */
 .wrap { display: flex; justify-content: center; padding: 32px 0 48px; }
 .card {
-  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
-  width: min(560px, 100%); padding: 40px 32px; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-xl); box-shadow: var(--sh-md);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  width: min(560px, 100%); padding: 28px 28px 24px; background: var(--surface); border: 1px solid var(--border);
+  border-top: 2px solid var(--primary); border-radius: var(--radius-md);
 }
-.code { font-size: var(--fs-hero); line-height: 68px; font-weight: var(--fw-semibold); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.code { font-size: var(--fs-small); line-height: var(--lh-small); font-weight: var(--fw-medium); color: var(--text3); font-variant-numeric: tabular-nums; }
 .code403, .code500 { color: var(--danger-fg); }
-.code404 { color: var(--primary); }
-.title { font-size: var(--fs-heading); line-height: 34px; font-weight: var(--fw-semibold); letter-spacing: -0.015em; }
-.text { max-width: 420px; font-size: var(--fs-body); line-height: 23px; color: var(--text2); }
-.note { max-width: 420px; font-size: var(--fs-small); line-height: 20px; color: var(--text3); }
-.actions { display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
-@media (max-width: 767px) { .card { padding: 32px 20px; } .code { font-size: var(--fs-hero); line-height: 52px; } }
+.code404 { color: var(--text3); }
+.card:has(.code403), .card:has(.code500) { border-top-color: var(--danger-solid); }
+.title { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: var(--fw-semibold); }
+.text { max-width: 480px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text2); }
+.note { max-width: 480px; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text3); }
+.actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+@media (max-width: 767px) { .card { padding: 24px 20px 20px; } }

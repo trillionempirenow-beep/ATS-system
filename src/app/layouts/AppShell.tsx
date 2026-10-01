@@ -8,7 +8,7 @@ import { Avatar } from '@/components/ui/Display';
 import { Menu } from '@/components/ui/Overlay';
 import { Spinner } from '@/components/ui/Feedback';
 import { cx } from '@/lib/cx';
-import { AssistantDock } from '@/features/assistant/AssistantDock';
+import { AssistantButton, AssistantDock } from '@/features/assistant/AssistantDock';
 import { NotificationItem } from '@/features/notifications/NotificationItem';
 import { useMarkRead, useNotifications, useShellSummary } from '@/features/notifications/api';
 import { useAuth, useMe } from '../providers/AuthProvider';
@@ -58,7 +58,7 @@ function badgeCount(item: NavItem, summary?: ShellSummaryDto): number {
 function NavEntry({ item, summary, onNavigate, tip }: { item: NavItem; summary?: ShellSummaryDto; onNavigate: () => void; tip?: TipProps }) {
   const location = useLocation();
   const count = badgeCount(item, summary);
-  const extra = item.match?.some((m) => location.pathname.startsWith(m) && location.pathname !== '/app/candidates/new');
+  const extra = item.match?.some((m) => location.pathname.startsWith(m));
   return (
     <NavLink
       to={item.to}
@@ -385,7 +385,7 @@ function NotificationBell({ unread }: { unread: number }) {
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   }, [open]);
   return (
-    <div ref={wrap} style={{ position: 'relative' }}>
+    <div ref={wrap} className={s.bellWrap}>
       <IconButton icon="bell" label={unread ? `Notifications, ${unread} unread` : 'Notifications'} size={40} badge={unread} onClick={() => setOpen((v) => !v)} aria-expanded={open} />
       {open ? (
         <div className={s.popover} role="dialog" aria-label="Notifications">
@@ -394,8 +394,8 @@ function NotificationBell({ unread }: { unread: number }) {
             {unread ? <button type="button" className={s.linkBtn} onClick={() => markRead.mutate({ all: true })}>Mark all read</button> : null}
           </div>
           <div className={s.popList}>
-            {list.isLoading ? <div style={{ padding: 24, display: 'flex', justifyContent: 'center' }}><Spinner /></div> : null}
-            {list.data?.items.length === 0 ? <p style={{ padding: 24, textAlign: 'center', color: 'var(--text3)' }}>You are all caught up.</p> : null}
+            {list.isLoading ? <div className={s.popCenter}><Spinner /></div> : null}
+            {list.data?.items.length === 0 ? <p className={s.popEmpty}>You are all caught up.</p> : null}
             {list.data?.items.map((n) => (
               <NotificationItem key={n.id} n={n} compact onOpen={(item) => { if (!item.read) markRead.mutate({ ids: [item.id] }); setOpen(false); }} />
             ))}
@@ -446,6 +446,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
             <IconButton className={s.mobileMenu} icon="menu" label="Open navigation" size={40} onClick={() => setDrawerOpen(true)} />
           </div>
           <div className={s.headerRight}>
+            <AssistantButton className={s.assistBtn} labelClassName={s.assistLabel} />
             <IconButton icon={theme === 'dark' ? 'sun' : 'moon'} label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} size={40} onClick={toggle} />
             <NotificationBell unread={summary.data?.unread ?? 0} />
             <Menu
@@ -455,7 +456,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
                   <Icon name="chevron" size={14} />
                 </button>
               )}
-              header={<div><div style={{ fontWeight: 600 }}>{me.name}</div><div style={{ fontSize: 13, color: 'var(--text3)' }}>{me.roleLabel}</div></div>}
+              header={<div><div className={s.menuName}>{me.name}</div><div className={s.menuRole}>{me.roleLabel}</div></div>}
               items={[
                 { label: 'My profile', icon: 'user', onSelect: () => navigate('/app/profile') },
                 { label: 'Notifications', icon: 'bell', onSelect: () => navigate('/app/notifications') },
@@ -467,7 +468,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
         </header>
         {live && !inRoom ? (
           <div className={s.liveBanner} role="status">
-            <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span className={s.liveDot} />Interview in progress · {live.jobTitle} with {live.candidateName}</span>
+            <span className={s.liveText}><span className={s.liveDot} />Interview in progress: {live.jobTitle} with {live.candidateName}</span>
             <ButtonLink size="sm" variant="secondary" to={`/app/interviews/${live.interviewId}/room`}>Back to meeting</ButtonLink>
           </div>
         ) : null}

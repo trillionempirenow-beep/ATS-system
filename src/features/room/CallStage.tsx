@@ -380,7 +380,7 @@ export function CallStage(p: Props) {
         {p.dock ? <Control icon="edit" label="Notes" active={p.panel === 'dock'} onClick={() => toggle('dock')} /> : null}
         <span className={s.ctrlSep} />
         <div className={s.ctrl}>
-          <button type="button" className={s.endBtn} onClick={p.onEnd}><Icon name="phone" size={20} />{p.endLabel}</button>
+          <button type="button" className={s.endBtn} onClick={p.onEnd} aria-label={p.endLabel}><Icon name="phone" size={20} /><span className={s.endText}>{p.endLabel}</span></button>
         </div>
       </footer>
       {p.overlay}

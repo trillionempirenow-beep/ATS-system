@@ -147,7 +147,7 @@ export function AddCandidatePage() {
 
   return (
     <div className={w.page}>
-      <PageHeader title="Add a candidate" description="Upload a CV to pre-fill details, or enter them by hand." crumbs={[{ label: 'Recruiting', to: '/app' }, { label: 'Add candidate' }]} />
+      <PageHeader title="Add a candidate" description="Upload a CV to pre-fill details, or enter them by hand." crumbs={[{ label: 'Recruiting' }, { label: 'Candidates', to: '/app/candidates' }, { label: 'Add candidate' }]} />
       <div className={w.aside340}>
         <form className={w.stack} noValidate onSubmit={(e) => { e.preventDefault(); void submit('submit')(); }}>
           <Card>
@@ -172,7 +172,7 @@ export function AddCandidatePage() {
           </Card>
 
           <Card>
-            {formError ? <Notice tone="danger" style={{ marginBottom: 16 }}>{formError}</Notice> : null}
+            {formError ? <Notice tone="danger" className={w.mb16}>{formError}</Notice> : null}
             <fieldset className={s.section}>
               <legend className={s.legend}>Personal details</legend>
               <Field label={label('full_name', 'Full name')} error={errors.fullName?.message}><TextInput autoComplete="off" {...register('fullName')} /></Field>
@@ -208,7 +208,7 @@ export function AddCandidatePage() {
               </div>
               <Field label="Recruiter notes" optional><Textarea rows={3} maxLength={5000} {...register('notes')} /></Field>
             </fieldset>
-            <div className={w.stickyActions}>
+            <div className={`${w.stickyActions} ${w.stickyInCard}`}>
               <Button type="button" variant="ghost" onClick={() => navigate(-1)}>Cancel</Button>
               <Button type="button" variant="secondary" loading={save.isPending && save.variables?.action === 'draft'} disabled={save.isPending || parse.state === 'working'} onClick={() => void submit('draft')()}>Save as draft</Button>
               <Button type="submit" loading={save.isPending && save.variables?.action === 'submit'} disabled={save.isPending || parse.state === 'working'}>Submit candidate</Button>
@@ -251,7 +251,7 @@ function FieldSettings({ required }: { required: string[] }) {
         {Object.entries(CONFIGURABLE_CANDIDATE_FIELDS).map(([key, text]) => (
           <Checkbox key={key} label={text} checked={picked.has(key)} onChange={(e) => toggle(key, e.target.checked)} />
         ))}
-        <Button variant="secondary" size="sm" loading={save.isPending} onClick={() => save.mutate()} style={{ alignSelf: 'flex-start', marginTop: 8 }}>Save field settings</Button>
+        <Button variant="secondary" size="sm" loading={save.isPending} onClick={() => save.mutate()} className={`${w.selfStart} ${w.mt8}`}>Save field settings</Button>
       </div>
     </Card>
   );

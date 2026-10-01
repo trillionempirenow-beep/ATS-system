@@ -6,7 +6,7 @@ export function RoleNotFound() {
   return (
     <div className={sys.wrap}>
       <div className={sys.card}>
-        <span className={`${sys.code} ${sys.code404}`} aria-hidden>404</span>
+        <span className={`${sys.code} ${sys.code404}`} >Error 404</span>
         <h1 className={sys.title}>Role not found</h1>
         <p className={sys.text}>This role may have been filled or removed. Browse the roles that are open right now.</p>
         <div className={sys.actions}>

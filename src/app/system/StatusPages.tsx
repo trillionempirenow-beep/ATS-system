@@ -11,7 +11,7 @@ function StatusCard({ code, title, text, note, actions }: { code: 403 | 404 | 50
   return (
     <div className={s.wrap}>
       <div className={s.card}>
-        <span className={cx(s.code, s[`code${code}`])} aria-hidden>{code}</span>
+        <span className={cx(s.code, s[`code${code}`])}>Error {code}</span>
         <h1 className={s.title}>{title}</h1>
         <p className={s.text}>{text}</p>
         {note ? <p className={s.note}>{note}</p> : null}

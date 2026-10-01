@@ -85,8 +85,7 @@
 .mobileMenu { display: none; }
 .accountBtn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 4px; border-radius: var(--radius-full); border: 1px solid transparent; background: none; color: var(--text2); }
 .accountBtn:hover { background: var(--surface2); }
-.content { flex: 1; width: 100%; max-width: calc(var(--content-max) + var(--page-pad) * 2); margin: 0 auto; padding: 32px var(--page-pad) 168px; container: workspace / inline-size; }
-/* The bottom padding keeps the end of every page clear of the assistant launcher. */
+.content { flex: 1; width: 100%; max-width: calc(var(--content-max) + var(--page-pad) * 2); margin: 0 auto; padding: 32px var(--page-pad) 64px; container: workspace / inline-size; }
 .contentWide { max-width: none; }
 
 .liveBanner {
@@ -115,4 +114,24 @@
   .mobileMenu { display: inline-flex; }
   .accountName { display: none; }
   .content { padding-top: 20px; }
+}
+.bellWrap { position: relative; }
+.popCenter { display: flex; justify-content: center; padding: 24px; }
+.popEmpty { padding: 24px; text-align: center; color: var(--text3); }
+.menuName { font-weight: var(--fw-semibold); }
+.menuRole { font-size: var(--fs-small); color: var(--text3); }
+.liveText { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+/* The assistant's launcher: a labelled button in the top bar, so it never covers page controls. */
+.assistBtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 6px; margin-right: 4px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+  color: var(--text); font-size: var(--fs-small); font-weight: var(--fw-medium);
+}
+.assistBtn img { width: 24px; height: 24px; flex: none; }
+.assistBtn:hover { background: var(--surface2); border-color: var(--border-strong); }
+.assistBtn[aria-expanded='true'] { background: var(--primary-subtle); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary-subtle-fg); }
+@media (max-width: 640px) {
+  .assistBtn { width: 40px; height: 40px; padding: 0; justify-content: center; border-color: transparent; background: none; margin-right: 0; }
+  .assistLabel { display: none; }
 }

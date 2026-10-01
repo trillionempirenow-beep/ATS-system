@@ -167,7 +167,7 @@ function ReviewView({ tabs }: { tabs: ReactNode }) {
           <Button type="submit" disabled={invalid} loading={q.isFetching && Boolean(range)}>Review</Button>
           <ButtonLink variant="secondary" icon="download" reloadDocument to={`/api/v1/attendance/export${qs({ scope: 'team', from: d?.from, to: d?.to })}`}>Export CSV</ButtonLink>
         </form>
-        {invalid ? <Notice tone="warning" style={{ marginTop: 12 }}>The start date must be on or before the end date.</Notice> : null}
+        {invalid ? <Notice tone="warning" className={w.mt12}>The start date must be on or before the end date.</Notice> : null}
         {d && Object.keys(d.summary).length ? (
           <div className={s.summary}>
             {Object.entries(d.summary).map(([k, n]) => <Badge key={k} tone="neutral" size="sm">{ATTENDANCE_STATUS_LABELS[k as AttendanceStatus]} · {n}</Badge>)}

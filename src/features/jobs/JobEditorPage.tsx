@@ -213,7 +213,7 @@ function Editor({ id, data }: { id: number | null; data: JobEditorDto }) {
                 <FileRow name={pdf.name} sub={`Attached · ${pdf.size}`} />
                 {pdf.result.qualityWarning ? <Notice tone="warning">{pdf.result.qualityWarning}</Notice> : null}
                 {pdf.result.message ? <Notice tone={pdf.result.ok && !pdf.result.message.includes('unavailable') ? 'info' : 'warning'}>{pdf.result.message}</Notice> : null}
-                <Button variant="secondary" size="sm" onClick={() => setPdf({ state: 'idle' })} style={{ alignSelf: 'flex-start' }}>Extract again</Button>
+                <Button variant="secondary" size="sm" onClick={() => setPdf({ state: 'idle' })} className={w.selfStart}>Extract again</Button>
               </div>
             ) : null}
             {pdf.state === 'idle' || pdf.state === 'failed' ? (
