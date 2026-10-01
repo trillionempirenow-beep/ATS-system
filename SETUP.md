@@ -228,7 +228,8 @@ Setup:
    (`CV_N8N_SECRET` or `EMAIL_N8N_SECRET`). `APP_URL` must be the public site
    address: the workflow calls back to `APP_URL/api/v1/assistant/tools`.
 2. Voice replies: in n8n open **ats-assistant** → **ElevenLabs voice**, add an
-   ElevenLabs credential (your API key from elevenlabs.io → API keys), turn the
+   ElevenLabs credential (the API key itself, which starts with `sk_` and is shown
+   only when the key is created; not the key ID), turn the
    node on, and publish. Until then the assistant answers in text only. Change
    the voice in the same node.
 
