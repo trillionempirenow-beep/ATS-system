@@ -18,11 +18,12 @@ import { describeError } from '../../parsers/resume-ai.js';
  */
 
 export const MIN_MATCH = 60;
-const TIMEOUT_MS = 45_000;
+/** Inside the function's 60-second limit on Vercel, with room to save the result. */
+const TIMEOUT_MS = 50_000;
 /** Applicants scored for one job, after a quick keyword pre-filter. */
 const JOB_POOL = 40;
 /** Applicants per AI call: small calls in parallel finish well inside the function's time limit. */
-const CHUNK = 8;
+const CHUNK = 5;
 /** A run that started longer ago than this died with its function. */
 const RUN_STALE_MS = 90_000;
 /** Open jobs an application is compared against. */
