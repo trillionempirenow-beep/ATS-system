@@ -1,5 +1,6 @@
 import { sql, type Db } from '../../db/client.js';
 import type { Stage } from '../../../shared/domain/pipeline.js';
+import type { AiSummary } from '../../../shared/api/interviews.js';
 import type { CandidateRequestState, GuestState, InterviewStatus, InterviewType, MeetingState, MeetingType, Recommendation } from '../../../shared/domain/interviews.js';
 
 export interface InterviewRow {
@@ -35,6 +36,8 @@ export interface InterviewRow {
   candidate_last_seen: Date | null;
   interviewer_last_seen: Date | null;
   assistant_enabled: boolean;
+  ai_summary: AiSummary | null;
+  ai_summary_at: Date | null;
   reminder_sent_at: Date | null;
   candidate_id: number;
   first_name: string;
@@ -51,7 +54,7 @@ const SELECT = sql`
   select i.id, i.application_id, i.interviewer_id, i.meeting_type, i.starts_at, i.ends_at, i.timezone, i.interview_type, i.meeting_url,
          i.meeting_provider, i.room_code, i.candidate_token, i.is_final, i.guest_token, i.location, i.status, i.meeting_state, i.notes, i.live_notes, i.notes_updated_at,
          i.feedback, i.score, i.recommendation, i.started_at, i.ended_at, i.reviewed_at, i.reviewer_id, i.candidate_request_state,
-         i.candidate_requested_at, i.candidate_last_seen, i.interviewer_last_seen, i.assistant_enabled, i.reminder_sent_at,
+         i.candidate_requested_at, i.candidate_last_seen, i.interviewer_last_seen, i.assistant_enabled, i.ai_summary, i.ai_summary_at, i.reminder_sent_at,
          c.id as candidate_id, c.first_name, c.last_name, c.email::text, c.profile_image, j.title as job_title, a.stage,
          u.name as interviewer_name, rv.name as reviewer_name
   from interviews i

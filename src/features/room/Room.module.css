@@ -1340,3 +1340,52 @@ button.topLink {
 @media (max-width: 720px) {
   .admitStack { top: 72px; right: 16px; left: 16px; width: auto; }
 }
+
+/* Team chat: a faint tint so nobody mistakes it for the chat the candidate reads. */
+.chatTeam {
+  background: color-mix(in srgb, var(--warning-solid) 7%, transparent);
+}
+
+.unreadDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warning-solid);
+}
+
+/* Guests and other watchers: a centred row of small tiles under the interview. */
+.audience {
+  justify-content: center;
+}
+
+.audience:empty {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .audience .tileSmall { width: 132px; height: 92px; }
+}
+
+.pillAi svg {
+  color: #c4b5fd;
+}
+
+.assistState > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.assistError {
+  margin: 0;
+  font-size: 12.5px;
+  color: #fcd34d;
+}
+
+.noteTopic {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}

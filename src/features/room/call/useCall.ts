@@ -23,7 +23,8 @@ export interface RemotePeer {
   state: RTCPeerConnectionState | 'new';
 }
 
-export interface ChatMessage { id: string; from: string; name: string; text: string; at: string; mine: boolean }
+export type ChatScope = 'everyone' | 'team';
+export interface ChatMessage { id: string; from: string; name: string; text: string; at: string; mine: boolean; scope: ChatScope }
 
 interface Signal {
   from: string;
@@ -52,6 +53,8 @@ export interface CallOptions {
   driver: RealtimeDriver;
   /** The room channel; null until the API grants it. */
   channel: string | null;
+  /** Team chat channel: granted to the hiring team and admitted guests only. */
+  team?: string | null;
   rtc: RtcConfigDto | null;
   self: { id: string; name: string; role: ParticipantRole; position?: string };
   stream: MediaStream | null;
@@ -67,7 +70,9 @@ export interface Call {
   status: ConnectionStatus;
   peers: RemotePeer[];
   messages: ChatMessage[];
-  sendChat: (text: string) => void;
+  sendChat: (text: string, scope?: ChatScope) => void;
+  /** This person can read and write Team chat. */
+  teamChat: boolean;
   /** Some peer lost its media connection and is trying again. */
   reconnecting: boolean;
 }
@@ -145,6 +150,7 @@ export function useCall(opts: CallOptions): Call {
   // Connections live in refs; bump() re-renders when one of them changes.
   const [, bump] = useReducer((x: number) => x + 1, 0);
   const channelRef = useRef<Channel<ParticipantMeta> | null>(null);
+  const teamRef = useRef<Channel | null>(null);
   const peers = useRef(new Map<string, PeerEntry>());
   const outStream = useRef(new MediaStream());
   const media = useRef({ stream: opts.stream, screen: opts.screen });
@@ -314,7 +320,7 @@ export function useCall(opts: CallOptions): Call {
       ch.on(EV_SIGNAL, (p) => { void onSignal(p); }),
       ch.on(EV_CHAT, (p) => {
         const m = p as Omit<ChatMessage, 'mine'>;
-        if (m && typeof m.text === 'string') setMessages((list) => [...list, { ...m, text: m.text.slice(0, 2000), mine: false }].slice(-200));
+        if (m && typeof m.text === 'string') setMessages((list) => [...list, { ...m, text: m.text.slice(0, 2000), mine: false, scope: 'everyone' as const }].slice(-200));
       }),
       ch.on(EV_ENDED, (p) => callbacks.current.onEnded?.((p ?? {}) as { endedBy?: string; endedById?: number })),
       ch.on(EV_HELLO, (p) => {
@@ -364,6 +370,22 @@ export function useCall(opts: CallOptions): Call {
       }
     };
   }, [opts.channel, opts.driver, hasRtc, selfId, onSignal, restartVideo]);
+
+  // Team chat lives on its own channel, which the candidate is never given: it is
+  // private by construction, not merely hidden on their screen.
+  const teamName = opts.team ?? null;
+  useEffect(() => {
+    if (!teamName) return undefined;
+    const ch = joinChannel(opts.driver, teamName, selfId);
+    teamRef.current = ch;
+    const off = ch.on(EV_CHAT, (p) => {
+      const m = p as Omit<ChatMessage, 'mine' | 'scope'>;
+      if (m && typeof m.text === 'string' && m.from !== selfId) {
+        setMessages((list) => [...list, { ...m, text: m.text.slice(0, 2000), mine: false, scope: 'team' as const }].slice(-200));
+      }
+    });
+    return () => { off(); ch.close(); teamRef.current = null; };
+  }, [teamName, opts.driver, selfId]);
 
   // Rotated TURN credentials: hand them to open connections without renegotiating.
   useEffect(() => {
@@ -461,12 +483,14 @@ export function useCall(opts: CallOptions): Call {
     for (const entry of peers.current.values()) syncTracks(entry);
   }, [opts.stream, opts.screen, syncTracks]);
 
-  const sendChat = useCallback((text: string) => {
+  const sendChat = useCallback((text: string, scope: ChatScope = 'everyone') => {
     const clean = text.trim().slice(0, 2000);
     if (!clean) return;
+    const target = scope === 'team' ? teamRef.current : channelRef.current;
+    if (!target) return;
     const msg = { id: nonce(), from: selfId, name: opts.self.name, text: clean, at: new Date().toISOString() };
-    channelRef.current?.send(EV_CHAT, msg);
-    setMessages((list) => [...list, { ...msg, mine: true }].slice(-200));
+    target.send(EV_CHAT, msg);
+    setMessages((list) => [...list, { ...msg, mine: true, scope }].slice(-200));
   }, [selfId, opts.self.name]);
 
   const remotePeers: RemotePeer[] = [...metas.values()].map((meta) => {
@@ -483,5 +507,5 @@ export function useCall(opts: CallOptions): Call {
 
   const reconnecting = status === 'disconnected' || remotePeers.some((p) => p.state === 'disconnected' || p.state === 'failed');
 
-  return { status, peers: remotePeers, messages, sendChat, reconnecting };
+  return { status, peers: remotePeers, messages, sendChat, teamChat: Boolean(teamName), reconnecting };
 }

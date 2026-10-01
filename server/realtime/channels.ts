@@ -11,6 +11,8 @@ export const channels = {
   user: (userId: number) => `user-${userId}-${tag('user', userId)}`,
   /** Everyone in the call: staff and the admitted candidate. Signalling, chat, presence. */
   room: (interviewId: number) => `room-${interviewId}-${tag('room', interviewId)}`,
+  /** Team chat: the hiring team and admitted guests. Never issued to the candidate. */
+  team: (interviewId: number) => `team-${interviewId}-${tag('team', interviewId)}`,
   /** Staff only: entry requests, assistant notes. */
   staff: (interviewId: number) => `staff-${interviewId}-${tag('staff', interviewId)}`,
   /** The candidate's waiting room: admission and end-of-meeting events. */

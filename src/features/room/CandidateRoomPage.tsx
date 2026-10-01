@@ -12,7 +12,7 @@ import { ApiError, api, errorMessage } from '@/lib/api';
 import { formatDate, formatTime, plural } from '@/lib/format';
 import { joinChannel } from '@/lib/realtime';
 import { FORMAT_LABELS } from '../interviews/ScheduleDrawer';
-import { CallStage, type SidePanel } from './CallStage';
+import { AiNotesPill, CallStage, type SidePanel } from './CallStage';
 import { DeviceCheck } from './DeviceCheck';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
@@ -253,6 +253,7 @@ function CandidateCall({ data, media, since, onLeave, onEnded }: {
       title={`Interview with ${data.interviewerName ?? data.companyName}`}
       subtitle={`${data.jobTitle} ${data.meetingType === 'screening' ? 'screening' : 'interview'} · Room code ${data.roomCode}`}
       since={since}
+      pills={data.aiNotesOn ? <AiNotesPill /> : null}
       call={call}
       media={media}
       self={{ name: data.candidateName, role: 'candidate' }}

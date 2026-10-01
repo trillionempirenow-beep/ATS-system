@@ -13,7 +13,7 @@ import { ApiError, api, errorMessage } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { formatDate, formatTime } from '@/lib/format';
 import { joinChannel } from '@/lib/realtime';
-import { CallStage, type SidePanel } from './CallStage';
+import { AiNotesPill, CallStage, type SidePanel } from './CallStage';
 import { DeviceCheck, VideoPreview } from './DeviceCheck';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
@@ -293,6 +293,7 @@ function GuestCall({ session, media, since, onLeave, onEnded }: {
   const call = useCall({
     driver: session.realtime.driver,
     channel: session.realtime.room,
+    team: session.realtime.team,
     rtc: session.rtc,
     self,
     stream: media.stream, screen: media.screen, micOn: media.micOn, camOn: media.camOn, hand,
@@ -303,6 +304,7 @@ function GuestCall({ session, media, since, onLeave, onEnded }: {
       title={`Final interview · ${session.jobTitle}`}
       subtitle={`${session.companyName} · You are a guest: ${session.guest.name} - ${session.guest.position}`}
       since={since}
+      pills={session.aiNotesOn ? <AiNotesPill /> : null}
       call={call}
       media={media}
       self={self}

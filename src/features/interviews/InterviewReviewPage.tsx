@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import type { StaffRoomDto } from '@shared/api/interviews';
+import type { AiSummary, StaffRoomDto } from '@shared/api/interviews';
 import { RECOMMENDATIONS } from '@shared/domain/interviews';
 import { Icon } from '@/components/icon/Icon';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -15,6 +15,29 @@ import { ReviewForm, ScoreSummary, ScorecardRatings } from './ReviewForm';
 import w from '../workspace.module.css';
 import s from './Interviews.module.css';
 
+/** What the AI took from the whole meeting, written once it ended. */
+function AiSummaryCard({ summary }: { summary: AiSummary }) {
+  const list = (title: string, items: string[]) => (items.length ? (
+    <div>
+      <div className={w.overline}>{title}</div>
+      <ul className={s.summaryList}>{items.map((x) => <li key={x}>{x}</li>)}</ul>
+    </div>
+  ) : null);
+  return (
+    <Card>
+      <CardHeader title="AI summary" subtitle="From everything said in the meeting" actions={<Badge tone="purple" icon="sparkle" size="sm">AI-generated</Badge>} />
+      <div className={w.stack}>
+        <p>{summary.summary}</p>
+        {summary.keyAnswers.length ? <DescriptionList items={summary.keyAnswers.map((k) => [k.label, k.value])} /> : null}
+        {list('Strengths', summary.strengths)}
+        {list('Concerns', summary.concerns)}
+        {list('Follow up on', summary.followUps)}
+        <p className={w.faint}>Check it against your own notes before deciding. The AI can mishear names and numbers.</p>
+      </div>
+    </Card>
+  );
+}
+
 function durationMinutes(iv: StaffRoomDto['interview']): number | null {
   if (!iv.startedAt || !iv.endedAt) return null;
   return Math.max(1, Math.round((Date.parse(iv.endedAt) - Date.parse(iv.startedAt)) / 60_000));
@@ -28,6 +51,15 @@ export function InterviewReviewPage() {
   const [showNotes, setShowNotes] = useState(false);
 
   useEffect(() => { document.title = 'Interview review · Acme People'; }, []);
+  // The AI summary is written in the background right after the meeting: check back for a few minutes.
+  const d = room.data;
+  const summaryPending = Boolean(d && !d.aiSummary && d.assistant.notes.length && d.interview.endedAt && Date.now() - Date.parse(d.interview.endedAt) < 180_000);
+  const refetch = room.refetch;
+  useEffect(() => {
+    if (!summaryPending) return undefined;
+    const t = window.setInterval(() => void refetch(), 5000);
+    return () => window.clearInterval(t);
+  }, [summaryPending, refetch]);
 
   if (room.isError) return <QueryErrorPage error={room.error} onRetry={() => void room.refetch()} />;
   if (!room.data) {
@@ -83,6 +115,10 @@ export function InterviewReviewPage() {
               ]} />
             </div>
           </Card>
+
+          {data.aiSummary ? <AiSummaryCard summary={data.aiSummary} /> : summaryPending ? (
+            <Card><CardHeader title="AI summary" subtitle="Writing it from the meeting… this takes up to a minute." actions={<Badge tone="purple" icon="sparkle" size="sm">AI-generated</Badge>} /></Card>
+          ) : null}
 
           {assistNotes.length ? (
             <Card>

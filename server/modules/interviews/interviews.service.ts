@@ -4,7 +4,7 @@ import { RECOMMENDATIONS, SCORECARD_CRITERIA } from '../../../shared/domain/inte
 import { REVIEW_STAGE_LABELS, STAGE_ORDER, stageRank } from '../../../shared/domain/pipeline.js';
 import type {
   InterviewListDto, LiveMeetingDto, PresenceResultDto, ScheduleOptionsDto, ScheduleResultDto, StaffRoomDto,
-  momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
+  AiSummary, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
 } from '../../../shared/api/interviews.js';
 import type { DeliveryReport } from '../../../shared/api/envelope.js';
 import { env } from '../../config/env.js';
@@ -29,6 +29,7 @@ import {
 } from './interview-helpers.js';
 import * as guests from './guest-access.service.js';
 import * as repo from './interviews.repository.js';
+import * as aiNotes from './interview-notes.service.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -184,8 +185,9 @@ export async function update(id: number, input: z.infer<typeof updateInterviewSc
 export async function staffRoom(id: number, user: CurrentUser): Promise<StaffRoomDto> {
   const row = await load(id);
   const windowSeconds = await presenceWindow();
+  const isInterviewer = row.interviewer_id === user.id;
   const [myRatings, moments, assistantNotes, rtc, guestList] = await Promise.all([
-    repo.scorecardFor(id, user.id), repo.momentsFor(id), repo.assistantNotesFor(id), rtcConfig(), guests.forHosts(id, windowSeconds),
+    repo.scorecardFor(id, user.id), repo.momentsFor(id), isInterviewer ? aiNotes.notesFor(id) : Promise.resolve([]), rtcConfig(), guests.forHosts(id, windowSeconds),
   ]);
   return {
     interview: {
@@ -208,11 +210,12 @@ export async function staffRoom(id: number, user: CurrentUser): Promise<StaffRoo
     me: { id: user.id, name: user.name },
     scorecard: { criteria: [...SCORECARD_CRITERIA], myRatings },
     moments: moments.map((m) => ({ id: m.id, atSecond: m.at_second, label: m.label, author: m.author })),
-    // No transcription provider is configured in this deployment, so the assistant
-    // stays off; the dock says so instead of pretending to listen.
-    assistant: { configured: false, enabled: false, notes: assistantNotes.map((n) => ({ atSecond: n.at_second, topic: n.topic, text: n.text })) },
+    // Live AI notes are the interviewer's alone.
+    assistant: { configured: aiNotes.notesConfigured(), enabled: row.assistant_enabled, canUse: isInterviewer, notes: assistantNotes },
+    // Older drivers hand jsonb back as text.
+    aiSummary: typeof row.ai_summary === 'string' ? JSON.parse(row.ai_summary) as AiSummary : row.ai_summary,
     rtc,
-    realtime: { driver: env.REALTIME_DRIVER, room: row.room_code ? channels.room(id) : null, staff: channels.staff(id), lobby: null },
+    realtime: { driver: env.REALTIME_DRIVER, room: row.room_code ? channels.room(id) : null, staff: channels.staff(id), lobby: null, team: row.room_code ? channels.team(id) : null },
     presenceSeconds: windowSeconds,
     guests: { link: guestRoomLink(row), admitted: guestList.admitted },
   };
@@ -291,6 +294,10 @@ export async function endMeeting(id: number, liveNotes: string | undefined, ctx:
     publish(channels.room(id), EVENTS.roomEnded, payload), publish(channels.lobby(id), EVENTS.roomEnded, payload), guests.notifyGuests(id, EVENTS.roomEnded, payload),
   ]);
   emitN8nEvent('interview.ended', { interviewId: id });
+  if (row.assistant_enabled) {
+    await sql`update interviews set assistant_enabled = false where id = ${id}`;
+    aiNotes.summariseAfterMeeting(id);
+  }
 }
 
 export async function submitReview(id: number, input: z.infer<typeof reviewSchema>, ctx: Ctx): Promise<void> {

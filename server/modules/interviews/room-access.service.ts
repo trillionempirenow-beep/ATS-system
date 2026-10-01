@@ -58,8 +58,9 @@ async function stateFor(row: repo.InterviewRow): Promise<CandidateRoomDto> {
     serverTime: new Date().toISOString(),
     startedAt: iso(row.started_at),
     // The call channel is only issued once the interviewer has let the candidate in.
-    realtime: { driver: env.REALTIME_DRIVER, lobby: channels.lobby(row.id), room: admitted ? channels.room(row.id) : null, staff: null },
+    realtime: { driver: env.REALTIME_DRIVER, lobby: channels.lobby(row.id), room: admitted ? channels.room(row.id) : null, staff: null, team: null },
     rtc: admitted ? await rtcConfig() : null,
+    aiNotesOn: row.assistant_enabled,
   };
 }
 

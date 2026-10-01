@@ -4,7 +4,7 @@ import { Icon, type IconName } from '@/components/icon/Icon';
 import { Avatar } from '@/components/ui/Display';
 import { cx } from '@/lib/cx';
 import { formatTime, mmss } from '@/lib/format';
-import type { Call, ParticipantMeta, ParticipantRole, RemotePeer } from './call/useCall';
+import type { Call, ChatScope, ParticipantMeta, ParticipantRole, RemotePeer } from './call/useCall';
 import type { LocalMedia } from './call/useLocalMedia';
 import s from './Room.module.css';
 
@@ -14,6 +14,48 @@ const ROLE_LABELS: Record<ParticipantRole, string> = { interviewer: 'Interviewer
 const tileRole = (meta: Pick<ParticipantMeta, 'role' | 'position' | 'screen'>): { role?: string; position?: string } =>
   meta.screen ? { role: 'Presenting', position: meta.role === 'guest' ? meta.position : undefined }
     : meta.role === 'guest' && meta.position ? { position: meta.position } : { role: ROLE_LABELS[meta.role] };
+
+/**
+ * Who is talking right now, from the sound on each person's incoming audio. One
+ * shared AudioContext, read a few times a second; only drives a highlight ring.
+ */
+function useSpeaking(peers: RemotePeer[]): Set<string> {
+  const [speaking, setSpeaking] = useState<Set<string>>(new Set());
+  const key = peers.map((x) => `${x.meta.id}:${x.stream.getAudioTracks()[0]?.id ?? ''}`).join('|');
+  useEffect(() => {
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return undefined;
+    const ctx = new AC();
+    const meters = peers.flatMap((x) => {
+      const track = x.stream.getAudioTracks()[0];
+      if (!track) return [];
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      ctx.createMediaStreamSource(new MediaStream([track])).connect(analyser);
+      return [{ id: x.meta.id, analyser, data: new Uint8Array(analyser.fftSize) }];
+    });
+    const t = window.setInterval(() => {
+      if (ctx.state === 'suspended') void ctx.resume().catch(() => undefined);
+      const now = new Set<string>();
+      for (const m of meters) {
+        m.analyser.getByteTimeDomainData(m.data);
+        let sum = 0;
+        for (const v of m.data) sum += (v - 128) * (v - 128);
+        if (Math.sqrt(sum / m.data.length) > 6) now.add(m.id);
+      }
+      setSpeaking((prev) => (prev.size === now.size && [...now].every((id) => prev.has(id)) ? prev : now));
+    }, 250);
+    return () => { window.clearInterval(t); void ctx.close().catch(() => undefined); };
+    // The key captures who is here and which audio track each sends.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return speaking;
+}
+
+/** Shown to everyone in the room while the interviewer has AI notes on. */
+export function AiNotesPill() {
+  return <span className={cx(s.pill, s.pillAi)} title="The interviewer's AI assistant is taking notes of this meeting."><Icon name="sparkle" size={15} />AI notes on</span>;
+}
 
 export function Elapsed({ since }: { since: string | null }) {
   const [now, setNow] = useState(() => Date.now());
@@ -66,15 +108,40 @@ function Control({ icon, label, onClick, off, active, disabled }: { icon: IconNa
 
 function ChatPanel({ call }: { call: Call }) {
   const [text, setText] = useState('');
+  const [scope, setScope] = useState<ChatScope>('everyone');
+  const [seen, setSeen] = useState<Record<ChatScope, number>>({ everyone: 0, team: 0 });
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [call.messages.length]);
-  const submit = (e: FormEvent) => { e.preventDefault(); call.sendChat(text); setText(''); };
+  const team = call.teamChat && scope === 'team';
+  const list = call.messages.filter((m) => m.scope === scope);
+  const count = (sc: ChatScope) => call.messages.filter((m) => m.scope === sc).length;
+  // What has arrived in the other tab since it was last open.
+  const unread = (sc: ChatScope) => sc !== scope && count(sc) > seen[sc];
+  useEffect(() => { setSeen((v) => ({ ...v, [scope]: list.length })); }, [scope, list.length]);
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [list.length, scope]);
+  const submit = (e: FormEvent) => { e.preventDefault(); call.sendChat(text, scope); setText(''); };
   return (
     <>
-      <div className={s.sideHead}><strong>Chat</strong><span>Visible to everyone in the room</span></div>
-      <div className={s.chatList} aria-live="polite">
-        {call.messages.length === 0 ? <p className={s.sideEmpty}>Messages you send here are seen by everyone in the room and are not saved after the meeting.</p> : null}
-        {call.messages.map((m) => (
+      {call.teamChat ? (
+        <div className={s.sideTabs} role="tablist" aria-label="Chat">
+          <button type="button" role="tab" aria-selected={scope === 'everyone'} className={s.sideTab} onClick={() => setScope('everyone')}>
+            Everyone{unread('everyone') ? <span className={s.unreadDot} aria-label="new messages" /> : null}
+          </button>
+          <button type="button" role="tab" aria-selected={scope === 'team'} className={s.sideTab} onClick={() => setScope('team')}>
+            <Icon name="lock" size={13} />Team chat{unread('team') ? <span className={s.unreadDot} aria-label="new messages" /> : null}
+          </button>
+        </div>
+      ) : null}
+      <div className={s.sideHead}>
+        <strong>{team ? 'Team chat' : 'Chat'}</strong>
+        <span>{team ? 'Only the hiring team and guests. The candidate cannot see this.' : 'Visible to everyone in the room'}</span>
+      </div>
+      <div className={cx(s.chatList, team && s.chatTeam)} aria-live="polite">
+        {list.length === 0 ? (
+          <p className={s.sideEmpty}>{team
+            ? 'Pass notes to the panel here, like a question to ask next. Not saved after the meeting.'
+            : 'Messages you send here are seen by everyone in the room and are not saved after the meeting.'}</p>
+        ) : null}
+        {list.map((m) => (
           <div key={m.id} className={cx(s.chatMsg, m.mine && s.chatMine)}>
             <span className={s.chatWho}>{m.mine ? 'You' : m.name} <time>{formatTime(m.at)}</time></span>
             <p>{m.text}</p>
@@ -83,7 +150,7 @@ function ChatPanel({ call }: { call: Call }) {
         <div ref={end} />
       </div>
       <form className={s.chatForm} onSubmit={submit}>
-        <input className={s.chatInput} value={text} onChange={(e) => setText(e.target.value)} placeholder="Send a message" maxLength={2000} aria-label="Chat message" />
+        <input className={s.chatInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={team ? 'Message the team' : 'Send a message'} maxLength={2000} aria-label={team ? 'Team chat message' : 'Chat message'} />
         <button type="submit" className={s.chatSend} aria-label="Send message" disabled={!text.trim()}><Icon name="send" size={18} /></button>
       </form>
     </>
@@ -179,12 +246,17 @@ export function CallStage(p: Props) {
   }, []);
 
   const sharing = call.peers.find((x) => x.meta.screen) ?? null;
-  // Three or more people and nobody presenting: everyone gets an equal tile in the grid.
-  const grid = !sharing && call.peers.length >= 2;
+  // The interview itself is between the interviewer and the candidate. Everyone else
+  // (guests, other hiring team) watches from a row of small tiles, so they never look
+  // like a second candidate. Two people, or someone presenting: the classic layout.
+  const lead = (role: ParticipantRole) => role === 'interviewer' || role === 'candidate';
+  const selfLead = lead(p.self.role);
+  const leads = call.peers.filter((x) => lead(x.meta.role));
+  const audience = call.peers.filter((x) => !lead(x.meta.role));
+  const panelMode = !sharing && (audience.length > 0 || !selfLead);
   const presenter = sharing ?? call.peers[0] ?? null;
   const others = call.peers.filter((x) => x !== presenter);
-  const everyone = call.peers.length + 1;
-  const gridCols = everyone <= 4 ? 2 : everyone <= 9 ? 3 : 4;
+  const speaking = useSpeaking(call.peers);
   const selfHasVideo = Boolean(media.screen || (media.stream?.getVideoTracks().length && media.camOn));
   const selfStream = media.screen ?? media.stream;
   const hasMic = Boolean(media.stream?.getAudioTracks().length);
@@ -213,21 +285,33 @@ export function CallStage(p: Props) {
 
       <div className={s.body}>
         <div className={s.stage}>
-          {grid ? (
-            <div className={s.main}>
-              <div className={s.grid} style={{ '--cols': gridCols } as CSSProperties}>
-                {call.peers.map((o) => (
-                  <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} />
-                ))}
-                <Tile stream={selfStream} name="You" position={p.self.position} muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} />
+          {panelMode ? (
+            <>
+              <div className={s.main}>
+                {leads.length + (selfLead ? 1 : 0) ? (
+                  <div className={s.grid} style={{ '--cols': leads.length + (selfLead ? 1 : 0) } as CSSProperties}>
+                    {leads.map((o) => (
+                      <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} highlight={speaking.has(o.meta.id)} />
+                    ))}
+                    {selfLead ? <Tile stream={selfStream} name="You" muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} /> : null}
+                  </div>
+                ) : (
+                  <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
+                )}
               </div>
-            </div>
+              <div className={cx(s.strip, s.audience)} aria-label="Also in the room">
+                {audience.map((o) => (
+                  <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} small highlight={speaking.has(o.meta.id)} />
+                ))}
+                {!selfLead ? <Tile stream={selfStream} name="You" position={p.self.position} muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small /> : null}
+              </div>
+            </>
           ) : (
             <>
               <div className={s.main}>
                 {presenter ? (
                   <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)}
-                    hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight />
+                    hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight={speaking.has(presenter.meta.id)} />
                 ) : (
                   <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
                 )}

@@ -70,9 +70,10 @@ async function sessionFor(row: repo.InterviewRow, guest: repo.GuestRow): Promise
   return {
     ...room,
     guest: { ...toGuest(guest), key: guest.guest_key, state: guest.state },
-    realtime: { driver: env.REALTIME_DRIVER, lobby: channels.guest(guest.id), room: inCall ? channels.room(row.id) : null, staff: null },
+    realtime: { driver: env.REALTIME_DRIVER, lobby: channels.guest(guest.id), room: inCall ? channels.room(row.id) : null, staff: null, team: inCall ? channels.team(row.id) : null },
     rtc: inCall ? await rtcConfig() : null,
     startedAt: iso(row.started_at),
+    aiNotesOn: row.assistant_enabled,
   };
 }
 

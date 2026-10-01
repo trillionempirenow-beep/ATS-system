@@ -1,15 +1,15 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
-  assistantToggleSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
+  assistantChunkSchema, assistantToggleSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
 } from '../../../shared/api/interviews.js';
-import { AppError } from '../../http/errors.js';
 import { body, idParam, parse } from '../../http/validate.js';
 import { requireStaff } from '../../middleware/guards.js';
 import { rateLimit } from '../../middleware/security.js';
 import * as service from './interviews.service.js';
 import * as room from './room-access.service.js';
 import * as guests from './guest-access.service.js';
+import * as aiNotes from './interview-notes.service.js';
 
 export const interviewsRouter = Router();
 
@@ -82,9 +82,12 @@ interviewsRouter.post('/interviews/:id/moments', async (req, res) => {
   res.status(201).json({ data: await service.flagMoment(idParam(req), body(req, momentSchema), req.auth!.user) });
 });
 
-interviewsRouter.patch('/interviews/:id/assistant', async (req, _res) => {
-  body(req, assistantToggleSchema);
-  throw new AppError(503, 'service_unavailable', 'Acme Assist needs a transcription provider, which is not configured for this workspace.');
+interviewsRouter.patch('/interviews/:id/assistant', async (req, res) => {
+  res.json({ data: await aiNotes.setEnabled(idParam(req), body(req, assistantToggleSchema).enabled, req.auth!.user.id) });
+});
+
+interviewsRouter.post('/interviews/:id/assistant/chunk', async (req, res) => {
+  res.json({ data: await aiNotes.addChunk(idParam(req), body(req, assistantChunkSchema), req.auth!.user.id) });
 });
 
 // ---- Candidate (interview token) ------------------------------------------

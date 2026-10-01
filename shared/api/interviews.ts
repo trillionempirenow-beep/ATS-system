@@ -115,6 +115,24 @@ export const scorecardDraftSchema = z.object({
 export const momentSchema = z.object({ atSecond: z.number().int().min(0), label: z.string().trim().min(1).max(200) });
 export const assistantToggleSchema = z.object({ enabled: z.boolean() });
 
+/** About 30 seconds of the meeting's sound, recorded in the interviewer's browser. */
+export const assistantChunkSchema = z.object({
+  audio: z.string().min(100).max(900_000),
+  audioMime: z.string().max(80),
+  atSecond: z.number().int().min(0).max(86_400),
+});
+
+export interface AiNoteDto { atSecond: number; topic: string | null; text: string }
+
+/** Written once when the meeting ends, from everything the AI heard. */
+export interface AiSummary {
+  summary: string;
+  keyAnswers: Array<{ label: string; value: string }>;
+  strengths: string[];
+  concerns: string[];
+  followUps: string[];
+}
+
 export interface RtcConfigDto {
   iceServers: Array<{ urls: string | string[]; username?: string; credential?: string }>;
   /** Whether the TURN relay loaded, and why not; logged in the browser console. */
@@ -126,6 +144,8 @@ export interface RealtimeGrantDto {
   room: string | null;
   staff: string | null;
   lobby: string | null;
+  /** Team chat (hiring team and guests only); null for the candidate. */
+  team: string | null;
 }
 
 export interface StaffRoomDto {
@@ -148,7 +168,10 @@ export interface StaffRoomDto {
   me: { id: number; name: string };
   scorecard: { criteria: string[]; myRatings: Record<string, number | null> };
   moments: Array<{ id: number; atSecond: number; label: string; author: string | null }>;
-  assistant: { configured: boolean; enabled: boolean; notes: Array<{ atSecond: number; topic: string | null; text: string }> };
+  /** AI notes: only the interviewer gets them (canUse); everyone else sees an empty list. */
+  assistant: { configured: boolean; enabled: boolean; canUse: boolean; notes: AiNoteDto[] };
+  /** The AI's summary of the meeting, once it has ended. */
+  aiSummary: AiSummary | null;
   rtc: RtcConfigDto;
   realtime: RealtimeGrantDto;
   presenceSeconds: number;
@@ -222,6 +245,8 @@ export interface GuestSessionDto extends GuestRoomDto {
   rtc: RtcConfigDto | null;
   /** When the meeting started; the call timer counts from here for everyone. */
   startedAt: string | null;
+  /** The interviewer has AI notes on: the room shows a notice while it is. */
+  aiNotesOn: boolean;
 }
 
 export interface CandidateRoomDto {
@@ -249,6 +274,8 @@ export interface CandidateRoomDto {
   rtc: RtcConfigDto | null;
   /** When the meeting started; the call timer counts from here for everyone. */
   startedAt: string | null;
+  /** The interviewer has AI notes on: the room shows a notice while it is. */
+  aiNotesOn: boolean;
 }
 
 export interface LiveMeetingDto {

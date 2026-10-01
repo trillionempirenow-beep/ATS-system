@@ -78,6 +78,8 @@ const schema = z.object({
   CV_N8N_SECRET: optionalString,
   // Acme assistant: the "ats-assistant" n8n workflow's webhook (same shared secret as the other flows).
   ASSISTANT_N8N_WEBHOOK_URL: optionalUrl,
+  // Interview AI notes; defaults to /webhook/ats-interview-notes on the CV reader's n8n.
+  NOTES_N8N_WEBHOOK_URL: optionalUrl,
   GEMINI_API_KEY: optionalString,
   GEMINI_MODEL: optionalString,
   ANTHROPIC_API_KEY: optionalString,

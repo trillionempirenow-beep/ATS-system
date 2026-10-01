@@ -48,6 +48,10 @@ describe('interview scheduling, waiting room and review', () => {
     const admitted = await (await anon()).get(`/api/v1/room/${code}`).query({ t });
     expect(admitted.body.data.requestState).toBe('admitted');
     expect(admitted.body.data.realtime.room).toMatch(/^room-/);
+    // Team chat is a separate channel the candidate is never given.
+    expect(admitted.body.data.realtime.team).toBeNull();
+    const staffView = await hr.agent.get(`/api/v1/interviews/${interviewId}`);
+    expect(staffView.body.data.realtime.team).toMatch(/^team-/);
 
     await hr.agent.post(`/api/v1/interviews/${interviewId}/notes`).set('X-CSRF-Token', hr.csrf).send({ liveNotes: 'Strong answers' }).expect(200);
     await hr.agent.post(`/api/v1/interviews/${interviewId}/end`).set('X-CSRF-Token', hr.csrf).send({}).expect(200);
@@ -115,6 +119,9 @@ describe('interview scheduling, waiting room and review', () => {
     const admitted = await (await anon()).post(`${guestApi}/status`).send({ g, key: janeKey });
     expect(admitted.body.data.guest.state).toBe('admitted');
     expect(admitted.body.data.realtime.room).toMatch(/^room-/);
+    // An admitted guest is part of Team chat, on the same channel as the hiring team.
+    const staffView = await hr.agent.get(`/api/v1/interviews/${interviewId}`);
+    expect(admitted.body.data.realtime.team).toBe(staffView.body.data.realtime.team);
     expect(admitted.body.data.rtc).not.toBeNull();
 
     // A second host changing their mind after the first decided gets a clear answer.

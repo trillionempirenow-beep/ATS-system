@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { StaffRoomDto } from '@shared/api/interviews';
+import type { AiNoteDto, StaffRoomDto } from '@shared/api/interviews';
 import { Icon } from '@/components/icon/Icon';
 import { api, errorMessage } from '@/lib/api';
 import { mmss, timeAgo } from '@/lib/format';
@@ -71,9 +71,20 @@ interface Props {
   moments: StaffRoomDto['moments'];
   onFlag: (label: string) => Promise<void>;
   elapsedSeconds: () => number;
+  ai: AiNotesPanel;
 }
 
-export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag, elapsedSeconds }: Props) {
+export interface AiNotesPanel {
+  on: boolean;
+  toggling: boolean;
+  onToggle: () => void;
+  notes: AiNoteDto[];
+  state: 'off' | 'starting' | 'listening' | 'error';
+  error: string | null;
+  lastAt: string | null;
+}
+
+export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag, elapsedSeconds, ai }: Props) {
   const live = suggestedScore(scorecard.ratings);
   const [flagLabel, setFlagLabel] = useState('');
   const [flagging, setFlagging] = useState(false);
@@ -108,14 +119,25 @@ export function StaffDock({ room, tab, onTab, notes, scorecard, moments, onFlag,
           <div className={s.assistState}>
             <span><Icon name="sparkle" size={20} /></span>
             <div>
-              <strong>{room.assistant.configured ? 'Acme Assist is ready' : 'Acme Assist is not available'}</strong>
-              <small>{room.assistant.configured ? 'Starts when the candidate joins' : 'No transcription service is set up for this workspace. Keep meeting and type your own notes.'}</small>
+              <strong>{!room.assistant.canUse ? 'AI notes are the interviewer\'s' : !room.assistant.configured ? 'AI notes are not connected' : ai.on ? 'AI notes are on' : 'AI notes are off'}</strong>
+              <small>{!room.assistant.canUse ? 'Only the interviewer sees them. Use My notes and the scorecard.'
+                : !room.assistant.configured ? 'Ask your admin to connect the "Interview notes" flow (SETUP.md). Type your own notes meanwhile.'
+                  : ai.on ? (ai.lastAt ? `Listening · last update ${timeAgo(ai.lastAt)}` : 'Listening · first notes in about 30 seconds')
+                    : 'Understands Tagalog, English and Taglish. Notes are written in English. Everyone in the room sees that it is on.'}</small>
             </div>
+            {room.assistant.canUse && room.assistant.configured ? (
+              <button type="button" className={ai.on ? s.darkBtn : s.lightBtn} onClick={ai.onToggle} disabled={ai.toggling}>{ai.on ? 'Stop' : 'Start'}</button>
+            ) : null}
           </div>
-          {room.assistant.notes.length ? (
+          {ai.error && ai.on ? <p className={s.assistError} role="status">{ai.error} The next piece tries again.</p> : null}
+          {room.assistant.canUse ? (
             <div className={s.darkCard}>
               <span className={s.overline}>Notes so far</span>
-              {room.assistant.notes.map((n, i) => <div key={i} className={s.moment}><time>{mmss(n.atSecond)}</time><span>{n.text}</span></div>)}
+              {ai.notes.length
+                ? ai.notes.map((n, i) => (
+                  <div key={i} className={s.moment}><time>{mmss(n.atSecond)}</time><span>{n.topic ? <b className={s.noteTopic}>{n.topic}</b> : null}{n.text}</span></div>
+                ))
+                : <p>{ai.on ? 'Notes appear here as the conversation goes.' : 'Start AI notes to have the important points written down for you.'}</p>}
             </div>
           ) : null}
           <div className={s.darkCard}>

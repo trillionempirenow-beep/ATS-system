@@ -234,6 +234,28 @@ The job list shows every staff member all postings (drafts stay with their
 author) with a **Created by** column. The careers site never shows who created
 a posting.
 
+## Interview room: Team chat, guests and AI notes
+
+- **Team chat:** in the room's Chat panel, the interviewer, hiring team and
+  admitted guests get a second tab, **Team chat** (🔒). The candidate never
+  receives that channel, so it cannot leak to them.
+- **Guests:** when guests or other hiring team members join, the candidate and
+  the interviewer stay large and everyone else shows as small tiles underneath.
+  A light ring marks whoever is talking.
+- **AI notes (interviewer only):** in Notes → AI notes, the interviewer presses
+  **Start**. The meeting's sound is sent in 30-second pieces to the ATS-system
+  n8n workflow's **Interview AI notes** flow (`/webhook/ats-interview-notes`):
+  OpenAI speech-to-text understands Tagalog, English and Taglish, and Gemini
+  writes short English notes. Both run on n8n's gateway credits, so no API key
+  is needed. Everyone in the room sees an "AI notes on" notice while it runs.
+  When the meeting ends, an **AI summary** (key answers, strengths, concerns,
+  follow-ups) appears on the interview's review page.
+
+Setup: nothing extra if `CV_N8N_WEBHOOK_URL` is set (same n8n, same secret).
+To use another address, set `NOTES_N8N_WEBHOOK_URL`. A 30-minute interview uses
+about 60 small gateway calls; if the credits run out, the room keeps working and
+the interviewer types notes under My notes.
+
 ## Acme assistant (n8n agent, voice)
 
 The robot in the bottom-right corner is an agent: ask it things ("sino nasa

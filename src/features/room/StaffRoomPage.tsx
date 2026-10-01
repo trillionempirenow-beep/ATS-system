@@ -22,6 +22,7 @@ import { CallStage, type SidePanel } from './CallStage';
 import { DeviceCheck } from './DeviceCheck';
 import { GuestAdmissions, copyText, type GuestDecision } from './GuestAdmissions';
 import { StaffDock, useLiveNotes, useScorecardDraft, type DockTab } from './StaffDock';
+import { useAiNotes } from './call/useAiNotes';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
 import w from '../workspace.module.css';
@@ -186,6 +187,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   const call = useCall({
     driver: room.realtime.driver,
     channel: room.realtime.room,
+    team: room.realtime.team,
     rtc: room.rtc,
     self: { id: `u${room.me.id}`, name: room.me.name, role: iv.interviewerId === room.me.id ? 'interviewer' : 'staff' },
     stream: media.stream, screen: media.screen, micOn: media.micOn, camOn: media.camOn, hand,
@@ -309,6 +311,24 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
     else await media.startScreen();
   };
 
+  // AI notes: the interviewer switches them on; the browser then sends the meeting's sound in pieces.
+  const canUseAi = room.assistant.canUse && room.assistant.configured;
+  const [aiOn, setAiOn] = useState(canUseAi && room.assistant.enabled);
+  const [aiToggling, setAiToggling] = useState(false);
+  const ai = useAiNotes({ interviewId: iv.id, enabled: aiOn, initial: room.assistant.notes, mic: media.stream, peers: call.peers, elapsedSeconds: elapsed });
+  const toggleAi = async () => {
+    setAiToggling(true);
+    try {
+      const r = await api.patch<{ enabled: boolean }>(`/interviews/${iv.id}/assistant`, { enabled: !aiOn });
+      setAiOn(r.enabled);
+      toast.success(r.enabled ? 'AI notes are on. Everyone in the room sees a notice.' : 'AI notes are off.');
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setAiToggling(false);
+    }
+  };
+
   const live = suggestedScore(scorecard.ratings).score;
   const { title, subtitle } = roomTitle(room);
 
@@ -317,7 +337,10 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       title={title}
       subtitle={subtitle}
       since={startedAt}
-      pills={live !== null ? <span className={`${s.pill} ${s.pillScore}`}><Icon name="star" size={15} />Score {live}</span> : null}
+      pills={<>
+        {aiOn ? <span className={`${s.pill} ${s.pillAi}`}><Icon name="sparkle" size={15} />AI notes on</span> : null}
+        {live !== null ? <span className={`${s.pill} ${s.pillScore}`}><Icon name="star" size={15} />Score {live}</span> : null}
+      </>}
       headerAction={<>
         {room.guests.link ? <button type="button" className={s.topLink} onClick={() => void copyGuestLink()}><Icon name="link" size={14} />Copy guest link</button> : null}
         <Link className={s.topLink} to={`/app/candidates/${iv.applicationId}`} target="_blank" rel="noopener noreferrer">View candidate<Icon name="external" size={14} /></Link>
@@ -343,7 +366,8 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
           <span>{pending ? 'Admit them from the banner above when you are ready.' : 'They will appear here once they join and you let them in.'}</span>
         </div>
       )}
-      dock={<StaffDock room={room} tab={tab} onTab={setTab} notes={notes} scorecard={scorecard} moments={moments} onFlag={flag} elapsedSeconds={elapsed} />}
+      dock={<StaffDock room={room} tab={tab} onTab={setTab} notes={notes} scorecard={scorecard} moments={moments} onFlag={flag} elapsedSeconds={elapsed}
+        ai={{ on: aiOn, toggling: aiToggling, onToggle: () => void toggleAi(), notes: ai.notes, state: ai.state, error: ai.error, lastAt: ai.lastAt }} />}
       panel={panel}
       onPanel={setPanel}
       endLabel="End meeting"

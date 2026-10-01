@@ -10,7 +10,8 @@ import { uploadsRouter } from './modules/uploads/uploads.routes.js';
 import { featureRouters } from './routes.js';
 
 /** Routes that wait on an AI service and may take most of the function's time. */
-const SLOW_ROUTES = ['/api/v1/assistant/message', '/api/v1/candidates/parse-cv', '/api/v1/jobs/extract-pdf', '/api/v1/cron/'];
+const SLOW_ROUTES: Array<string | RegExp> = ['/api/v1/assistant/message', '/api/v1/candidates/parse-cv', '/api/v1/jobs/extract-pdf', '/api/v1/cron/',
+  /^\/api\/v1\/interviews\/\d+\/assistant\/chunk$/];
 
 export function createApp(): express.Express {
   const app = express();
@@ -21,7 +22,7 @@ export function createApp(): express.Express {
     const done = beginDbRequest();
     // Answer a stuck request well before the platform's 60s limit, with a message the
     // page can show, and give the next requests fresh database connections.
-    const limit = SLOW_ROUTES.some((r) => req.path.startsWith(r)) ? 57_000 : 25_000;
+    const limit = SLOW_ROUTES.some((r) => (typeof r === 'string' ? req.path.startsWith(r) : r.test(req.path))) ? 57_000 : 25_000;
     const watchdog = setTimeout(() => {
       resetDbPool();
       if (!res.headersSent) {
