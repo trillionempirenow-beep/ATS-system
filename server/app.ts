@@ -1,7 +1,7 @@
 import cookieParser from 'cookie-parser';
 import express, { Router } from 'express';
 import { env } from './config/env.js';
-import { beginDbRequest } from './db/client.js';
+import { beginDbRequest, resetDbPool } from './db/client.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { csrfProtection } from './middleware/security.js';
 import { loadSession } from './middleware/session.js';
@@ -9,15 +9,28 @@ import { authRouter } from './modules/auth/auth.routes.js';
 import { uploadsRouter } from './modules/uploads/uploads.routes.js';
 import { featureRouters } from './routes.js';
 
+/** Routes that wait on an AI service and may take most of the function's time. */
+const SLOW_ROUTES = ['/api/v1/assistant/message', '/api/v1/candidates/parse-cv', '/api/v1/jobs/extract-pdf', '/api/v1/cron/'];
+
 export function createApp(): express.Express {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', env.TRUST_PROXY || env.NODE_ENV === 'production' ? 1 : false);
 
-  app.use((_req, res, next) => {
+  app.use((req, res, next) => {
     const done = beginDbRequest();
-    res.on('finish', done);
-    res.on('close', done);
+    // Answer a stuck request well before the platform's 60s limit, with a message the
+    // page can show, and give the next requests fresh database connections.
+    const limit = SLOW_ROUTES.some((r) => req.path.startsWith(r)) ? 57_000 : 25_000;
+    const watchdog = setTimeout(() => {
+      resetDbPool();
+      if (!res.headersSent) {
+        res.status(503).json({ error: { code: 'service_unavailable', message: 'The server took too long to answer. Please try again.' } });
+      }
+    }, limit);
+    const finished = () => { clearTimeout(watchdog); done(); };
+    res.on('finish', finished);
+    res.on('close', finished);
     res.set('Cache-Control', 'no-store');
     res.set('X-Content-Type-Options', 'nosniff');
     next();

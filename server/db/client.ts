@@ -37,13 +37,27 @@ let pool: Pool = connect();
 let lastActivity = Date.now();
 let inFlight = 0;
 
+function swapPool(graceSeconds: number): void {
+  const old = pool;
+  pool = connect();
+  void old.end({ timeout: graceSeconds }).catch(() => undefined);
+}
+
+/**
+ * A request that is still waiting long after it should have answered is almost
+ * always stuck on a dead connection. Replace the pool now, so the requests that
+ * follow get fresh connections instead of queueing behind the dead ones.
+ */
+export function resetDbPool(): void {
+  console.warn('[db] a request got stuck; starting fresh connections');
+  swapPool(2);
+}
+
 /** Call at the start of each request; call the returned function when it finishes. */
 export function beginDbRequest(): () => void {
   if (inFlight === 0 && Date.now() - lastActivity > STALE_AFTER_MS) {
-    const old = pool;
-    pool = connect();
     // Background work that outlived its request gets a few seconds to finish.
-    void old.end({ timeout: 5 }).catch(() => undefined);
+    swapPool(5);
   }
   inFlight++;
   let done = false;

@@ -26,7 +26,10 @@ export const SESSION_ENDED_EVENT = 'acme:session-ended';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+/** The platform's own gateway errors ("An error occurred with your deployment") are not ours to show. */
+const GATEWAY_MESSAGE = 'The server took too long to answer. Please try again.';
+
+async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal, retried = false): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (method !== 'GET' && csrfToken) headers['X-CSRF-Token'] = csrfToken;
@@ -47,7 +50,12 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
   let json: unknown = null;
   try { json = text ? JSON.parse(text) : null; } catch { json = null; }
   if (!res.ok) {
-    const err = (json as ApiErrorBody | null)?.error;
+    const gateway = (res.status === 502 || res.status === 503 || res.status === 504);
+    // A read that hit a stuck server is safe to try once more; the server starts fresh connections.
+    if (gateway && method === 'GET' && !retried && !signal?.aborted) return request<T>(method, path, body, signal, true);
+    const raw = (json as ApiErrorBody | null)?.error;
+    // Vercel's own error bodies use upper-case codes like FUNCTION_INVOCATION_TIMEOUT.
+    const err = raw && /^[a-z_]+$/.test(String(raw.code)) ? raw : gateway ? { code: 'service_unavailable' as const, message: GATEWAY_MESSAGE } : raw;
     const apiErr = new ApiError(
       res.status,
       err?.code ?? (res.status === 404 ? 'not_found' : 'internal_error'),

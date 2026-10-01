@@ -22,8 +22,8 @@ import { TOKEN_PATTERN, readToken, signToken } from './assistant.tokens.js';
 type Ctx = { user: CurrentUser; ip: string | null };
 type SignedAction = ActionData & { title: string; lines: string[]; confirmLabel: string };
 
-/** n8n's agent may take a few tool round trips; the function itself may run 60s (vercel.json). */
-const TIMEOUT_MS = 55_000;
+/** n8n's agent may take a few tool round trips; leave room inside the function's 60s (vercel.json). */
+const TIMEOUT_MS = 50_000;
 
 export const assistantEnabled = () => Boolean(env.ASSISTANT_N8N_WEBHOOK_URL);
 
