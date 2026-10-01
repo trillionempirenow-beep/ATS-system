@@ -19,7 +19,7 @@ import { parseJobDescription, skillsToTags } from '../../parsers/jd-parser.js';
 import { parseJobWithAi } from '../../parsers/jd-ai.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import * as repo from './jobs.repository.js';
-import { MIN_MATCH, inBackground, matchJobOnce, matchingEnabled } from '../matching/matching.service.js';
+import { MIN_MATCH, isMatching, matchingEnabled, startJobMatching } from '../matching/matching.service.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -32,7 +32,7 @@ export function canEditJob(job: Pick<repo.JobRow, 'created_by' | 'owner_id' | 's
 }
 
 /** Once, in the background: score every registered applicant against a newly published job. */
-const matchOnPublish = (jobId: number) => inBackground(`job ${jobId}`, () => matchJobOnce(jobId));
+const matchOnPublish = (jobId: number) => { void startJobMatching(jobId).catch(() => undefined); };
 
 function toRow(j: repo.JobRow, user: CurrentUser): JobRowDto {
   return {
@@ -87,7 +87,7 @@ export async function mine(user: CurrentUser): Promise<MyJobsDto> {
 export async function view(id: number, user: CurrentUser): Promise<JobViewDto> {
   const job = await repo.byId(id);
   if (!job || !visibleTo(job, user)) throw notFound('That job no longer exists.');
-  const [applicants, matches] = await Promise.all([
+  const [applicants, matches, [scored]] = await Promise.all([
     sql<{ application_id: number; candidate_id: number; first_name: string; last_name: string; stage: Stage; applied_at: Date; score: number | null }[]>`
       select a.id as application_id, c.id as candidate_id, c.first_name, c.last_name, a.stage, a.applied_at, x.overall_score as score
       from applications a join candidates c on c.id = a.candidate_id left join candidate_ai_analysis x on x.application_id = a.id
@@ -99,6 +99,7 @@ export async function view(id: number, user: CurrentUser): Promise<JobViewDto> {
       from candidate_job_matches m join candidates c on c.id = m.candidate_id
       where m.job_id = ${id} and m.score >= ${MIN_MATCH} and c.record_status = 'active'
       order by m.score desc limit 20`,
+    sql<{ n: number }[]>`select count(*)::int as n from candidate_job_matches where job_id = ${id}`,
   ]);
   return {
     job: editorJob(job, user),
@@ -108,16 +109,19 @@ export async function view(id: number, user: CurrentUser): Promise<JobViewDto> {
       score: m.score, reason: m.reason, matched: m.matched, missing: m.missing, appliedHere: m.applied_here,
     })),
     matchedAt: iso(job.matched_at),
+    matchingNow: isMatching(job),
+    matchingError: isMatching(job) ? null : job.matching_error,
+    scored: scored?.n ?? 0,
     matchingEnabled: matchingEnabled(),
   };
 }
 
-/** Jobs published before matching existed get their one-time scoring from the job page. */
+/** Scores every registered applicant against the job again, in the background; the page polls the overview. */
 export async function runMatching(id: number, user: CurrentUser): Promise<JobViewDto> {
   const job = await repo.byId(id);
   if (!job || !visibleTo(job, user)) throw notFound('That job no longer exists.');
   if (!matchingEnabled()) throw new AppError(503, 'service_unavailable', 'AI matching is not connected yet. See SETUP.md, "Applicant and job matching".');
-  if (!job.matched_at) await matchJobOnce(id);
+  await startJobMatching(id);
   return view(id, user);
 }
 

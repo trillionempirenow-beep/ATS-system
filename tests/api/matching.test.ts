@@ -4,8 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { USERS, getApp, signIn } from '../helpers.js';
 
 /**
- * A stand-in for the "Match applicants and jobs" n8n flow. It scores the first
- * candidate it is given 82 and everyone else 40, so the 60% cut-off shows.
+ * A stand-in for the "Match applicants and jobs" n8n flow. For a job it scores
+ * candidate 1 at 82 and everyone else 40, so the 60% cut-off shows.
  */
 let n8n: Server;
 const calls: Array<{ mode: string }> = [];
@@ -14,7 +14,7 @@ interface Body { mode: string; candidates: Array<{ id: number }>; jobs: Array<{ 
 function fakeMatcher(body: Body) {
   calls.push({ mode: body.mode });
   const matches = body.mode === 'job'
-    ? body.candidates.map((c, i) => ({ candidate_id: c.id, job_id: body.jobs[0]!.id, score: i === 0 ? 82 : 40, reason: 'Strong SQL.', applicant_note: '', matched: ['SQL'], missing: [] }))
+    ? body.candidates.map((c) => ({ candidate_id: c.id, job_id: body.jobs[0]!.id, score: c.id === 1 ? 82 : 40, reason: 'Strong SQL.', applicant_note: '', matched: ['SQL'], missing: [] }))
     : body.jobs.map((j, i) => ({ candidate_id: body.candidates[0]!.id, job_id: j.id, score: i === 1 ? 77 : 55, reason: 'Fits.', applicant_note: 'Your SQL work fits this role.', matched: ['SQL'], missing: ['Go'] }));
   const analysis = body.mode === 'application'
     ? { score: 55, summary: 'Solid analyst, light on the applied role.', strengths: ['SQL'], concerns: ['No Go'], recommendation: 'Recommended for Screening Call', categories: { Skills: 60 } }
@@ -55,23 +55,33 @@ describe('job list, job page and AI matching', () => {
     expect(jobs.every((j) => j.mine || j.state !== 'draft')).toBe(true);
 
     const live = jobs.find((j) => j.state === 'published')!;
-    const { sql } = await import('../../server/db/client.js');
-    await sql`update jobs set matched_at = null where id = ${live.id}`;
     const before = await hr.agent.get(`/api/v1/jobs/${live.id}/overview`);
     expect(before.status).toBe(200);
     expect(before.body.data.matchingEnabled).toBe(true);
-    expect(before.body.data.matchedAt).toBeNull();
 
-    const run = await hr.agent.post(`/api/v1/jobs/${live.id}/match`).set('X-CSRF-Token', hr.csrf).send({});
-    expect(run.status).toBe(200);
-    expect(run.body.data.matchedAt).not.toBeNull();
-    expect(run.body.data.matches.length).toBe(1);
-    expect(run.body.data.matches[0].score).toBe(82);
+    // The run goes on in the background; the page polls the overview.
+    const settle = async () => {
+      for (let i = 0; i < 50; i++) {
+        const r = await hr.agent.get(`/api/v1/jobs/${live.id}/overview`);
+        if (!r.body.data.matchingNow) return r.body.data;
+        await new Promise((ok) => setTimeout(ok, 100));
+      }
+      throw new Error('matching never finished');
+    };
+    const start = await hr.agent.post(`/api/v1/jobs/${live.id}/match`).set('X-CSRF-Token', hr.csrf).send({});
+    expect(start.status).toBe(200);
+    const done = await settle();
+    expect(done.matchedAt).not.toBeNull();
+    expect(done.matchingError).toBeNull();
+    expect(done.scored).toBeGreaterThan(1);
+    expect(done.matches.map((m: { score: number }) => m.score)).toEqual([82]);
 
-    // One time only: a second run reads the stored result.
+    // It can be run again at any time, on any job; the new scores replace the old.
     const jobCalls = calls.filter((c) => c.mode === 'job').length;
     await hr.agent.post(`/api/v1/jobs/${live.id}/match`).set('X-CSRF-Token', hr.csrf).send({}).expect(200);
-    expect(calls.filter((c) => c.mode === 'job').length).toBe(jobCalls);
+    const again = await settle();
+    expect(calls.filter((c) => c.mode === 'job').length).toBeGreaterThan(jobCalls);
+    expect(again.scored).toBe(done.scored);
 
     // The careers site never names who wrote a posting.
     const { default: request } = await import('supertest');

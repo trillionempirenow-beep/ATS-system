@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { QueryErrorPage } from '@/app/system/StatusPages';
 import { errorMessage } from '@/lib/api';
 import { cx } from '@/lib/cx';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatDateTime } from '@/lib/format';
 import c from '@/features/careers/Careers.module.css';
 import { Bullets, Tags } from '@/features/careers/PostingSections';
 import { useJobView, useRunMatching } from './api';
@@ -54,31 +54,32 @@ function MatchItem({ m }: { m: Match }) {
 function MatchPanel({ d, jobId }: { d: JobViewDto; jobId: number }) {
   const toast = useToast();
   const run = useRunMatching(jobId);
-  const live = d.job.state === 'published';
+  const busy = d.matchingNow || run.isPending;
   let body;
-  if (!d.matchingEnabled && !d.matchedAt) {
-    body = <p className={w.faint}>AI matching is not connected yet. Once it is, every registered applicant is scored against this role one time.</p>;
+  if (!d.matchingEnabled) {
+    body = <p className={w.faint}>AI matching is not connected yet. Once it is, every registered applicant can be scored against this role.</p>;
+  } else if (busy) {
+    body = <p className={s.running}><span className={s.spinner} aria-hidden />Scoring every registered applicant. This takes up to a minute.</p>;
   } else if (!d.matchedAt) {
-    body = live ? (
-      <div className={s.runBox}>
-        <p className={w.faint}>Score every registered applicant against this role. It runs one time, then the results stay here.</p>
-        <Button icon="sparkle" loading={run.isPending}
-          onClick={() => run.mutate(undefined, { onError: (e) => toast.error(errorMessage(e)) })}>
-          Find matching applicants
-        </Button>
-      </div>
-    ) : <p className={w.faint}>Matching runs one time, as soon as this posting goes live.</p>;
+    body = <p className={w.faint}>Score every registered applicant against this role and see who fits.</p>;
   } else if (!d.matches.length) {
-    body = <p className={w.faint}>No registered applicant scored 60% or more for this role.</p>;
+    body = <p className={w.faint}>{d.scored ? `Scored ${d.scored} applicant${d.scored === 1 ? '' : 's'}; none reached 60% for this role.` : 'No registered applicants to score yet.'}</p>;
   } else {
     body = <ul className={s.matches}>{d.matches.map((m) => <MatchItem key={m.candidateId} m={m} />)}</ul>;
   }
   return (
     <Card className={s.panel}>
       <CardHeader title={<span className={s.panelTitle}><Icon name="sparkle" size={16} />Matching applicants</span>}
-        subtitle="AI-scored from every registered applicant · 60% and up" />
+        subtitle="All registered applicants · 60%+"
+        actions={d.matchingEnabled ? (
+          <Button size="sm" variant={d.matchedAt ? 'secondary' : 'primary'} icon={d.matchedAt ? 'refresh' : 'sparkle'} loading={busy}
+            onClick={() => run.mutate(undefined, { onError: (e) => toast.error(errorMessage(e)) })}>
+            {d.matchedAt ? 'Run again' : 'Find matches'}
+          </Button>
+        ) : null} />
+      {d.matchingError && !busy ? <Notice tone="warning">The last run did not finish: {d.matchingError} Try again.</Notice> : null}
       {body}
-      {d.matchedAt ? <p className={s.panelFoot}>Scored once on {formatDate(d.matchedAt)}</p> : null}
+      {d.matchedAt && !busy ? <p className={s.panelFoot}>Last scored {formatDateTime(d.matchedAt)}</p> : null}
     </Card>
   );
 }

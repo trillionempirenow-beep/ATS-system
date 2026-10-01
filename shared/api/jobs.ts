@@ -50,8 +50,14 @@ export interface JobViewDto {
     candidateId: number; applicationId: number | null; name: string; currentTitle: string | null;
     score: number; reason: string; matched: string[]; missing: string[]; appliedHere: boolean;
   }>;
-  /** When the one-time scoring against all applicants ran; null if it has not yet. */
+  /** When the last scoring against all applicants finished; null if never. */
   matchedAt: string | null;
+  /** A run is in progress (it takes up to a minute). */
+  matchingNow: boolean;
+  /** Why the last run failed, or partly failed. */
+  matchingError: string | null;
+  /** Applicants the last run scored (all of them, not only the 60%+ shown). */
+  scored: number;
   matchingEnabled: boolean;
 }
 

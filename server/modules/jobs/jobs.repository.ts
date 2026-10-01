@@ -24,6 +24,8 @@ export interface JobRow {
   published_at: Date | null;
   created_at: Date;
   matched_at: Date | null;
+  matching_started_at: Date | null;
+  matching_error: string | null;
   description: string | null;
   requirements: string | null;
   responsibilities: string | null;

@@ -1,24 +1,30 @@
 import { waitUntil } from '@vercel/functions';
 import { env } from '../../config/env.js';
-import { sql } from '../../db/client.js';
+import { sql, transaction } from '../../db/client.js';
 import { describeError } from '../../parsers/resume-ai.js';
 
 /**
  * AI matching between applicants and job postings, through the "Match
  * applicants and jobs" flow of the ATS-system n8n workflow (Gemini).
  *
- * Each runs once and is stored:
- *  - analyseApplicationOnce: right after someone applies, a real analysis of
- *    the application, and their fit for every other open job. Strong fits
- *    (60%+) become role suggestions on their application status page.
- *  - matchJobOnce: when a job is published, every registered applicant is
- *    scored against it, for the job's "Matching applicants" panel.
+ * Results are stored, so pages never wait on the AI:
+ *  - analyseApplicationOnce: once, right after someone applies, a real
+ *    analysis of the application, and their fit for every other open job.
+ *    Strong fits (60%+) become role suggestions on their status page.
+ *  - matchJob: every registered applicant scored against one job, for the
+ *    job's "Matching applicants" panel. Runs when a job is published and
+ *    whenever someone presses "Find matching applicants"; each run replaces
+ *    the job's previous scores.
  */
 
 export const MIN_MATCH = 60;
 const TIMEOUT_MS = 45_000;
-/** Applicants sent to the AI for one job, after a quick keyword pre-filter. */
-const JOB_POOL = 30;
+/** Applicants scored for one job, after a quick keyword pre-filter. */
+const JOB_POOL = 40;
+/** Applicants per AI call: small calls in parallel finish well inside the function's time limit. */
+const CHUNK = 8;
+/** A run that started longer ago than this died with its function. */
+const RUN_STALE_MS = 90_000;
 /** Open jobs an application is compared against. */
 const MAX_JOBS = 25;
 
@@ -64,6 +70,12 @@ async function callMatcher(body: object): Promise<{ matches: MatchOut[]; analysi
   return { matches, analysis };
 }
 
+/** Emails, links and phone numbers say nothing about fit: keep them out of what the AI reads. */
+const scrubContacts = (text: string) => text
+  .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, ' ')
+  .replace(/\b(?:https?:\/\/|www\.)\S+|\blinkedin\.com\/\S+/gi, ' ')
+  .replace(/\+?\d[\d\s().-]{7,}\d/g, (m) => (/^(19|20)\d\d\s*[-–]\s*(19|20)\d\d$/.test(m.trim()) ? m : ' '));
+
 /** What the AI reads about an applicant: work-relevant facts only (no name, email or phone). */
 async function candidateProfiles(ids: number[], cvChars: number) {
   if (!ids.length) return [];
@@ -71,7 +83,7 @@ async function candidateProfiles(ids: number[], cvChars: number) {
     select id, current_title, experience_level, skills, education, resume_text, notes from candidates where id in ${sql(ids)}`;
   return rows.map((c) => ({
     id: c.id, title: c.current_title ?? '', level: c.experience_level ?? '', skills: c.skills ?? '', education: c.education ?? '',
-    cv: (c.resume_text ?? '').replace(/\s+/g, ' ').slice(0, cvChars),
+    cv: scrubContacts(c.resume_text ?? '').replace(/\s+/g, ' ').slice(0, cvChars),
   }));
 }
 
@@ -158,38 +170,69 @@ export async function analyseApplicationOnce(applicationId: number): Promise<'do
   return 'done';
 }
 
+export const isMatching = (j: { matching_started_at: Date | null }) =>
+  Boolean(j.matching_started_at && Date.now() - j.matching_started_at.getTime() < RUN_STALE_MS);
+
 /**
- * Once per job: score every registered applicant against it. A keyword
- * pre-filter picks the most likely few dozen so one AI call covers them.
+ * Claims a matching run for the job; false if one is already running. The
+ * claim lapses on its own if the function running it dies.
  */
-export async function matchJobOnce(jobId: number, opts: { force?: boolean } = {}): Promise<'done' | 'skipped'> {
-  if (!matchingEnabled()) return 'skipped';
-  const [job] = await sql<(JobFacts & { matched_at: Date | null; status: string })[]>`select ${JOB_COLUMNS}, j.matched_at, j.status from jobs j where j.id = ${jobId}`;
-  if (!job || (job.matched_at && !opts.force)) return 'skipped';
-  const words = `${job.title} ${job.tags ?? ''} ${job.requirements ?? ''} ${job.preferred_skills ?? ''}`
-    .toLowerCase().match(/[a-z0-9+#.]{3,}/g) ?? [];
-  // websearch_to_tsquery reads any text safely ("c++", "node.js"); "or" ranks applicants matching any word.
-  const query = [...new Set(words)].slice(0, 40).join(' or ');
-  const pool = await sql<{ id: number }[]>`
-    select c.id from candidates c
-    where c.record_status = 'active'
-    order by ${query ? sql`ts_rank(c.search_vector, websearch_to_tsquery('simple', ${query}))` : sql`0`} desc, c.created_at desc
-    limit ${JOB_POOL}`;
-  const profiles = await candidateProfiles(pool.map((p) => p.id), 1200);
-  // Claim the job first, so two requests never run the same scoring.
-  const claimed = await sql`update jobs set matched_at = now() where id = ${jobId} and (matched_at is null or ${Boolean(opts.force)}) returning id`;
-  if (!claimed.length) return 'skipped';
-  if (!profiles.length) return 'done';
+export async function claimJobMatching(jobId: number): Promise<boolean> {
+  const claimed = await sql`update jobs set matching_started_at = now(), matching_error = null
+    where id = ${jobId} and (matching_started_at is null or matching_started_at < now() - ${`${RUN_STALE_MS / 1000} seconds`}::interval)
+    returning id`;
+  return claimed.length > 0;
+}
+
+/**
+ * Scores every registered applicant against the job and replaces its previous
+ * scores. A keyword pre-filter picks the most likely ones; they are scored in
+ * small batches in parallel. Call claimJobMatching first.
+ */
+export async function matchJob(jobId: number): Promise<'done' | 'skipped'> {
   try {
-    const { matches } = await callMatcher({ mode: 'job', jobs: [{ id: job.id, title: job.title, text: jobText(job, 3000) }], candidates: profiles });
-    const valid = matches.filter((m) => m.job_id === job.id && profiles.some((p) => p.id === m.candidate_id));
-    await saveMatches(valid);
+    const [job] = await sql<(JobFacts & { status: string })[]>`select ${JOB_COLUMNS}, j.status from jobs j where j.id = ${jobId}`;
+    if (!job) return 'skipped';
+    const words = `${job.title} ${job.tags ?? ''} ${job.requirements ?? ''} ${job.preferred_skills ?? ''}`
+      .toLowerCase().match(/[a-z0-9+#.]{3,}/g) ?? [];
+    // websearch_to_tsquery reads any text safely ("c++", "node.js"); "or" ranks applicants matching any word.
+    const query = [...new Set(words)].slice(0, 40).join(' or ');
+    const pool = await sql<{ id: number }[]>`
+      select c.id from candidates c
+      where c.record_status = 'active'
+      order by ${query ? sql`ts_rank(c.search_vector, websearch_to_tsquery('simple', ${query}))` : sql`0`} desc, c.created_at desc
+      limit ${JOB_POOL}`;
+    const profiles = await candidateProfiles(pool.map((p) => p.id), 1200);
+    const jobs = [{ id: job.id, title: job.title, text: jobText(job, 2500) }];
+    const batches: Array<typeof profiles> = [];
+    for (let i = 0; i < profiles.length; i += CHUNK) batches.push(profiles.slice(i, i + CHUNK));
+    const results = await Promise.allSettled(batches.map((candidates) => callMatcher({ mode: 'job', jobs, candidates })));
+    const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (batches.length && failed.length === batches.length) throw failed[0]!.reason;
+    const valid = results.flatMap((r) => (r.status === 'fulfilled' ? r.value.matches : []))
+      .filter((m) => m.job_id === job.id && profiles.some((p) => p.id === m.candidate_id));
+    await transaction(async (tx) => {
+      await tx`delete from candidate_job_matches where job_id = ${jobId}`;
+      for (const m of valid) {
+        await tx`insert into candidate_job_matches (candidate_id, job_id, score, reason, matched, missing)
+                 values (${m.candidate_id}, ${m.job_id}, ${m.score}, ${m.reason}, ${m.matched}, ${m.missing})`;
+      }
+      await tx`update jobs set matched_at = now(), matching_started_at = null,
+                 matching_error = ${failed.length ? `${failed.length} of ${batches.length} batches failed; scored the rest.` : null}
+               where id = ${jobId}`;
+    });
     if (job.status === 'open') await suggestToApplicants(valid);
     console.info(`[matching] job ${jobId}: ${valid.length} applicants scored`);
     return 'done';
   } catch (e) {
-    // Let it be tried again later.
-    await sql`update jobs set matched_at = null where id = ${jobId}`;
+    await sql`update jobs set matching_started_at = null, matching_error = ${describeError(e).slice(0, 300)} where id = ${jobId}`;
     throw e;
   }
+}
+
+/** Starts a run in the background of the current request; false if one is already running. */
+export async function startJobMatching(jobId: number): Promise<boolean> {
+  if (!matchingEnabled() || !(await claimJobMatching(jobId))) return false;
+  inBackground(`job ${jobId}`, () => matchJob(jobId));
+  return true;
 }

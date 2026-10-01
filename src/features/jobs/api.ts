@@ -20,7 +20,12 @@ export const useJobsOverview = () => useQuery({ queryKey: jobKeys.overview, quer
 export const useMyJobs = () => useQuery({ queryKey: jobKeys.mine, queryFn: () => api.get<MyJobsDto>('/jobs/mine') });
 export const useJobEditor = (id: number | null) =>
   useQuery({ queryKey: jobKeys.editor(id), queryFn: () => api.get<JobEditorDto>(id === null ? '/jobs/new' : `/jobs/${id}`) });
-export const useJobView = (id: number) => useQuery({ queryKey: jobKeys.view(id), queryFn: () => api.get<JobViewDto>(`/jobs/${id}/overview`) });
+export const useJobView = (id: number) => useQuery({
+  queryKey: jobKeys.view(id),
+  queryFn: () => api.get<JobViewDto>(`/jobs/${id}/overview`),
+  // While a matching run is going, check back until it lands.
+  refetchInterval: (q) => (q.state.data?.matchingNow ? 3000 : false),
+});
 export const useApprovalQueue = () => useQuery({ queryKey: jobKeys.approvals, queryFn: () => api.get<ApprovalQueueDto>('/approvals') });
 export const useApprovalDetail = (id: number) => useQuery({ queryKey: jobKeys.approval(id), queryFn: () => api.get<ApprovalDetailDto>(`/approvals/${id}`) });
 
@@ -66,7 +71,7 @@ export function useDecide(id: number) {
   return useMutation({ mutationFn: (input: ApprovalDecisionInput) => api.post<{ published: boolean }>(`/approvals/${id}/decision`, input), onSuccess: invalidate });
 }
 
-/** The job's one-time scoring against every registered applicant. */
+/** Scores every registered applicant against the job (again); the run continues in the background. */
 export function useRunMatching(id: number) {
   const qc = useQueryClient();
   return useMutation({
