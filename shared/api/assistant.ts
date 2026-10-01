@@ -23,7 +23,7 @@ export interface AssistantActionDto {
   title: string;
   lines: string[];
   confirmLabel: string;
-  /** What the result will look like, for the Preview button (job postings and new applicants). */
+  /** What the result will look like, for the card's Preview button. */
   preview?: AssistantPreview;
 }
 
@@ -35,6 +35,22 @@ export type AssistantPreview =
       title: string; department: string; location: string; employmentType: string; salary: string;
       description: string; responsibilities: string; qualifications: string; requirements: string; preferredSkills: string;
       experience: string; education: string; publish: boolean;
+      /** A line above the posting, e.g. the reason when it is being rejected. */
+      notice?: string;
+    }
+  | { type: 'email'; email: PreviewEmail }
+  | {
+      type: 'stage';
+      candidate: string; job: string; from: string; to: string;
+      /** The pipeline in order, to show where the candidate moves. */
+      stages: string[];
+      email: PreviewEmail | null;
+    }
+  | {
+      type: 'interview';
+      candidate: string; job: string; when: string; duration: string; kind: string; format: string;
+      interviewer: string; location: string | null;
+      email: PreviewEmail;
     }
   | {
       type: 'candidate';
@@ -43,6 +59,9 @@ export type AssistantPreview =
       /** Set when the email already belongs to a candidate, whose record will be updated. */
       existing: string | null;
     };
+
+/** An email exactly as the recipient will get it (the HTML is shown in a sandboxed frame). */
+export interface PreviewEmail { to: string; subject: string; html: string }
 
 export interface AssistantReplyDto {
   reply: string;

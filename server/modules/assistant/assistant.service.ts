@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { z } from 'zod';
-import { STAGE_LABELS, type Stage } from '../../../shared/domain/pipeline.js';
+import { STAGE_LABELS, STAGE_ORDER, type Stage } from '../../../shared/domain/pipeline.js';
 import { canPublishJobs, ROLE_LABELS, hasPermission, isAdminLevel } from '../../../shared/domain/access.js';
 import { scheduleInterviewSchema } from '../../../shared/api/interviews.js';
 import { saveJobSchema } from '../../../shared/api/jobs.js';
@@ -9,13 +9,15 @@ import { EMPLOYMENT_TYPE_LABELS, type EmploymentType } from '../../../shared/dom
 import { EXPERIENCE_LEVEL_LABELS, MANUAL_SOURCES, type ExperienceLevel, type ManualSource } from '../../../shared/domain/pipeline.js';
 import type { AssistantActionDto, AssistantConfirmDto, AssistantPreview, AssistantReplyDto, assistantMessageSchema } from '../../../shared/api/assistant.js';
 import { env } from '../../config/env.js';
+import { sql } from '../../db/client.js';
 import { auditQuietly } from '../../core/audit.js';
 import type { CurrentUser } from '../../http/context.js';
 import { AppError, forbidden } from '../../http/errors.js';
-import { brand } from '../../email/brand.js';
+import { appLink, brand } from '../../email/brand.js';
 import { sendEmail } from '../../email/email.service.js';
-import { recruiterMessage } from '../../email/templates/index.js';
+import { applicationStatus, interviewInvitation, recruiterMessage } from '../../email/templates/index.js';
 import { describeError } from '../../parsers/resume-ai.js';
+import { fullName } from '../../lib/format.js';
 import * as pipeline from '../pipeline/pipeline.service.js';
 import * as interviews from '../interviews/interviews.service.js';
 import * as jobs from '../jobs/jobs.service.js';
@@ -88,7 +90,7 @@ export async function message(input: z.infer<typeof assistantMessageSchema>, ctx
     if (seen.has(token)) continue;
     seen.add(token);
     const a = readToken<SignedAction>(token, 'action', user.id);
-    if (a) actions.push({ token, kind: a.kind, title: a.title, lines: a.lines, confirmLabel: a.confirmLabel, preview: previewOf(a) });
+    if (a) actions.push({ token, kind: a.kind, title: a.title, lines: a.lines, confirmLabel: a.confirmLabel, preview: await previewOf(a, user.name).catch(() => undefined) });
   }
   const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
   return {
@@ -100,28 +102,97 @@ export async function message(input: z.infer<typeof assistantMessageSchema>, ctx
   };
 }
 
-/** What a new job posting or applicant will look like, for the card's Preview. */
-function previewOf(a: SignedAction): AssistantPreview | undefined {
+/** "Thursday, October 2, 2026" / "2:00 PM" / "Asia/Manila", as the invitation email shows them. */
+function whenInfo(iso: string) {
+  const d = new Date(iso);
+  const part = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US', { timeZone: env.APP_TIMEZONE, ...o }).format(d);
+  return { date: part({ weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }), time: part({ hour: 'numeric', minute: '2-digit' }), timezone: env.APP_TIMEZONE };
+}
+
+const asEmail = (to: string, e: { subject: string; html: string }) => ({ to, subject: e.subject, html: e.html });
+
+/** Who and what an application is, for previews. */
+async function applicationInfo(id: number) {
+  const [a] = await sql<{ first_name: string; last_name: string; email: string; title: string; stage: Stage }[]>`
+    select c.first_name, c.last_name, c.email::text, j.title, a.stage
+    from applications a join candidates c on c.id = a.candidate_id join jobs j on j.id = a.job_id where a.id = ${id}`;
+  return a;
+}
+
+/** What the change will produce, for the card's Preview: the posting, the applicant, or the exact email. */
+async function previewOf(a: SignedAction, senderName: string): Promise<AssistantPreview | undefined> {
   const s = (v: unknown) => (typeof v === 'string' ? v : '');
-  if (a.kind === 'create_job') {
-    const f = a.fields;
-    return {
-      type: 'job', title: s(f.title), department: a.departmentName, location: s(f.location),
-      employmentType: EMPLOYMENT_TYPE_LABELS[s(f.employmentType) as EmploymentType] ?? s(f.employmentType), salary: s(f.salaryInfo),
-      description: s(f.description), responsibilities: s(f.responsibilities), qualifications: s(f.qualifications),
-      requirements: s(f.requirements), preferredSkills: s(f.preferredSkills), experience: s(f.experienceRequired),
-      education: s(f.educationRequired), publish: a.publish,
-    };
+  switch (a.kind) {
+    case 'create_job': {
+      const f = a.fields;
+      return {
+        type: 'job', title: s(f.title), department: a.departmentName, location: s(f.location),
+        employmentType: EMPLOYMENT_TYPE_LABELS[s(f.employmentType) as EmploymentType] ?? s(f.employmentType), salary: s(f.salaryInfo),
+        description: s(f.description), responsibilities: s(f.responsibilities), qualifications: s(f.qualifications),
+        requirements: s(f.requirements), preferredSkills: s(f.preferredSkills), experience: s(f.experienceRequired),
+        education: s(f.educationRequired), publish: a.publish,
+      };
+    }
+    case 'add_candidate': {
+      const i = a.input;
+      return {
+        type: 'candidate', fullName: s(i.fullName), email: s(i.email), phone: s(i.phone), currentTitle: s(i.currentTitle),
+        experienceLevel: EXPERIENCE_LEVEL_LABELS[s(i.experienceLevel) as ExperienceLevel] ?? '', skills: s(i.skills),
+        education: s(i.education), source: MANUAL_SOURCES[s(i.source) as ManualSource] ?? '', job: a.jobTitle, notes: s(i.notes), existing: a.existing,
+      };
+    }
+    case 'send_email': {
+      const email = recruiterMessage(await brand(), { candidateName: a.name, subject: a.subject, body: a.body, senderName });
+      return { type: 'email', email: asEmail(a.to, email) };
+    }
+    case 'move_stage': {
+      const app = await applicationInfo(a.applicationId);
+      if (!app) return undefined;
+      const statusUrl = appLink(`/status?email=${encodeURIComponent(app.email)}&id=${a.applicationId}`);
+      const email = a.notify && a.stage !== 'new'
+        ? asEmail(app.email, applicationStatus(await brand(), { candidateName: app.first_name, jobTitle: app.title, stage: a.stage, stageLabel: STAGE_LABELS[a.stage], statusUrl, feedback: null }))
+        : null;
+      return {
+        type: 'stage', candidate: fullName(app.first_name, app.last_name), job: app.title,
+        from: STAGE_LABELS[app.stage], to: STAGE_LABELS[a.stage], stages: [...STAGE_ORDER.map((st) => STAGE_LABELS[st]), STAGE_LABELS.rejected], email,
+      };
+    }
+    case 'schedule_interview': {
+      const app = await applicationInfo(a.applicationId);
+      const [iv] = await sql<{ name: string }[]>`select name from users where id = ${a.interviewerId}`;
+      if (!app) return undefined;
+      const minutes = Math.round((Date.parse(a.endsAt) - Date.parse(a.startsAt)) / 60_000);
+      const format = a.interviewType === 'video' ? 'Video call' : a.interviewType === 'phone' ? 'Phone call' : a.interviewType === 'onsite' ? 'On-site' : 'Panel';
+      const email = interviewInvitation(await brand(), {
+        candidateName: app.first_name, jobTitle: app.title, meetingType: a.meetingType, final: a.final, interviewType: format,
+        when: whenInfo(a.startsAt), duration: `${minutes} minutes`, interviewerName: iv?.name ?? null,
+        // The room and its link are created when the interview is booked.
+        joinUrl: a.interviewType === 'onsite' ? null : appLink('/interview/(created-when-you-confirm)'),
+        location: a.location || null, roomCode: null, builtIn: a.interviewType !== 'onsite', statusUrl: appLink('/status'),
+      });
+      return {
+        type: 'interview', candidate: fullName(app.first_name, app.last_name), job: app.title, when: `${whenInfo(a.startsAt).date}, ${whenInfo(a.startsAt).time}`,
+        duration: `${minutes} minutes`, kind: a.meetingType === 'screening' ? 'Screening' : a.final ? 'Final interview' : 'Interview', format,
+        interviewer: iv?.name ?? '', location: a.location || null, email: asEmail(app.email, email),
+      };
+    }
+    case 'approve_job':
+    case 'reject_job': {
+      const [j] = await sql<{ title: string; department: string | null; location: string | null; employment_type: EmploymentType; salary_info: string | null; description: string | null;
+        responsibilities: string | null; qualifications: string | null; requirements: string | null; preferred_skills: string | null; experience_required: string | null; education_required: string | null }[]>`
+        select j.title, d.name as department, j.location, j.employment_type, j.salary_info, j.description, j.responsibilities, j.qualifications,
+               j.requirements, j.preferred_skills, j.experience_required, j.education_required
+        from jobs j left join departments d on d.id = j.department_id where j.id = ${a.jobId}`;
+      if (!j) return undefined;
+      return {
+        type: 'job', title: j.title, department: j.department ?? '', location: j.location ?? '', employmentType: EMPLOYMENT_TYPE_LABELS[j.employment_type] ?? '',
+        salary: j.salary_info ?? '', description: j.description ?? '', responsibilities: j.responsibilities ?? '', qualifications: j.qualifications ?? '',
+        requirements: j.requirements ?? '', preferredSkills: j.preferred_skills ?? '', experience: j.experience_required ?? '', education: j.education_required ?? '',
+        publish: a.kind === 'approve_job',
+        notice: a.kind === 'reject_job' ? `This posting will be rejected and sent back to its author. Reason: ${a.note}` : undefined,
+      };
+    }
   }
-  if (a.kind === 'add_candidate') {
-    const i = a.input;
-    return {
-      type: 'candidate', fullName: s(i.fullName), email: s(i.email), phone: s(i.phone), currentTitle: s(i.currentTitle),
-      experienceLevel: EXPERIENCE_LEVEL_LABELS[s(i.experienceLevel) as ExperienceLevel] ?? '', skills: s(i.skills),
-      education: s(i.education), source: MANUAL_SOURCES[s(i.source) as ManualSource] ?? '', job: a.jobTitle, notes: s(i.notes), existing: a.existing,
-    };
-  }
-  return undefined;
 }
 
 /** Runs a prepared change as the person confirming it. Their own permissions apply again here. */

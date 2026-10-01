@@ -77,6 +77,7 @@ describe('Acme assistant', () => {
     expect(res.body.data.actions).toHaveLength(1);
     const action = res.body.data.actions[0];
     expect(action.kind).toBe('move_stage');
+    expect(action.preview).toMatchObject({ type: 'stage', stages: expect.arrayContaining(['Applied', 'Hired', 'Rejected']), email: null });
 
     // Another person cannot confirm someone else's suggestion.
     expect((await admin.agent.post('/api/v1/assistant/actions/confirm').set('X-CSRF-Token', admin.csrf).send({ token: action.token })).status).toBe(410);
@@ -109,6 +110,7 @@ describe('Acme assistant', () => {
     // The Admin can approve it through the assistant.
     const adminApprove = await say(admin, `approve:${pending.id}`);
     expect(adminApprove.body.data.actions).toHaveLength(1);
+    expect(adminApprove.body.data.actions[0].preview).toMatchObject({ type: 'job', title: 'Assistant Test Role', publish: true });
     const ok = await admin.agent.post('/api/v1/assistant/actions/confirm').set('X-CSRF-Token', admin.csrf).send({ token: adminApprove.body.data.actions[0].token });
     expect(ok.body.data.message).toMatch(/Approved and published/);
   });
@@ -118,6 +120,12 @@ describe('Acme assistant', () => {
       const res = await say(hr, scenario);
       expect(res.body.data.actions).toHaveLength(1);
       const token = res.body.data.actions[0].token;
+      const preview = res.body.data.actions[0].preview;
+      // Both show the exact email the applicant gets.
+      const email = preview.email;
+      expect(preview.type).toBe(scenario === 'schedule' ? 'interview' : 'email');
+      expect(email.html).toContain('<html');
+      expect(email.subject).toMatch(scenario === 'schedule' ? /^Your interview for / : /^Quick update$/);
       const done = await hr.agent.post('/api/v1/assistant/actions/confirm').set('X-CSRF-Token', hr.csrf).send({ token });
       expect(done.status, JSON.stringify(done.body)).toBe(200);
       expect(done.body.data.message).toMatch(/^Done/);
