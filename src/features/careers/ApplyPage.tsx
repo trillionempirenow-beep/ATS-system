@@ -20,7 +20,6 @@ import { uploadFile } from '@/lib/upload';
 import { cx } from '@/lib/cx';
 import { usePublicJob } from './api';
 import { RoleNotFound } from './RoleNotFound';
-import { Crumbs } from './Crumbs';
 import s from './Careers.module.css';
 
 const formSchema = applyFieldsSchema.omit({ resumeUploadId: true, photoUploadId: true, confirm: true }).extend({ confirm: z.boolean() }).superRefine(refineApply);
@@ -77,19 +76,18 @@ export function ApplyPage() {
 
   if (result) {
     return (
-      <div className={s.narrow} role="status">
-        <header className={s.intro}>
-          <h1 className={s.title}>Application sent</h1>
-          <p className={s.lead}>
-            {result.confirmationEmail === 'sent'
-              ? <>We emailed a confirmation to <strong>{result.email}</strong>. Use your application ID with that email to check where you are in the process.</>
-              : <>Use your application ID with the email you applied with (<strong>{result.email}</strong>) to check where you are in the process.</>}
-          </p>
-        </header>
-        <dl className={s.idBox}><dt>Application ID</dt><dd>{result.applicationId}</dd><dt>Role</dt><dd className={s.idRole}>{j.title}</dd></dl>
-        <div className={s.actions}>
+      <div className={s.result} role="status">
+        <span className={s.resultIcon}><Icon name="checkcircle" size={28} /></span>
+        <h1 className={s.resultTitle}>Your application has been received.</h1>
+        <p style={{ color: 'var(--text2)' }}>
+          {result.confirmationEmail === 'sent'
+            ? <>We sent a confirmation to <strong>{result.email}</strong>. Keep your application ID to check progress at any time.</>
+            : <>Keep your application ID and the email you used (<strong>{result.email}</strong>) to check progress at any time.</>}
+        </p>
+        <div className={s.idBox}><span>Application ID</span><strong>{result.applicationId}</strong></div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
           <ButtonLink to={`/status?email=${encodeURIComponent(result.email)}&id=${result.applicationId}`}>View application status</ButtonLink>
-          <ButtonLink to="/jobs" variant="secondary">See other open roles</ButtonLink>
+          <ButtonLink to="/jobs" variant="secondary">Browse other open roles</ButtonLink>
         </div>
       </div>
     );
@@ -99,7 +97,7 @@ export function ApplyPage() {
     return (
       <div className={s.narrow}>
         <Notice tone="warning" title={j.full ? 'This role is full' : 'Applications are closed'}>{j.closedReason}</Notice>
-        <ButtonLink to="/jobs" variant="secondary">See other open roles</ButtonLink>
+        <ButtonLink to="/jobs" variant="secondary">Browse other open roles</ButtonLink>
       </div>
     );
   }
@@ -125,11 +123,15 @@ export function ApplyPage() {
   });
 
   return (
-    <div className={s.container}>
+    <div>
       <header className={s.applyHead}>
-        <Crumbs items={[{ label: 'Open roles', to: '/jobs' }, { label: j.title, to: `/jobs/${j.slug}` }, { label: 'Apply' }]} />
-        <h1 className={s.title}>Apply for {j.title}</h1>
-        <p className={s.detailMeta}>{[j.department, j.location || 'Location flexible'].filter(Boolean).join(', ')}</p>
+        <div className={s.cardBadges}>
+          <span style={{ color: 'var(--text2)' }}>{j.department ?? 'Acme'}</span>
+          <span style={{ color: 'var(--text3)' }}>·</span>
+          <span style={{ color: 'var(--text2)' }}>{j.location || 'Location flexible'}</span>
+        </div>
+        <h1 className={s.statusTitle}>Apply · {j.title}</h1>
+        <Link to="/jobs" className={s.back}>Browse other open roles<Icon name="arrowr" size={14} /></Link>
       </header>
       <form className={s.applyGrid} onSubmit={onSubmit} noValidate>
         <div className={s.formCard}>
@@ -166,9 +168,9 @@ export function ApplyPage() {
             <span className={formStyles.label}>Profile picture <span className={formStyles.optional}>optional</span></span>
             <div className={s.photoRow}>
               <Avatar name={v.name || 'You'} src={photoPreview} size={56} />
-              <div className={s.photoText}>
-                <span className={s.hint}>JPG, PNG or WEBP, up to 3 MB</span>
-                <div className={s.actions}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 13, color: 'var(--text3)' }}>JPG, PNG or WEBP · max 3 MB</span>
+                <div style={{ display: 'flex', gap: 8 }}>
                   <FilePickButton accept="image/jpeg,image/png,image/webp" icon="image" label={photo.state ? 'Change photo' : 'Upload photo'}
                     onFile={(f) => { setPhotoPreview(URL.createObjectURL(f)); void photo.pick(f); }} />
                   {photo.state ? <Button size="sm" variant="ghost" onClick={() => { photo.clear(); setPhotoPreview(null); }}>Remove</Button> : null}
@@ -182,7 +184,7 @@ export function ApplyPage() {
             <span className={formStyles.label}>Resume <span className={formStyles.req} aria-hidden>*</span></span>
             {resume.state && !resume.state.error ? (
               <FileRow name={resume.state.name} progress={resume.state.progress}
-                sub={resume.state.progress !== null ? `Uploading… ${resume.state.progress}%` : `${formatBytes(resume.state.size)}, uploaded`}
+                sub={resume.state.progress !== null ? `Uploading… ${resume.state.progress}%` : `${formatBytes(resume.state.size)} · uploaded just now`}
                 onRemove={() => resume.clear()} />
             ) : (
               <Dropzone accept=".pdf,.doc,.docx" error={Boolean(resumeError || resume.state?.error)} title="Drop your resume here, or browse" hint={UPLOAD_RULES.resume.label}
@@ -194,16 +196,17 @@ export function ApplyPage() {
 
         <aside className={s.aside}>
           <div className={s.applyCard}>
-            <div className={s.sheetHead}>
-              <strong>Before you submit</strong>
-              <span className="num">{doneCount} of {progress.length} done</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <strong>Application progress</strong>
+              <span className="num" style={{ color: 'var(--text2)' }}>{doneCount} / {progress.length}</span>
             </div>
             <ul className={s.progressList}>
               {progress.map((p) => (
-                <li key={p.label} className={cx(s.progressItem, p.done && s.progressDone)}><Icon name={p.done ? 'checkcircle' : 'check'} size={16} />{p.label}</li>
+                <li key={p.label} className={cx(s.progressItem, p.done && s.progressDone)}><Icon name={p.done ? 'checkcircle' : 'clock'} size={16} />{p.label}</li>
               ))}
             </ul>
             <hr className={surfaceStyles.divider} />
+            <strong>Review and submit</strong>
             <dl className={s.summary}>
               <dt>Name</dt><dd>{v.name?.trim() || '—'}</dd>
               <dt>Email</dt><dd>{v.email?.trim() || '—'}</dd>
@@ -219,10 +222,10 @@ export function ApplyPage() {
           </div>
           {j.related.length ? (
             <div className={s.softCard}>
-              <strong>Other open roles</strong>
+              <strong>Other open positions</strong>
               <div className={s.otherRoles}>
                 {j.related.map((r) => (
-                  <Link key={r.id} to={`/jobs/${r.slug}`} className={s.otherRole}><span>{r.title}</span><span className={s.hint}>{r.department}</span></Link>
+                  <Link key={r.id} to={`/jobs/${r.slug}`} className={s.otherRole}><span>{r.title}</span><span style={{ color: 'var(--text3)' }}>{r.department}</span></Link>
                 ))}
               </div>
             </div>

@@ -1,38 +1,30 @@
-/* Ink panel with the stage scale, then the form on paper. No floating card, no shadow. */
-.split { display: flex; min-height: 100dvh; background: var(--bg); }
+.split { display: flex; min-height: 100dvh; }
 .brand {
-  flex: 0 0 min(44%, 560px); min-width: 0; background: var(--brand-panel); color: var(--brand-panel-text);
-  padding: 32px 48px 40px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px;
+  position: relative; flex: 1 1 0; min-width: 0; background: var(--brand-panel); color: var(--brand-panel-text);
+  padding: 56px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px;
 }
-.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: var(--fw-semibold); font-size: var(--fs-lead); }
-.logo em { font-style: normal; color: var(--brand-panel-faint); font-weight: var(--fw-regular); }
-.themeBtn { color: var(--brand-panel-muted); }
-.themeBtn:hover { color: var(--brand-panel-text); background: var(--brand-panel-chip); }
-.pitch { display: flex; flex-direction: column; gap: 28px; max-width: 420px; }
-.pitchText { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: var(--fw-medium); color: var(--brand-panel-text); }
-/* The stage scale: the same slate-to-jade order as the workspace's stage rail. */
-.scale { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
-.scale li { display: flex; flex-direction: column; gap: 8px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--brand-panel-muted); min-width: 0; }
-.scaleBar { height: 4px; border-radius: 1px; background: var(--brand-panel-chip); }
-.scale li[data-stage='new'] .scaleBar { background: var(--brand-panel-stage-1); }
-.scale li[data-stage='screening'] .scaleBar { background: var(--brand-panel-stage-2); }
-.scale li[data-stage='interview'] .scaleBar { background: var(--brand-panel-stage-3); }
-.scale li[data-stage='final_interview'] .scaleBar { background: var(--brand-panel-stage-4); }
-.scale li[data-stage='offer'] .scaleBar { background: var(--brand-panel-stage-5); }
-.scale li[data-stage='hired'] .scaleBar { background: var(--brand-panel-stage-6); }
-.foot { font-size: var(--fs-small); line-height: var(--lh-small); color: var(--brand-panel-faint); max-width: 420px; }
-.foot a { color: var(--brand-panel-text); text-decoration: underline; text-underline-offset: 3px; border-radius: var(--radius-xs); }
-.formSide { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 48px 40px; }
-.panel { width: min(400px, 100%); display: flex; flex-direction: column; gap: 20px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.logo em { font-style: normal; color: var(--brand-panel-accent); font-weight: 500; }
+.pitch { display: flex; flex-direction: column; gap: 20px; max-width: 460px; }
+.pitch h1 { font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.02em; }
+.pitch p { font-size: 17px; line-height: 27px; color: var(--brand-panel-muted); }
+.points { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.point { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--brand-panel-soft); }
+.pointIcon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-panel-chip); color: var(--brand-panel-text); flex: none; }
+.foot { font-size: 14px; line-height: 22px; color: var(--brand-panel-faint); max-width: 460px; }
+.foot a { color: var(--brand-panel-text); text-decoration: underline; text-underline-offset: 3px; }
+.formSide { position: relative; flex: 1 1 0; min-width: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 40px; }
+.theme { position: absolute; top: 20px; right: 20px; }
+.panel { width: min(420px, 100%); padding: 32px; border-radius: var(--radius-xl); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--sh-md); display: flex; flex-direction: column; gap: 20px; }
 
 @media (max-width: 991px) {
   .split { flex-direction: column; }
-  .brand { flex: none; padding: 12px 16px 12px 20px; gap: 0; }
-  .pitch, .foot { display: none; }
-  .formSide { flex: 1; align-items: flex-start; padding: 32px 20px 48px; }
-  .panel { padding: 24px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .brand { flex: none; padding: 24px 20px; gap: 16px; }
+  .pitch h1 { font-size: 28px; line-height: 36px; }
+  .pitch p { font-size: 15px; line-height: 23px; }
+  .points, .foot { display: none; }
+  .formSide { flex: 1; align-items: flex-start; padding: 24px 16px 40px; }
+  .theme { top: 18px; right: 16px; }
+  .themeOnBrand { color: var(--brand-panel-text); }
 }
-@media (max-width: 480px) {
-  .formSide { padding: 20px 16px 40px; }
-}
+@media (max-width: 480px) { .panel { padding: 24px 20px; } }
