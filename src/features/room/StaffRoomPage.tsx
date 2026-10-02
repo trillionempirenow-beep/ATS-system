@@ -131,7 +131,7 @@ function PreCall({ room, media, phase, onPhase }: { room: StaffRoomDto; media: M
   );
 }
 
-/** Final interviews: the shareable link for department heads and outside stakeholders. */
+/** The interviewer's shareable link for department heads, managers and outside stakeholders. */
 function GuestLinkCard({ link }: { link: string }) {
   const toast = useToast();
   const copy = async () => {
@@ -141,7 +141,7 @@ function GuestLinkCard({ link }: { link: string }) {
   return (
     <Card>
       <CardHeader title="Guest link" />
-      <p className={w.faint}>Share it with department heads or clients joining this final interview. Guests give their name and position, then wait until someone in the room admits them. Do not send it to the candidate: they have their own link.</p>
+      <p className={w.faint}>Share it with department heads, managers or clients who should join this interview. Guests give their name and position, then wait until someone in the room admits them. Do not send it to the candidate: they have their own link.</p>
       <div className={`${w.row} ${w.gap8} ${w.mt12}`}>
         <TextInput readOnly value={link} aria-label="Guest link" onFocus={(e) => e.currentTarget.select()} />
         <Button variant="secondary" icon="copy" onClick={() => void copy()}>Copy</Button>

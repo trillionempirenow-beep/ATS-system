@@ -170,13 +170,20 @@ describe('interview scheduling, waiting room and review', () => {
     expect(await timeline('ravi.menon@example.com', 9)).not.toContain('final_interview');
   });
 
-  it('only issues guest links for final interviews in the built-in room', async () => {
+  it('issues guest links for built-in room interviews, to the interviewer only', async () => {
     const hr = await signInRecruiter();
     const plain = await hr.agent.post('/api/v1/interviews').set('X-CSRF-Token', hr.csrf).send({
       applicationId: 5, startsAt: new Date(Date.now() + 3 * 86_400_000).toISOString(), interviewType: 'video', meetingType: 'interview', meetingMode: 'builtin', sendInvite: false,
     });
     expect(plain.status).toBe(201);
-    expect(plain.body.data.guestLink).toBeNull();
+    expect(plain.body.data.guestLink).toMatch(/\/interview\/ACM[A-Z0-9]+\/guest\?g=[a-f0-9]{32}$/);
+    const mine = await hr.agent.get(`/api/v1/interviews/${plain.body.data.interviewId}`);
+    expect(mine.body.data.guests.link).toBe(plain.body.data.guestLink);
+    // Someone else on the team opening the room does not get the link to share.
+    const admin = await signIn(USERS.admin);
+    const theirs = await admin.agent.get(`/api/v1/interviews/${plain.body.data.interviewId}`);
+    expect(theirs.status).toBe(200);
+    expect(theirs.body.data.guests.link).toBeNull();
     const external = await hr.agent.post('/api/v1/interviews').set('X-CSRF-Token', hr.csrf).send({
       applicationId: 5, startsAt: new Date(Date.now() + 4 * 86_400_000).toISOString(), interviewType: 'video', meetingType: 'interview',
       meetingMode: 'external', meetingUrl: 'https://meet.example.com/x', finalInterview: true, sendInvite: false,

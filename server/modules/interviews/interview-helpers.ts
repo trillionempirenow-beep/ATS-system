@@ -100,8 +100,8 @@ export const candidateRoomLink = (r: Pick<InterviewRow, 'room_code' | 'candidate
   r.room_code && r.candidate_token ? appLink(`/interview/${encodeURIComponent(r.room_code)}?t=${r.candidate_token}`) : null;
 
 /** The shareable link for outside stakeholders. Only final interviews in the built-in room have one. */
-export const guestRoomLink = (r: Pick<InterviewRow, 'is_final' | 'room_code' | 'guest_token'>): string | null =>
-  r.is_final && r.room_code && r.guest_token ? appLink(`/interview/${encodeURIComponent(r.room_code)}/guest?g=${r.guest_token}`) : null;
+export const guestRoomLink = (r: Pick<InterviewRow, 'room_code' | 'guest_token'>): string | null =>
+  r.room_code && r.guest_token ? appLink(`/interview/${encodeURIComponent(r.room_code)}/guest?g=${r.guest_token}`) : null;
 
 const TYPE_LABELS: Record<(typeof INTERVIEW_TYPES)[number], string> = { phone: 'Phone call', video: 'Video call', onsite: 'Onsite', panel: 'Panel (video)' };
 

@@ -49,7 +49,7 @@ interviewsRouter.post('/interviews/:id/admit', async (req, res) => {
   res.json(ok);
 });
 
-// Final interviews: a host lets a waiting guest in, or turns them away.
+// Guests: a host lets a waiting guest in, or turns them away.
 interviewsRouter.post('/interviews/:id/guests/:guestId/decision', async (req, res) => {
   res.json({ data: await guests.decide(idParam(req), idParam(req, 'guestId'), body(req, guestDecisionSchema).decision, ctx(req)) });
 });
@@ -113,7 +113,7 @@ interviewsRouter.post('/room/:code/leave', roomLimit, async (req, res) => {
   res.json(ok);
 });
 
-// ---- Final-interview guest (guest link) ------------------------------------
+// ---- Interview guest (guest link) ------------------------------------------
 // Joining is limited harder than polling: each join puts a request in front of the hosts.
 const guestJoinLimit = rateLimit({ name: 'guest-join', max: 10, windowSeconds: 600 });
 const guestTokenOf = (req: Request) => parse(z.string().regex(/^[a-f0-9]{32}$/i), req.query.g ?? '');

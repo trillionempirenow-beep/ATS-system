@@ -27,7 +27,7 @@ const invalid = () => new AppError(403, 'forbidden', 'This guest link is not val
 async function resolve(code: string, token: string) {
   if (!code || !/^[a-f0-9]{32}$/i.test(token)) throw invalid();
   const row = await repo.byRoomCode(code);
-  if (!row || !row.is_final || !row.guest_token || !safeEqual(row.guest_token, token.toLowerCase())) throw invalid();
+  if (!row || !row.guest_token || !safeEqual(row.guest_token, token.toLowerCase())) throw invalid();
   return row;
 }
 

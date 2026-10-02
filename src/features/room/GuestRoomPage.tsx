@@ -34,7 +34,7 @@ const save = (code: string, v: { key: string; name: string; position: string } |
 };
 
 /**
- * Final interview guest entry: department heads and outside stakeholders give
+ * Interview guest entry: department heads and outside stakeholders give
  * their name and position, wait until a host admits them, then join the call.
  */
 export function GuestRoomPage() {
@@ -64,7 +64,7 @@ export function GuestRoomPage() {
   });
   const info: GuestRoomDto | undefined = session ?? room.data;
 
-  useEffect(() => { document.title = info ? `Final interview · ${info.companyName}` : 'Final interview'; }, [info]);
+  useEffect(() => { document.title = info ? `Interview · ${info.companyName}` : 'Interview'; }, [info]);
 
   /** Moves the screen to wherever the server says this guest is. */
   const applySession = useCallback((next: GuestSessionDto) => {
@@ -170,7 +170,7 @@ export function GuestRoomPage() {
       <div className={`${s.shell} ${s.narrow}`}>
         <Card>
           <EmptyState icon={info.cancelled ? 'xcircle' : 'checkcircle'} title={info.cancelled ? 'This interview was cancelled' : 'This meeting has ended'}
-            text={info.cancelled ? 'Please contact the person who invited you.' : 'Thank you for joining the final interview. You can close this page.'} />
+            text={info.cancelled ? 'Please contact the person who invited you.' : 'Thank you for joining the interview. You can close this page.'} />
         </Card>
       </div>
     );
@@ -178,7 +178,7 @@ export function GuestRoomPage() {
 
   const facts = (
     <div className={s.facts}>
-      <div><span>Meeting</span><strong>Final interview</strong></div>
+      <div><span>Meeting</span><strong>Interview</strong></div>
       <div><span>Role</span><strong>{info.jobTitle}</strong></div>
       <div><span>Date</span><strong>{formatDate(info.startsAt, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</strong></div>
       <div><span>Time</span><strong>{formatTime(info.startsAt)}{info.endsAt ? ` – ${formatTime(info.endsAt)}` : ''}</strong></div>
@@ -259,7 +259,7 @@ export function GuestRoomPage() {
             <Badge tone={info.canJoin ? 'success' : 'neutral'} dot>{info.canJoin ? 'Room is open' : 'Not open yet'}</Badge>
             {roomCode}
           </div>
-          <h1 className={s.heading}>Join the final interview at {info.companyName}</h1>
+          <h1 className={s.heading}>Join the interview at {info.companyName}</h1>
           <p className={s.lead}>You have been invited as a guest. Tell the hiring team who you are, and a host will let you in.</p>
           {facts}
           <form className={formStyles.stack} noValidate onSubmit={(e) => { e.preventDefault(); void submit(); }}>
@@ -301,7 +301,7 @@ function GuestCall({ session, media, since, onLeave, onEnded }: {
   });
   return (
     <CallStage
-      title={`Final interview · ${session.jobTitle}`}
+      title={`Interview · ${session.jobTitle}`}
       subtitle={`${session.companyName} · You are a guest: ${session.guest.name} - ${session.guest.position}`}
       since={since}
       pills={session.aiNotesOn ? <AiNotesPill /> : null}
