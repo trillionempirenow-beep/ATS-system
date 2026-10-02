@@ -363,7 +363,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
         </div>
       )}
       dock={<StaffDock room={room} tab={tab} onTab={setTab} notes={notes} moments={moments} onFlag={flag} elapsedSeconds={elapsed}
-        ai={{ on: aiOn, toggling: aiToggling, onToggle: () => void toggleAi(), notes: ai.notes, state: ai.state, error: ai.error, lastAt: ai.lastAt }} />}
+        ai={{ on: aiOn, toggling: aiToggling, onToggle: () => void toggleAi(), notes: ai.notes, state: ai.state, error: ai.error, lastAt: ai.lastAt, heard: ai.heard, silent: ai.silent }} />}
       panel={panel}
       onPanel={setPanel}
       endLabel="End meeting"

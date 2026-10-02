@@ -68,7 +68,7 @@ export async function setEnabled(id: number, enabled: boolean, userId: number): 
 }
 
 /** One piece of the meeting: transcribe it, keep the words, add any new notes. */
-export async function addChunk(id: number, input: { audio: string; audioMime: string; atSecond: number }, userId: number): Promise<{ notes: AiNoteDto[] }> {
+export async function addChunk(id: number, input: { audio: string; audioMime: string; atSecond: number }, userId: number): Promise<{ notes: AiNoteDto[]; heard: string }> {
   const row = await interviewerRow(id, userId);
   if (!row.assistant_enabled) throw conflict('AI notes are off for this meeting.');
   const [tail, recent] = await Promise.all([
@@ -96,7 +96,7 @@ export async function addChunk(id: number, input: { audio: string; audioMime: st
   for (const n of notes) {
     await sql`insert into assistant_notes (interview_id, at_second, topic, text) values (${id}, ${input.atSecond}, ${n.topic}, ${n.text})`;
   }
-  return { notes: notes.map((n) => ({ atSecond: input.atSecond, ...n })) };
+  return { notes: notes.map((n) => ({ atSecond: input.atSecond, ...n })), heard: transcript };
 }
 
 /** When the meeting ends: one summary from the whole transcript, for the review. */
