@@ -26,6 +26,8 @@ export const appRoutes: RouteObject[] = [
       { path: 'analytics', element: page(() => import('@/features/insights/AnalyticsPage'), 'AnalyticsPage') },
       { path: 'analytics/report', element: <RequireAdminLevel>{page(() => import('@/features/insights/ReportPage'), 'ReportPage')}</RequireAdminLevel> },
       { path: 'employees', element: page(() => import('@/features/people/EmployeesPage'), 'EmployeesPage') },
+      { path: 'library', element: <RequirePermission permission="library">{page(() => import('@/features/library/LibraryPage'), 'LibraryPage')}</RequirePermission> },
+      { path: 'library/:id', element: <RequirePermission permission="library">{page(() => import('@/features/library/LibraryFilePage'), 'LibraryFilePage')}</RequirePermission> },
       {
         path: 'jobs',
         children: [

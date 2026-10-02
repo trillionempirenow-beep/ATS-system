@@ -29,8 +29,8 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 /** The platform's own gateway errors ("An error occurred with your deployment") are not ours to show. */
 const GATEWAY_MESSAGE = 'The server took too long to answer. Please try again.';
 
-async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal, retried = false): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
+async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal, retried = false, extra?: Record<string, string>): Promise<T> {
+  const headers: Record<string, string> = { Accept: 'application/json', ...extra };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (method !== 'GET' && csrfToken) headers['X-CSRF-Token'] = csrfToken;
   let res: Response;
@@ -52,7 +52,7 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
   if (!res.ok) {
     const gateway = (res.status === 502 || res.status === 503 || res.status === 504);
     // A read that hit a stuck server is safe to try once more; the server starts fresh connections.
-    if (gateway && method === 'GET' && !retried && !signal?.aborted) return request<T>(method, path, body, signal, true);
+    if (gateway && method === 'GET' && !retried && !signal?.aborted) return request<T>(method, path, body, signal, true, extra);
     const raw = (json as ApiErrorBody | null)?.error;
     // Vercel's own error bodies use upper-case codes like FUNCTION_INVOCATION_TIMEOUT.
     const err = raw && /^[a-z_]+$/.test(String(raw.code)) ? raw : gateway ? { code: 'service_unavailable' as const, message: GATEWAY_MESSAGE } : raw;
@@ -73,6 +73,8 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
 
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>('GET', path, undefined, signal),
+  /** A read with extra headers (the shared-file viewer token, for example). */
+  getWith: <T>(path: string, headers: Record<string, string>) => request<T>('GET', path, undefined, undefined, false, headers),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body ?? {}),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body ?? {}),

@@ -140,3 +140,24 @@ export function recruiterMessage(brand: Brand, v: { candidateName: string; subje
     { kind: 'note', text: `Sent by ${v.senderName}, ${brand.company} recruiting team.` },
   ]);
 }
+
+export function libraryShareInvite(brand: Brand, v: {
+  recipientName: string | null; senderName: string; candidateName: string; jobTitle: string; link: string; message: string | null; expires: string | null;
+}): RenderedEmail {
+  return renderEmail(brand, `${v.senderName} shared ${v.candidateName}'s file with you`, `${v.candidateName}, ${v.jobTitle}`, [
+    { kind: 'heading', text: `${v.candidateName}'s applicant file` },
+    { kind: 'paragraph', text: `${v.recipientName ? `Hi ${v.recipientName}, ` : ''}${v.senderName} from ${brand.company} shared a view-only copy of ${v.candidateName}'s file for the ${v.jobTitle} role with you.` },
+    ...(v.message ? [{ kind: 'paragraph' as const, text: `"${v.message}"` }] : []),
+    { kind: 'button', label: 'Open the file', href: v.link },
+    { kind: 'note', text: `To open it, enter this email address and the 6-digit code we send to it. The link only works for you${v.expires ? `, until ${v.expires}` : ''}. You do not need an account.` },
+  ]);
+}
+
+export function libraryShareCode(brand: Brand, v: { code: string; candidateName: string }): RenderedEmail {
+  return renderEmail(brand, `Your code to open ${v.candidateName}'s file: ${v.code}`, `Code ${v.code}`, [
+    { kind: 'heading', text: 'Your sign-in code' },
+    { kind: 'paragraph', text: `Enter this code to open the applicant file ${brand.company} shared with you. It works for 10 minutes.` },
+    { kind: 'details', rows: [['Code', v.code, 'mono']] },
+    { kind: 'note', text: 'If you did not try to open a shared file, you can ignore this email.' },
+  ]);
+}

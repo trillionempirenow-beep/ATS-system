@@ -106,7 +106,7 @@ function CreateAdmin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [limit, setLimit] = useState('3');
-  const [perms, setPerms] = useState<Set<PermissionKey>>(new Set(['job_management', 'job_posting']));
+  const [perms, setPerms] = useState<Set<PermissionKey>>(new Set(['job_management', 'job_posting', 'library']));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const create = useAdminMutation(() => api.post('/admin/admins', {
     name: name.trim(), email: email.trim(), password, hrAccountLimit: Number(limit) || 0, permissions: ADMIN_GRANTABLE_PERMISSIONS.filter((k) => perms.has(k)),

@@ -32,6 +32,7 @@ export function navFor(user: MeDto): NavGroup[] {
         { to: '/app/admin/users', label: 'HR / Recruiters', icon: 'candidates', badge: 'accounts' },
         { to: '/app/admin/password-resets', label: 'Password resets', icon: 'key', badge: 'resets' },
         { to: '/app/admin/applicant-portal', label: 'Applicant portal', icon: 'public' },
+        { to: '/app/library', label: 'Library', icon: 'doc' },
         { to: '/app/admin/audit', label: 'Audit trail', icon: 'layers' },
         { to: '/app/admin/admins', label: 'Admins', icon: 'users' },
         { to: '/app/admin/settings', label: 'Settings', icon: 'settings' },
@@ -50,6 +51,7 @@ export function navFor(user: MeDto): NavGroup[] {
       { to: '/app/candidates', label: 'Candidates', icon: 'candidates', end: true, match: ['/app/candidates/'] },
       { to: '/app/interviews', label: 'Interviews', icon: 'interviews' },
       { to: '/app/analytics', label: 'Analytics', icon: 'analytics' },
+      ...(perm('library') ? [{ to: '/app/library', label: 'Library', icon: 'doc' as const }] : []),
     ],
   }];
 

@@ -11,7 +11,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   employee: 'Employee',
 };
 
-export const PERMISSIONS = ['manage_accounts', 'job_management', 'job_posting', 'audit_trail', 'applicant_portal'] as const;
+export const PERMISSIONS = ['manage_accounts', 'job_management', 'job_posting', 'audit_trail', 'applicant_portal', 'library'] as const;
 export type PermissionKey = (typeof PERMISSIONS)[number];
 
 export interface PermissionInfo {
@@ -35,6 +35,10 @@ export const ADMIN_PERMISSION_CATALOG: Record<PermissionKey, PermissionInfo> = {
     label: 'Applicant portal management',
     description: 'Oversee applicant registrations, applications, and portal settings.',
   },
+  library: {
+    label: 'Library',
+    description: 'Open every applicant\'s file (CV, details, notes, interview summaries and recordings) and share a view-only copy by email.',
+  },
 };
 
 /**
@@ -44,7 +48,7 @@ export const ADMIN_PERMISSION_CATALOG: Record<PermissionKey, PermissionInfo> = {
 export const ADMIN_GRANTABLE_PERMISSIONS = PERMISSIONS.filter((p) => p !== 'manage_accounts');
 
 /** The subset an Admin may pass on to an HR/Recruiter. */
-export const RECRUITER_PERMISSION_KEYS = ['job_management', 'job_posting', 'audit_trail'] as const satisfies readonly PermissionKey[];
+export const RECRUITER_PERMISSION_KEYS = ['job_management', 'job_posting', 'audit_trail', 'library'] as const satisfies readonly PermissionKey[];
 
 export type RecruiterPermissionKey = (typeof RECRUITER_PERMISSION_KEYS)[number];
 export const isRecruiterPermission = (p: PermissionKey): p is RecruiterPermissionKey => (RECRUITER_PERMISSION_KEYS as readonly PermissionKey[]).includes(p);
@@ -56,6 +60,7 @@ export const RECRUITER_PERMISSION_CATALOG: Record<RecruiterPermissionKey, Permis
     description: 'Create job posting drafts and submit them for Admin approval. Does not grant publishing.',
   },
   audit_trail: { label: 'Audit trail', description: 'Read the audit trail (their own recorded activity).' },
+  library: { label: 'Library', description: 'Open applicant files in the Library and share a view-only copy by email.' },
 };
 
 export const ACCOUNT_STATUSES = ['pending', 'active', 'rejected', 'suspended', 'disabled', 'pending_reactivation'] as const;
