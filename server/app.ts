@@ -1,7 +1,7 @@
 import cookieParser from 'cookie-parser';
 import express, { Router } from 'express';
 import { env } from './config/env.js';
-import { beginDbRequest, resetDbPool } from './db/client.js';
+import { beginDbRequest, prepareDb, resetDbPool } from './db/client.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { csrfProtection } from './middleware/security.js';
 import { loadSession } from './middleware/session.js';
@@ -18,7 +18,8 @@ export function createApp(): express.Express {
   app.disable('x-powered-by');
   app.set('trust proxy', env.TRUST_PROXY || env.NODE_ENV === 'production' ? 1 : false);
 
-  app.use((req, res, next) => {
+  app.use(async (req, res, next) => {
+    await prepareDb();
     const done = beginDbRequest();
     // Answer a stuck request well before the platform's 60s limit, with a message the
     // page can show, and give the next requests fresh database connections.
