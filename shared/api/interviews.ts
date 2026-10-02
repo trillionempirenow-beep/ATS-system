@@ -67,6 +67,8 @@ export const scheduleInterviewSchema = z
     sendInvite: z.boolean().optional().default(true),
     /** Final interview: moves the candidate to the Final interview stage; in the built-in room it also issues a guest link. */
     finalInterview: z.boolean().optional().default(false),
+    /** Built-in room only: the interviewer's browser records the camera tiles and sound. */
+    recordMeeting: z.boolean().optional().default(false),
   })
   .superRefine((v, ctx) => {
     if (v.finalInterview && v.meetingType !== 'interview') {
@@ -75,6 +77,9 @@ export const scheduleInterviewSchema = z
     if (v.endsAt && Date.parse(v.endsAt) <= Date.parse(v.startsAt)) ctx.addIssue({ code: 'custom', path: ['endsAt'], message: 'The end time must be after the start time.' });
     if (v.meetingMode === 'external' && v.meetingUrl && !/^https?:\/\//i.test(v.meetingUrl)) {
       ctx.addIssue({ code: 'custom', path: ['meetingUrl'], message: 'Use a full meeting link starting with https://' });
+    }
+    if (v.recordMeeting && (v.meetingMode !== 'builtin' || v.interviewType === 'onsite')) {
+      ctx.addIssue({ code: 'custom', path: ['recordMeeting'], message: 'Only meetings in the built-in room can be recorded.' });
     }
     if (v.interviewType === 'onsite' && !v.location) ctx.addIssue({ code: 'custom', path: ['location'], message: 'Add the address for an onsite interview.' });
   });
@@ -113,6 +118,17 @@ export const scorecardDraftSchema = z.object({
 });
 
 export const momentSchema = z.object({ atSecond: z.number().int().min(0), label: z.string().trim().min(1).max(200) });
+export const recordingGrantSchema = z.object({ mime: z.enum(['video/webm', 'video/mp4']) });
+export const recordingSaveSchema = z.object({
+  path: z.string().regex(/^\d+\/[\w.-]+\.(webm|mp4)$/),
+  token: z.string().regex(/^[\w-]{16,128}$/),
+  mime: z.enum(['video/webm', 'video/mp4']),
+  sizeBytes: z.number().int().min(1).max(26_214_400),
+  durationSec: z.number().int().min(0).max(3600),
+  startedAt: isoDate,
+});
+export interface RecordingGrantDto { path: string; uploadUrl: string; headers: Record<string, string>; token: string }
+
 export const assistantToggleSchema = z.object({ enabled: z.boolean() });
 
 /** About 30 seconds of the meeting's sound, recorded in the interviewer's browser. */
@@ -177,6 +193,8 @@ export interface StaffRoomDto {
   presenceSeconds: number;
   /** Final interviews only: the shareable guest link (staff only) and who has been let in. */
   guests: { link: string | null; admitted: GuestDto[] };
+  /** Recorded meetings: the interviewer's browser records; everyone sees the notice. */
+  recording: { on: boolean; isRecorder: boolean; parts: number };
 }
 
 /** A guest as the hosts see them: what they typed on the entry page, verified by the server. */
@@ -236,6 +254,8 @@ export interface GuestRoomDto {
   cancelled: boolean;
   message: string;
   opensAt: string;
+  /** This meeting is recorded: the entry page and the call say so. */
+  recorded: boolean;
 }
 
 /** One guest's own session: their request, and the call once a host admits them. */
@@ -276,6 +296,8 @@ export interface CandidateRoomDto {
   startedAt: string | null;
   /** The interviewer has AI notes on: the room shows a notice while it is. */
   aiNotesOn: boolean;
+  /** This meeting is recorded: the lobby and the call say so. */
+  recorded: boolean;
 }
 
 export interface LiveMeetingDto {

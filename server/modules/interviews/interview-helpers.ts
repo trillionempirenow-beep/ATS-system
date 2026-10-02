@@ -147,6 +147,7 @@ export async function invitationEmail(r: InterviewRow) {
     location: r.location,
     roomCode: r.room_code,
     builtIn: Boolean(r.room_code),
+    recorded: r.record_meeting,
     statusUrl: appLink(`/status?email=${encodeURIComponent(r.email)}&id=${r.application_id}`),
     calendarUrl: googleCalendarLink(event),
   });

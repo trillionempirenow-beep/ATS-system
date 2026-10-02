@@ -153,6 +153,7 @@ export interface SettingsDto {
   interviewReminderMinutes: number;
   attendanceTimezone: string;
   attendanceGraceMinutes: number;
+  recordingRetentionDays: number;
   iceServers: string;
   integrations: { email: string; n8n: boolean; storage: string; realtime: string };
 }
@@ -167,6 +168,8 @@ export const settingsSchema = z.object({
   interviewReminderMinutes: z.number().int().min(5).max(1440),
   attendanceTimezone: z.string().trim().min(1).max(60),
   attendanceGraceMinutes: z.number().int().min(0).max(120),
+  /** Meeting recordings are deleted this many days after the meeting. */
+  recordingRetentionDays: z.number().int().min(1).max(3650).optional(),
   iceServers: z.string().trim().refine((v) => {
     try { const p = JSON.parse(v) as unknown; return Array.isArray(p) && p.every((s) => typeof s === 'object' && s !== null && 'urls' in s); } catch { return false; }
   }, 'Enter a JSON array such as [{"urls":"stun:stun.l.google.com:19302"}].'),

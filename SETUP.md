@@ -256,6 +256,31 @@ To use another address, set `NOTES_N8N_WEBHOOK_URL`. A 30-minute interview uses
 about 60 small gateway calls; if the credits run out, the room keeps working and
 the interviewer types notes under My notes.
 
+## Library, shared files and meeting recordings
+
+- **Library** (Recruiting → Library): every applicant's file in one place: CV,
+  details, notes, AI analysis, scores, interview summaries, transcripts and
+  recordings. Admins have it by default; an admin can turn on **Library** for
+  an HR account in that account's permissions.
+- **Share a view-only copy:** open a file, press **Share**, enter the person's
+  email (for example a hiring manager with no account), and pick what they can
+  see. They get a link; to open it they enter their email and a 6-digit code
+  sent to that address, so a forwarded link is useless to anyone else. Choose
+  7 days, 30 days or "until I turn it off"; **Turn off** under "Shared with"
+  stops it at once. Every share and every opening is in the audit trail.
+- **Recording a meeting:** tick **Record this interview** when scheduling (built-in
+  room only). In the call, the interviewer's browser records every camera tile
+  and everyone's sound (no screen, no buttons) in five-minute parts of about
+  14 MB, which appear on the applicant's Library file. The candidate and guests
+  see "This interview is recorded" before joining and a **Recording** notice in
+  the call. Recording runs in the interviewer's tab: if that tab is closed, it
+  stops (it carries on in new parts if they rejoin). Recordings are deleted
+  after 90 days by the daily housekeeping job; change it in Settings → Hiring
+  defaults → "Keep meeting recordings (days)".
+
+Setup: run the migrations (they create the `recordings` storage bucket, 25 MB
+per part). Nothing to add in Vercel.
+
 ## Acme assistant (n8n agent, voice)
 
 The robot in the bottom-right corner is an agent: ask it things ("sino nasa

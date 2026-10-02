@@ -272,6 +272,7 @@ export async function settings(): Promise<SettingsDto> {
     interviewReminderMinutes: intSetting(s.interview_reminder_minutes, 60, 5),
     attendanceTimezone: s.attendance_timezone,
     attendanceGraceMinutes: intSetting(s.attendance_grace_minutes, 10),
+    recordingRetentionDays: intSetting(s.recording_retention_days, 90, 1),
     iceServers: s.ice_servers,
     integrations: { email: env.EMAIL_PROVIDER, n8n: env.N8N_ENABLED && Boolean(env.N8N_WEBHOOK_URL), storage: env.STORAGE_DRIVER, realtime: env.REALTIME_DRIVER },
   };
@@ -289,6 +290,7 @@ export async function saveSettings(input: z.infer<typeof settingsSchema>, ctx: C
     interview_reminder_minutes: String(input.interviewReminderMinutes),
     attendance_timezone: input.attendanceTimezone,
     attendance_grace_minutes: String(input.attendanceGraceMinutes),
+    ...(input.recordingRetentionDays !== undefined ? { recording_retention_days: String(input.recordingRetentionDays) } : {}),
     ice_servers: JSON.stringify(JSON.parse(input.iceServers)),
   };
   await setSettings(sql, patch);

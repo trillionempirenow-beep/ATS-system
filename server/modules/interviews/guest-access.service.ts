@@ -60,6 +60,7 @@ async function roomFor(row: repo.InterviewRow): Promise<GuestRoomDto> {
     cancelled,
     message,
     opensAt: js.opensAt,
+    recorded: row.record_meeting,
   };
 }
 

@@ -9,7 +9,7 @@ export interface WhenInfo {
 export function interviewInvitation(brand: Brand, v: {
   candidateName: string; jobTitle: string; meetingType: 'screening' | 'interview'; final?: boolean; interviewType: string;
   when: WhenInfo; duration: string | null; interviewerName: string | null; joinUrl: string | null;
-  location: string | null; roomCode: string | null; builtIn: boolean; statusUrl: string; calendarUrl?: string | null;
+  location: string | null; roomCode: string | null; builtIn: boolean; statusUrl: string; calendarUrl?: string | null; recorded?: boolean;
 }): RenderedEmail {
   const kind = v.meetingType === 'screening' ? 'screening call' : v.final ? 'final interview' : 'interview';
   const rows: Array<[string, string, 'mono'?]> = [
@@ -28,6 +28,7 @@ export function interviewInvitation(brand: Brand, v: {
         `The room opens shortly before your start time. Use the button below; no app or account is needed.`,
         'Use Chrome, Edge, Safari or Firefox on a laptop or phone, and allow camera and microphone access.',
         'You will wait in a short waiting room until your interviewer admits you.',
+        ...(v.recorded ? [`This interview is recorded (video and sound) so the hiring team can review it. The recording is kept for internal use only and deleted later.`] : []),
         'This link is personal to you. Please do not forward it.',
       ]
     : v.joinUrl

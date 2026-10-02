@@ -57,6 +57,11 @@ export function AiNotesPill() {
   return <span className={cx(s.pill, s.pillAi)} title="The interviewer's AI assistant is taking notes of this meeting."><Icon name="sparkle" size={15} />AI notes on</span>;
 }
 
+/** Shown to everyone in the room when the meeting is recorded. */
+export function RecordingPill() {
+  return <span className={cx(s.pill, s.pillRec)} title="This meeting is recorded (cameras and sound) for the hiring team."><span className={s.recDot} aria-hidden="true" />Recording</span>;
+}
+
 export function Elapsed({ since }: { since: string | null }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, []);

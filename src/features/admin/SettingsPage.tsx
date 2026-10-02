@@ -20,7 +20,7 @@ const toDraft = (d: SettingsDto): Draft => ({
   companyName: d.companyName, careersHeadline: d.careersHeadline, logoPath: d.logoPath, defaultApplicantLimit: d.defaultApplicantLimit,
   interviewJoinWindowMinutes: String(d.interviewJoinWindowMinutes), passwordResetHours: String(d.passwordResetHours),
   interviewReminderMinutes: String(d.interviewReminderMinutes), attendanceTimezone: d.attendanceTimezone,
-  attendanceGraceMinutes: String(d.attendanceGraceMinutes), iceServers: d.iceServers,
+  attendanceGraceMinutes: String(d.attendanceGraceMinutes), recordingRetentionDays: String(d.recordingRetentionDays), iceServers: d.iceServers,
 });
 
 const NUMBER_RULES: Array<{ key: keyof Draft; min: number; max: number }> = [
@@ -28,6 +28,7 @@ const NUMBER_RULES: Array<{ key: keyof Draft; min: number; max: number }> = [
   { key: 'passwordResetHours', min: 1, max: 168 },
   { key: 'interviewReminderMinutes', min: 5, max: 1440 },
   { key: 'attendanceGraceMinutes', min: 0, max: 120 },
+  { key: 'recordingRetentionDays', min: 1, max: 3650 },
 ];
 
 export function SettingsPage() {
@@ -56,6 +57,7 @@ function SettingsForm({ data }: { data: SettingsDto }) {
     ...f,
     interviewJoinWindowMinutes: Number(f.interviewJoinWindowMinutes), passwordResetHours: Number(f.passwordResetHours),
     interviewReminderMinutes: Number(f.interviewReminderMinutes), attendanceGraceMinutes: Number(f.attendanceGraceMinutes),
+    recordingRetentionDays: Number(f.recordingRetentionDays),
   }));
 
   const submit = () => {
@@ -105,6 +107,7 @@ function SettingsForm({ data }: { data: SettingsDto }) {
               <Field label="Interview room opens (minutes before start)" error={errors.interviewJoinWindowMinutes}><TextInput inputMode="numeric" value={f.interviewJoinWindowMinutes} onChange={set('interviewJoinWindowMinutes')} /></Field>
               <Field label="Interview reminder (minutes before start)" error={errors.interviewReminderMinutes}><TextInput inputMode="numeric" value={f.interviewReminderMinutes} onChange={set('interviewReminderMinutes')} /></Field>
               <Field label="Password reset link lifetime (hours)" error={errors.passwordResetHours}><TextInput inputMode="numeric" value={f.passwordResetHours} onChange={set('passwordResetHours')} /></Field>
+              <Field label="Keep meeting recordings (days)" hint="Recordings are deleted this long after the meeting." error={errors.recordingRetentionDays}><TextInput inputMode="numeric" value={f.recordingRetentionDays} onChange={set('recordingRetentionDays')} /></Field>
             </div>
           </div>
         </Card>

@@ -1164,7 +1164,9 @@
 
 @media (max-width: 720px) {
   .topbar { padding: 0 12px; gap: 12px; }
-  .pills > :not(:last-child):not(.timer) { display: none; }
+  /* The recording notice stays: people must be able to see they are recorded. */
+  .pills > :not(:last-child):not(.timer):not(.pillRec) { display: none; }
+  .pillRec { padding: 0 10px; gap: 6px; }
   .stage { padding: 12px; }
   .pip { right: 10px; bottom: 10px; }
   .tileSmall { width: 120px; height: 160px; }
@@ -1367,6 +1369,19 @@ button.topLink {
 .pillAi svg {
   color: var(--call-ai);
 }
+
+.pillRec { color: var(--call-text); }
+
+.recDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--call-danger-text);
+  animation: recPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes recPulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .recDot { animation: none; } }
 
 .assistState > div {
   flex: 1;

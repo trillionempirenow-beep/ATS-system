@@ -188,7 +188,7 @@ function Recording({ parts, actions }: { parts: LibraryRecordingDto[]; actions: 
       ) : (
         <>
           {src ? (
-            <video key={src} src={src} controls autoPlay className={s.video}
+            <video key={src} src={src} controls autoPlay className={s.video} onLoadedMetadata={(e) => fixDuration(e.currentTarget)}
               onEnded={() => { if (index < parts.length - 1) setIndex(index + 1); }} />
           ) : <div className={s.viewerWait}><Spinner /></div>}
           {parts.length > 1 ? (
@@ -204,6 +204,20 @@ function Recording({ parts, actions }: { parts: LibraryRecordingDto[]; actions: 
       )}
     </div>
   );
+}
+
+/** Recordings made in the browser carry no length, so the seek bar would not work; jumping to the end once reveals it. */
+function fixDuration(v: HTMLVideoElement) {
+  if (Number.isFinite(v.duration)) return;
+  const back = () => {
+    if (!Number.isFinite(v.duration)) return;
+    v.removeEventListener('durationchange', back);
+    v.removeEventListener('timeupdate', back);
+    v.currentTime = 0;
+  };
+  v.addEventListener('durationchange', back);
+  v.addEventListener('timeupdate', back);
+  v.currentTime = 1e101;
 }
 
 function List({ title, items }: { title: string; items: string[] }) {

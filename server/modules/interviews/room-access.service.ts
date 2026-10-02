@@ -61,6 +61,7 @@ async function stateFor(row: repo.InterviewRow): Promise<CandidateRoomDto> {
     realtime: { driver: env.REALTIME_DRIVER, lobby: channels.lobby(row.id), room: admitted ? channels.room(row.id) : null, staff: null, team: null },
     rtc: admitted ? await rtcConfig() : null,
     aiNotesOn: row.assistant_enabled,
+    recorded: row.record_meeting,
   };
 }
 

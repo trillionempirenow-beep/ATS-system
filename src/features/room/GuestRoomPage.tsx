@@ -13,7 +13,7 @@ import { ApiError, api, errorMessage } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { formatDate, formatTime } from '@/lib/format';
 import { joinChannel } from '@/lib/realtime';
-import { AiNotesPill, CallStage, type SidePanel } from './CallStage';
+import { AiNotesPill, CallStage, RecordingPill, type SidePanel } from './CallStage';
 import { DeviceCheck, VideoPreview } from './DeviceCheck';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
@@ -277,6 +277,7 @@ export function GuestRoomPage() {
             </div>
           </form>
           {!info.canJoin ? <Notice tone="info" title="The room is not open yet">{info.message} This page updates on its own.</Notice> : null}
+          {info.recorded ? <Notice tone="info" title="This meeting is recorded">Cameras and sound are recorded for the hiring team. By joining, you agree to appear in the recording.</Notice> : null}
           <p className={s.previewHint}><Icon name="lock" size={13} /> Your name and position are shown to everyone in the meeting.</p>
         </div>
       </Card>
@@ -304,7 +305,7 @@ function GuestCall({ session, media, since, onLeave, onEnded }: {
       title={`Interview · ${session.jobTitle}`}
       subtitle={`${session.companyName} · You are a guest: ${session.guest.name} - ${session.guest.position}`}
       since={since}
-      pills={session.aiNotesOn ? <AiNotesPill /> : null}
+      pills={<>{session.recorded ? <RecordingPill /> : null}{session.aiNotesOn ? <AiNotesPill /> : null}</>}
       call={call}
       media={media}
       self={self}

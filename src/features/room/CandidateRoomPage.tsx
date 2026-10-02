@@ -12,7 +12,7 @@ import { ApiError, api, errorMessage } from '@/lib/api';
 import { formatDate, formatTime, plural } from '@/lib/format';
 import { joinChannel } from '@/lib/realtime';
 import { FORMAT_LABELS } from '../interviews/ScheduleDrawer';
-import { AiNotesPill, CallStage, type SidePanel } from './CallStage';
+import { AiNotesPill, CallStage, RecordingPill, type SidePanel } from './CallStage';
 import { DeviceCheck } from './DeviceCheck';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
@@ -217,6 +217,7 @@ export function CandidateRoomPage() {
           <h1 className={s.heading}>Your interview at {data.companyName}</h1>
           <p className={s.lead}>{data.jobTitle}</p>
           {details}
+          {data.recorded ? <Notice tone="info" title="This interview is recorded">Cameras and sound are recorded so the hiring team can review the interview. The recording is for internal use only and is deleted later.</Notice> : null}
           <div className={s.actions}>
             <Button size="lg" icon="video" disabled={!open} onClick={() => setStep('check')}>Join interview</Button>
           </div>
@@ -253,7 +254,7 @@ function CandidateCall({ data, media, since, onLeave, onEnded }: {
       title={`Interview with ${data.interviewerName ?? data.companyName}`}
       subtitle={`${data.jobTitle} ${data.meetingType === 'screening' ? 'screening' : 'interview'} · Room code ${data.roomCode}`}
       since={since}
-      pills={data.aiNotesOn ? <AiNotesPill /> : null}
+      pills={<>{data.recorded ? <RecordingPill /> : null}{data.aiNotesOn ? <AiNotesPill /> : null}</>}
       call={call}
       media={media}
       self={{ name: data.candidateName, role: 'candidate' }}

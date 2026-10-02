@@ -75,4 +75,55 @@ describe('library and view-only shares', () => {
     expect((await pub.get(`/api/v1/shared/${token}`)).body.data.state).toBe('off');
     expect((await pub.get(`/api/v1/shared/${token}/file`).set('X-Share-Viewer', viewerToken)).status).toBe(410);
   });
+
+  it('records a meeting in parts that land in the library', async () => {
+    const admin = await signIn(USERS.admin);
+    const startsAt = new Date(Date.now() + 9 * 86_400_000 + 17 * 60_000).toISOString();
+    const scheduled = await admin.agent.post('/api/v1/interviews').set('X-CSRF-Token', admin.csrf).send({
+      applicationId: 5, startsAt, interviewType: 'video', meetingType: 'interview', meetingMode: 'builtin', recordMeeting: true, sendInvite: false,
+    });
+    expect(scheduled.status).toBe(201);
+    const { interviewId, candidateLink } = scheduled.body.data as { interviewId: number; candidateLink: string };
+
+    // Everyone is told: the candidate's room says it is recorded.
+    const url = new URL(candidateLink);
+    const roomState = await (await anon()).get(`/api/v1/room/${url.pathname.split('/').pop()}`).query({ t: url.searchParams.get('t') });
+    expect(roomState.body.data.recorded).toBe(true);
+
+    const staffRoom = await admin.agent.get(`/api/v1/interviews/${interviewId}`);
+    expect(staffRoom.body.data.recording).toEqual({ on: true, isRecorder: true, parts: 0 });
+
+    // Only the interviewer's browser records.
+    const hr = await signIn(USERS.recruiter);
+    expect((await hr.agent.post(`/api/v1/interviews/${interviewId}/recordings/grant`).set('X-CSRF-Token', hr.csrf).send({ mime: 'video/webm' })).status).toBe(403);
+
+    const grant = await admin.agent.post(`/api/v1/interviews/${interviewId}/recordings/grant`).set('X-CSRF-Token', admin.csrf).send({ mime: 'video/webm' });
+    expect(grant.status).toBe(200);
+    const g = grant.body.data as { path: string; uploadUrl: string; token: string };
+    expect(g.path).toMatch(new RegExp(`^${interviewId}/\\d+-[a-f0-9]+\\.webm$`));
+    const put = await (await anon()).put(new URL(g.uploadUrl).pathname).set('Content-Type', 'video/webm').send(Buffer.alloc(6000, 1));
+    expect(put.status).toBeLessThan(300);
+
+    const part = { path: g.path, mime: 'video/webm', sizeBytes: 6000, durationSec: 300, startedAt: new Date().toISOString() };
+    // A path the server did not hand out is refused.
+    expect((await admin.agent.post(`/api/v1/interviews/${interviewId}/recordings`).set('X-CSRF-Token', admin.csrf)
+      .send({ ...part, path: `${interviewId}/other.webm`, token: g.token })).status).toBe(403);
+    const saved = await admin.agent.post(`/api/v1/interviews/${interviewId}/recordings`).set('X-CSRF-Token', admin.csrf).send({ ...part, token: g.token });
+    expect(saved.status).toBe(201);
+    expect(saved.body.data.parts).toBe(1);
+
+    const file = await admin.agent.get('/api/v1/library/5');
+    const iv = (file.body.data.file.interviews as Array<{ id: number; recordings: Array<{ id: number; durationSec: number }> }>).find((i) => i.id === interviewId)!;
+    expect(iv.recordings).toHaveLength(1);
+    expect(iv.recordings[0]!.durationSec).toBe(300);
+    const play = await admin.agent.get(`/api/v1/library/5/recordings/${iv.recordings[0]!.id}`);
+    expect(play.status).toBe(200);
+
+    // Housekeeping removes recordings past the retention period.
+    const { sql } = await import('../../server/db/client.js');
+    const { cleanup } = await import('../../server/modules/interviews/interview-recordings.service.js');
+    await sql`update interviews set starts_at = now() - interval '100 days' where id = ${interviewId}`;
+    expect(await cleanup(90)).toBe(1);
+    expect((await sql`select count(*)::int as n from interview_recordings where interview_id = ${interviewId}`)[0]!.n).toBe(0);
+  });
 });

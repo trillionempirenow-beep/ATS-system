@@ -14,6 +14,7 @@ import { googleCalendarLink } from '../../email/calendar.js';
 import * as interviews from '../interviews/interviews.repository.js';
 import { pruneExpiredUploads } from '../uploads/uploads.service.js';
 import { pruneExpiredSessions } from '../auth/session.repository.js';
+import { cleanup as pruneRecordings } from '../interviews/interview-recordings.service.js';
 
 export const cronRouter = Router();
 
@@ -77,6 +78,7 @@ cronRouter.all('/cron/interview-reminders', requireCronSecret, async (req, res) 
     uploadsPruned: await pruneExpiredUploads(),
     orphanDocumentsPruned: (await sql`delete from candidate_documents where candidate_id is null and created_at < now() - interval '1 day'`).count,
     rateLimitsPruned: (await sql`delete from rate_limits where window_start < now() - interval '1 day'`).count,
+    recordingsPruned: await pruneRecordings(intSetting(s.recording_retention_days, 90, 1)),
   };
   await pruneExpiredSessions();
   res.json({ data: { reminders, housekeeping } });

@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
-  assistantChunkSchema, assistantToggleSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
+  assistantChunkSchema, assistantToggleSchema, recordingGrantSchema, recordingSaveSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
 } from '../../../shared/api/interviews.js';
 import { body, idParam, parse } from '../../http/validate.js';
 import { requireStaff } from '../../middleware/guards.js';
@@ -10,6 +10,7 @@ import * as service from './interviews.service.js';
 import * as room from './room-access.service.js';
 import * as guests from './guest-access.service.js';
 import * as aiNotes from './interview-notes.service.js';
+import * as recordings from './interview-recordings.service.js';
 
 export const interviewsRouter = Router();
 
@@ -88,6 +89,14 @@ interviewsRouter.patch('/interviews/:id/assistant', async (req, res) => {
 
 interviewsRouter.post('/interviews/:id/assistant/chunk', async (req, res) => {
   res.json({ data: await aiNotes.addChunk(idParam(req), body(req, assistantChunkSchema), req.auth!.user.id) });
+});
+
+interviewsRouter.post('/interviews/:id/recordings/grant', rateLimit({ name: 'recording-grant', max: 60, windowSeconds: 3600 }), async (req, res) => {
+  res.json({ data: await recordings.grant(idParam(req), req.auth!.user.id, body(req, recordingGrantSchema).mime) });
+});
+
+interviewsRouter.post('/interviews/:id/recordings', async (req, res) => {
+  res.status(201).json({ data: await recordings.save(idParam(req), req.auth!.user.id, body(req, recordingSaveSchema)) });
 });
 
 // ---- Candidate (interview token) ------------------------------------------

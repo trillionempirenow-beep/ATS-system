@@ -17,11 +17,12 @@ import { formatTime, formatWeekday, plural } from '@/lib/format';
 import { joinChannel } from '@/lib/realtime';
 import { interviewKeys, useInterview } from '../interviews/api';
 import { FORMAT_LABELS } from '../interviews/ScheduleDrawer';
-import { CallStage, type SidePanel } from './CallStage';
+import { CallStage, RecordingPill, type SidePanel } from './CallStage';
 import { DeviceCheck } from './DeviceCheck';
 import { GuestAdmissions, copyText, type GuestDecision } from './GuestAdmissions';
 import { StaffDock, useLiveNotes, type DockTab } from './StaffDock';
 import { useAiNotes } from './call/useAiNotes';
+import { useMeetingRecorder } from './call/useMeetingRecorder';
 import { useCall } from './call/useCall';
 import { useLocalMedia } from './call/useLocalMedia';
 import w from '../workspace.module.css';
@@ -280,10 +281,21 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
     }),
   };
 
+  // Recorded meetings: the interviewer's browser records the camera tiles and sound.
+  const rec = useMeetingRecorder({
+    interviewId: iv.id, enabled: room.recording.isRecorder, initialParts: room.recording.parts,
+    self: { id: `u${room.me.id}`, name: room.me.name, stream: media.stream, cam: media.camOn }, peers: verifiedCall.peers,
+  });
+  const recError = useRef<string | null>(null);
+  useEffect(() => {
+    if (rec.error && rec.error !== recError.current) toast.error(rec.error, 'Recording');
+    recError.current = rec.error;
+  }, [rec.error, toast]);
+
   const end = async () => {
     setEnding(true);
     try {
-      await notes.flush();
+      await Promise.all([notes.flush(), rec.finish()]);
       await api.post(`/interviews/${iv.id}/end`, { liveNotes: notes.current() });
       finish(new Date().toISOString());
     } catch (e) {
@@ -335,6 +347,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       subtitle={subtitle}
       since={startedAt}
       pills={<>
+        {room.recording.on ? <RecordingPill /> : null}
         {aiOn ? <span className={`${s.pill} ${s.pillAi}`}><Icon name="sparkle" size={15} />AI notes on</span> : null}
       </>}
       headerAction={<>
@@ -377,7 +390,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
           </>}>
           <ul className={s.steps}>
             <li><span><Icon name="close" size={14} /></span><span><strong>The room closes{candidateInCall ? ` and ${iv.candidateName} is disconnected` : ''}{admittedGuests.length ? `. Guests are disconnected too` : ''}</strong></span></li>
-            <li><span><Icon name="check" size={14} /></span><span><strong>Your notes are saved</strong></span></li>
+            <li><span><Icon name="check" size={14} /></span><span><strong>Your notes are saved{rec.state === 'recording' ? ', and the last part of the recording is uploaded' : ''}</strong></span></li>
             <li><span><Icon name="edit" size={14} /></span><span><strong>You score and review the interview next</strong></span></li>
           </ul>
         </Modal>
