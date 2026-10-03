@@ -284,7 +284,8 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   // Recorded meetings: the interviewer's browser records the camera tiles and sound.
   const rec = useMeetingRecorder({
     interviewId: iv.id, enabled: room.recording.isRecorder, initialParts: room.recording.parts,
-    self: { id: `u${room.me.id}`, name: room.me.name, stream: media.stream, cam: media.camOn }, peers: verifiedCall.peers,
+    self: { name: room.me.name, role: iv.interviewerId === room.me.id ? 'interviewer' : 'staff', stream: media.stream, screen: media.screen, cam: media.camOn },
+    peers: verifiedCall.peers, waitingFor: iv.candidateName,
   });
   const recError = useRef<string | null>(null);
   useEffect(() => {
