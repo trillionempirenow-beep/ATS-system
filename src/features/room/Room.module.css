@@ -1371,6 +1371,7 @@ button.topLink {
 }
 
 .pillRec { color: var(--call-text); }
+.recNote { font-weight: var(--fw-regular); color: var(--call-text-3); }
 
 .recDot {
   width: 9px;

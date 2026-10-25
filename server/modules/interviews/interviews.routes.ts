@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
-  assistantChunkSchema, assistantToggleSchema, recordingGrantSchema, recordingSaveSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
+  assistantChunkSchema, assistantToggleSchema, recordingGrantSchema, recordingReportSchema, recordingSaveSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
 } from '../../../shared/api/interviews.js';
 import { body, idParam, parse } from '../../http/validate.js';
 import { requireStaff } from '../../middleware/guards.js';
@@ -97,6 +97,11 @@ interviewsRouter.post('/interviews/:id/recordings/grant', rateLimit({ name: 'rec
 
 interviewsRouter.post('/interviews/:id/recordings', async (req, res) => {
   res.status(201).json({ data: await recordings.save(idParam(req), req.auth!.user.id, body(req, recordingSaveSchema)) });
+});
+
+interviewsRouter.post('/interviews/:id/recordings/report', rateLimit({ name: 'recording-report', max: 60, windowSeconds: 3600 }), async (req, res) => {
+  await recordings.report(idParam(req), req.auth!.user.id, body(req, recordingReportSchema));
+  res.json(ok);
 });
 
 // ---- Candidate (interview token) ------------------------------------------

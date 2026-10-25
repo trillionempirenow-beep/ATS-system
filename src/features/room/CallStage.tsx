@@ -58,8 +58,12 @@ export function AiNotesPill() {
 }
 
 /** Shown to everyone in the room when the meeting is recorded. */
-export function RecordingPill() {
-  return <span className={cx(s.pill, s.pillRec)} title="This meeting is recorded (cameras and sound) for the hiring team."><span className={s.recDot} aria-hidden="true" />Recording</span>;
+export function RecordingPill({ note, problem }: { note?: string; problem?: boolean } = {}) {
+  return (
+    <span className={cx(s.pill, s.pillRec)} title={problem ? 'A part of the recording could not be saved. Keep this tab open.' : 'This meeting is recorded (cameras and sound) for the hiring team.'}>
+      <span className={s.recDot} aria-hidden="true" />Recording{note ? <small className={s.recNote}>{problem ? 'save problem' : note}</small> : null}
+    </span>
+  );
 }
 
 export function Elapsed({ since }: { since: string | null }) {

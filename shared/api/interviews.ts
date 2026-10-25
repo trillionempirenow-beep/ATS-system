@@ -127,6 +127,11 @@ export const recordingSaveSchema = z.object({
   durationSec: z.number().int().min(0).max(3600),
   startedAt: isoDate,
 });
+/** The interviewer's browser reports how recording is going, so a failure can be found afterwards. */
+export const recordingReportSchema = z.object({
+  stage: z.enum(['started', 'unsupported', 'recorder', 'grant', 'upload', 'save']),
+  message: z.string().max(300),
+});
 export interface RecordingGrantDto { path: string; uploadUrl: string; headers: Record<string, string>; token: string }
 
 export const assistantToggleSchema = z.object({ enabled: z.boolean() });

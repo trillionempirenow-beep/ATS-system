@@ -270,8 +270,8 @@ the interviewer types notes under My notes.
   stops it at once. Every share and every opening is in the audit trail.
 - **Recording a meeting:** tick **Record this interview** when scheduling (built-in
   room only). In the call, the interviewer's browser records every camera tile
-  and everyone's sound (no screen, no buttons) in five-minute parts of about
-  14 MB, which appear on the applicant's Library file. The candidate and guests
+  and everyone's sound (no screen, no buttons) in two-minute parts of about
+  6 MB, which appear on the applicant's Library file. The candidate and guests
   see "This interview is recorded" before joining and a **Recording** notice in
   the call. Recording runs in the interviewer's tab: if that tab is closed, it
   stops (it carries on in new parts if they rejoin). Recordings are deleted

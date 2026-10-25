@@ -3,8 +3,8 @@ import type { RecordingGrantDto } from '@shared/api/interviews';
 import { api, errorMessage } from '@/lib/api';
 import type { ParticipantRole, RemotePeer } from './useCall';
 
-/** Each part is a complete file of about five minutes (~14 MB), well under the 25 MB limit. */
-const PART_SECONDS = 5 * 60;
+/** Each part is a complete file of about two minutes (~6 MB), well under the 25 MB limit; a short meeting still leaves something saved. */
+const PART_SECONDS = 2 * 60;
 const WIDTH = 960;
 const HEIGHT = 540;
 const FPS = 15;
@@ -142,7 +142,7 @@ const TAGS: Record<string, string> = { interviewer: 'Interviewer', candidate: 'C
 /**
  * Records the meeting in the interviewer's browser: the call stage (the big
  * tiles with the small ones underneath, no panels or controls) drawn on one
- * canvas plus everyone's sound, uploaded in five-minute parts. Only runs while
+ * canvas plus everyone's sound, uploaded in two-minute parts. Only runs while
  * `enabled`; closing the tab ends it.
  */
 export function useMeetingRecorder(opts: {
@@ -176,15 +176,22 @@ export function useMeetingRecorder(opts: {
     })),
   ];
 
+  const report = useCallback((stage: string, message: string) => {
+    void api.post(`/interviews/${opts.interviewId}/recordings/report`, { stage, message: message.slice(0, 300) }).catch(() => undefined);
+  }, [opts.interviewId]);
+
   const upload = useCallback((blob: Blob, mime: string, startedAt: string, seconds: number) => {
     if (blob.size < 4000) return;
     const base = mime.startsWith('video/mp4') ? 'video/mp4' : 'video/webm';
     queue.current = queue.current.then(async () => {
       for (let attempt = 0; attempt < 2; attempt++) {
+        let stage = 'grant';
         try {
           const g = await api.post<RecordingGrantDto>(`/interviews/${opts.interviewId}/recordings/grant`, { mime: base });
+          stage = 'upload';
           const put = await fetch(g.uploadUrl, { method: 'PUT', headers: { ...g.headers, 'Content-Type': base }, body: blob });
-          if (!put.ok) throw new Error(`The recording part did not upload (${put.status}).`);
+          if (!put.ok) throw new Error(`storage answered ${put.status} ${(await put.text().catch(() => '')).slice(0, 120)}`);
+          stage = 'save';
           const r = await api.post<{ parts: number }>(`/interviews/${opts.interviewId}/recordings`, {
             path: g.path, token: g.token, mime: base, sizeBytes: blob.size, durationSec: seconds, startedAt,
           });
@@ -192,11 +199,12 @@ export function useMeetingRecorder(opts: {
           setError(null);
           return;
         } catch (e) {
+          report(stage, `${blob.size} bytes, try ${attempt + 1}: ${e instanceof Error ? e.message : 'failed'}`);
           if (attempt === 1) setError(errorMessage(e));
         }
       }
     });
-  }, [opts.interviewId]);
+  }, [opts.interviewId, report]);
 
   useEffect(() => {
     if (!opts.enabled) { setState('off'); return undefined; }
@@ -206,6 +214,7 @@ export function useMeetingRecorder(opts: {
     const c = canvas.getContext('2d');
     if (!mime || !c || typeof canvas.captureStream !== 'function') {
       setState('error'); setError('This browser cannot record the meeting. Use Chrome or Edge.');
+      report('unsupported', `${navigator.userAgent.slice(0, 120)}; mime=${mime || 'none'}`);
       return undefined;
     }
     const ctx = new AudioContext();
@@ -231,12 +240,14 @@ export function useMeetingRecorder(opts: {
       const t0 = Date.now();
       recorder = new MediaRecorder(mixed, { mimeType: mime, videoBitsPerSecond: 400_000, audioBitsPerSecond: 32_000 });
       recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      recorder.onerror = () => report('recorder', 'The browser stopped the recorder.');
       recorder.onstop = () => upload(new Blob(chunks, { type: mime }), mime, startedAt, Math.round((Date.now() - t0) / 1000));
       recorder.start(10_000);
       timer = window.setTimeout(() => { recorder?.stop(); part(); }, PART_SECONDS * 1000);
     };
     part();
     setState('recording');
+    report('started', `${mime}; sound tracks ${dest.stream.getAudioTracks().length}`);
 
     const stop = () => {
       if (stopped) return;
@@ -253,7 +264,7 @@ export function useMeetingRecorder(opts: {
     };
     stopRef.current = stop;
     return () => { stop(); stopRef.current = null; };
-  }, [opts.enabled, upload]);
+  }, [opts.enabled, upload, report]);
 
   // Keep the picture and the mix in step with who is in the room.
   const key = people.current.map((t) => `${t.id}:${t.audio?.getAudioTracks()[0]?.id ?? ''}:${t.video?.getVideoTracks()[0]?.id ?? ''}`).join('|');

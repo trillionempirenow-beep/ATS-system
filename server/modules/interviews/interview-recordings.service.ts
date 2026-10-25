@@ -9,7 +9,7 @@ import * as repo from './interviews.repository.js';
 
 /**
  * Meeting recordings. The interviewer's browser draws the camera tiles and
- * mixes the sound, and uploads the meeting in five-minute parts straight to
+ * mixes the sound, and uploads the meeting in short parts straight to
  * storage; the server only hands out upload slots and keeps the list.
  */
 
@@ -52,6 +52,13 @@ export async function save(id: number, userId: number, input: z.infer<typeof rec
     await audit({ userId, action: 'interview_recording_part', entityType: 'interview', entityId: id, details: { seconds: input.durationSec, bytes: input.sizeBytes } });
   }
   return { parts: await partCount(id) };
+}
+
+/** What the recording browser says happened, kept in the audit trail. */
+export async function report(id: number, userId: number, input: { stage: string; message: string }): Promise<void> {
+  await recorderRow(id, userId);
+  await audit({ userId, action: input.stage === 'started' ? 'interview_recording_started' : 'interview_recording_problem', entityType: 'interview', entityId: id,
+    details: { stage: input.stage, message: input.message } });
 }
 
 /** Housekeeping: recordings go once their meeting is older than the retention period. */

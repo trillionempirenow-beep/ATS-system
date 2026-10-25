@@ -119,6 +119,13 @@ describe('library and view-only shares', () => {
     const play = await admin.agent.get(`/api/v1/library/5/recordings/${iv.recordings[0]!.id}`);
     expect(play.status).toBe(200);
 
+    // The recording browser reports problems; only the interviewer may, and they land in the audit trail.
+    const note = { stage: 'upload', message: 'storage answered 500' };
+    expect((await hr.agent.post(`/api/v1/interviews/${interviewId}/recordings/report`).set('X-CSRF-Token', hr.csrf).send(note)).status).toBe(403);
+    expect((await admin.agent.post(`/api/v1/interviews/${interviewId}/recordings/report`).set('X-CSRF-Token', admin.csrf).send(note)).status).toBe(200);
+    const { sql: db } = await import('../../server/db/client.js');
+    expect((await db`select count(*)::int as n from audit_logs where action = 'interview_recording_problem' and entity_id = ${interviewId}`)[0]!.n).toBe(1);
+
     // Housekeeping removes recordings past the retention period.
     const { sql } = await import('../../server/db/client.js');
     const { cleanup } = await import('../../server/modules/interviews/interview-recordings.service.js');

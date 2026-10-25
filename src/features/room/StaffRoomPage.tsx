@@ -348,7 +348,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       subtitle={subtitle}
       since={startedAt}
       pills={<>
-        {room.recording.on ? <RecordingPill /> : null}
+        {room.recording.on ? <RecordingPill note={room.recording.isRecorder ? `${rec.parts} saved` : undefined} problem={Boolean(rec.error)} /> : null}
         {aiOn ? <span className={`${s.pill} ${s.pillAi}`}><Icon name="sparkle" size={15} />AI notes on</span> : null}
       </>}
       headerAction={<>

@@ -163,7 +163,7 @@ function Interview({ iv, actions, showSummary }: { iv: LibraryInterviewDto; acti
   );
 }
 
-/** A recording is kept in five-minute parts; they play one after another. */
+/** A recording is kept in short parts; they play one after another. */
 function Recording({ parts, actions }: { parts: LibraryRecordingDto[]; actions: FileActions }) {
   const toast = useToast();
   const [index, setIndex] = useState<number | null>(null);
