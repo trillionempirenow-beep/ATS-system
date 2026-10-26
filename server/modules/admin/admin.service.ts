@@ -285,11 +285,11 @@ export async function saveSettings(input: z.infer<typeof settingsSchema>, ctx: C
     logo_path: input.logoPath,
     default_applicant_limit: input.defaultApplicantLimit,
     interview_join_window_minutes: String(input.interviewJoinWindowMinutes),
-    password_reset_hours: String(input.passwordResetHours),
     interview_reminder_minutes: String(input.interviewReminderMinutes),
     attendance_timezone: input.attendanceTimezone,
     attendance_grace_minutes: String(input.attendanceGraceMinutes),
-    ice_servers: JSON.stringify(JSON.parse(input.iceServers)),
+    ...(input.passwordResetHours !== undefined ? { password_reset_hours: String(input.passwordResetHours) } : {}),
+    ...(input.iceServers !== undefined ? { ice_servers: JSON.stringify(JSON.parse(input.iceServers)) } : {}),
   };
   await setSettings(sql, patch);
   const changed = Object.entries(patch).filter(([k, v]) => before[k as keyof typeof before] !== v).map(([k]) => k.replace(/_/g, ' '));

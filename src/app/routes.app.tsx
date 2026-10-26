@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router-dom';
+import { Navigate, type RouteObject } from 'react-router-dom';
 import { STAFF_ROLES } from '@shared/domain/access';
 import { page } from './lazyPage';
 import {
@@ -12,6 +12,7 @@ export const appRoutes: RouteObject[] = [
   { index: true, element: <RoleLanding>{page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage')}</RoleLanding> },
   { path: 'notifications', element: page(() => import('@/features/me/NotificationsPage'), 'NotificationsPage') },
   { path: 'profile', element: page(() => import('@/features/me/ProfilePage'), 'ProfilePage') },
+  { path: 'settings', element: page(() => import('@/features/settings/SettingsPage'), 'SettingsPage') },
   { path: 'attendance', element: page(() => import('@/features/people/AttendancePage'), 'AttendancePage') },
   {
     element: <RequireRoles roles={staff} />,
@@ -54,7 +55,7 @@ export const appRoutes: RouteObject[] = [
       { path: 'password-resets', element: <RequireSuperAdmin>{page(() => import('@/features/admin/PasswordResetsPage'), 'PasswordResetsPage')}</RequireSuperAdmin> },
       { path: 'applicant-portal', element: <RequirePermission permission="applicant_portal">{page(() => import('@/features/admin/ApplicantPortalPage'), 'ApplicantPortalPage')}</RequirePermission> },
       { path: 'audit', element: <RequirePermission permission="audit_trail">{page(() => import('@/features/admin/AuditPage'), 'AuditPage')}</RequirePermission> },
-      { path: 'settings', element: <RequireAdminLevel>{page(() => import('@/features/admin/SettingsPage'), 'SettingsPage')}</RequireAdminLevel> },
+      { path: 'settings', element: <RequireAdminLevel><Navigate to="/app/settings?tab=workspace" replace /></RequireAdminLevel> },
     ],
   },
 ];

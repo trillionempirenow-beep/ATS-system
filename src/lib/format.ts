@@ -25,14 +25,18 @@ export function relative(iso: string): string {
   return rtf.format(Math.round(diffH / 24), 'day');
 }
 
+/** Set from the signed-in person's preferences; undefined follows the locale (12-hour for en-US). */
+let hour12: boolean | undefined;
+export function setTimeFormat(f: '12h' | '24h'): void { hour12 = f === '24h' ? false : undefined; }
+
 export const formatDate = (iso: string | null | undefined, opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' }) =>
   iso ? new Intl.DateTimeFormat('en-US', opts).format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso)) : '—';
 
 export const formatTime = (iso: string | null | undefined) =>
-  iso ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(iso)) : '—';
+  iso ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12 }).format(new Date(iso)) : '—';
 
 export const formatDateTime = (iso: string | null | undefined) =>
-  iso ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(iso)) : '—';
+  iso ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12 }).format(new Date(iso)) : '—';
 
 export const formatWeekday = (iso: string) => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso));
 

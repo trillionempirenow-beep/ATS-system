@@ -179,6 +179,16 @@
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 
+  /* Component tokens: flat defaults. styles/workspace.css gives the signed-in app depth. */
+  --card-shadow: none;
+  --btn-fw: var(--fw-medium);
+  --btn-shadow: none;
+  --btn-primary-shadow: none;
+  --ctrl-shadow: none;
+  --badge-radius: var(--radius-xs);
+  --chip-radius: var(--radius-xs);
+  --modal-backdrop: none;
+
   /* Scrollbars: slim, and tinted from the text colour so they follow the theme. */
   --scrollbar-size: 10px;
   --scrollbar-thumb: color-mix(in srgb, var(--text3) 38%, transparent);

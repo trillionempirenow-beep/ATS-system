@@ -137,7 +137,7 @@ export function JobsPage() {
       <PageHeader title="Job management" description="Every listing, its applicants and its status in one place." crumbs={[{ label: 'Jobs' }, { label: 'Job management' }]}
         actions={<>
           <ButtonLink variant="secondary" to="/app/admin/audit">Audit trail</ButtonLink>
-          <ButtonLink variant="secondary" to="/app/admin/settings">Workspace settings</ButtonLink>
+          <ButtonLink variant="secondary" to="/app/settings?tab=workspace">Workspace settings</ButtonLink>
         </>} />
       <StatGrid>
         <StatCard icon="briefcase" label="Job listings" value={d?.jobs.length ?? 0} loading={!d} />

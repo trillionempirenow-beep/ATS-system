@@ -13,6 +13,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource-variable/figtree/index.css';
 import './styles/global.css';
 import './styles/legacy.css';
+import './styles/workspace.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

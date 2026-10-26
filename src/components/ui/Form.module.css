@@ -16,6 +16,7 @@
   border: 1px solid var(--border-input);
   background: var(--surface);
   color: var(--text);
+  box-shadow: var(--ctrl-shadow);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   outline: none;

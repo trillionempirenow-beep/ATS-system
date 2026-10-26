@@ -1,6 +1,6 @@
 import type { IconName } from '@/components/icon/Icon';
 import type { MeDto } from '@shared/api/auth';
-import { canPublishJobs, hasPermission, isAdminLevel } from '@shared/domain/access';
+import { canPublishJobs, hasPermission } from '@shared/domain/access';
 
 export interface NavItem {
   to: string;
@@ -24,7 +24,6 @@ export interface NavGroup {
 export function navFor(user: MeDto): NavGroup[] {
   const subject = { id: user.id, role: user.role, permissions: user.permissions };
   const perm = (p: Parameters<typeof hasPermission>[1]) => hasPermission(subject, p);
-  const admin = isAdminLevel(subject);
 
   if (user.role === 'super_admin') {
     return [{
@@ -34,7 +33,6 @@ export function navFor(user: MeDto): NavGroup[] {
         { to: '/app/admin/applicant-portal', label: 'Applicant portal', icon: 'public' },
         { to: '/app/admin/audit', label: 'Audit trail', icon: 'layers' },
         { to: '/app/admin/admins', label: 'Admins', icon: 'users' },
-        { to: '/app/admin/settings', label: 'Settings', icon: 'settings' },
       ],
     }];
   }
@@ -73,7 +71,6 @@ export function navFor(user: MeDto): NavGroup[] {
   if (perm('manage_accounts')) adminItems.push({ to: '/app/admin/users', label: 'HR / Recruiters', icon: 'candidates' });
   if (perm('applicant_portal')) adminItems.push({ to: '/app/admin/applicant-portal', label: 'Applicant portal', icon: 'public' });
   if (perm('audit_trail')) adminItems.push({ to: '/app/admin/audit', label: 'Audit trail', icon: 'layers' });
-  if (admin) adminItems.push({ to: '/app/admin/settings', label: 'Settings', icon: 'settings' });
   if (adminItems.length) groups.push({ key: 'administration', label: 'Administration', icon: 'settings', collapsible: true, items: adminItems });
 
   return groups;

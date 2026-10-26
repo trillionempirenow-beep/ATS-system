@@ -46,7 +46,7 @@ export function StageTag({ stage, size = 'md', label }: { stage: Stage; size?: '
   const text = label ?? STAGE_LABELS[stage];
   const where = stage === 'rejected' ? 'closed' : `step ${rank + 1} of ${STAGE_ORDER.length}`;
   return (
-    <span className={cx(s.tag, size === 'sm' && s.tagSm, stage === 'rejected' && s.tagRejected)} title={typeof text === 'string' ? `${text}, ${where}` : undefined}>
+    <span className={cx(s.tag, size === 'sm' && s.tagSm, stage === 'rejected' && s.tagRejected)} style={colorVar(stage)} title={typeof text === 'string' ? `${text}, ${where}` : undefined}>
       <StageTicks stage={stage} size={size} />
       <span className={s.tagLabel}>{text}</span>
     </span>

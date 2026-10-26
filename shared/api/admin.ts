@@ -163,12 +163,13 @@ export const settingsSchema = z.object({
   logoPath: z.string().trim().max(500).refine((v) => v === '' || /^https:\/\//.test(v) || /^\/?[\w\-./]+\.(png|jpg|jpeg|svg|webp)$/i.test(v), 'Use an https:// image URL or leave blank.').default(''),
   defaultApplicantLimit: z.string().trim().regex(/^\d*$/, 'Use a whole number or leave blank.').default(''),
   interviewJoinWindowMinutes: z.number().int().min(0).max(240),
-  passwordResetHours: z.number().int().min(1).max(168),
+  // Technical values the Settings screen no longer shows: left as they are when omitted.
+  passwordResetHours: z.number().int().min(1).max(168).optional(),
   interviewReminderMinutes: z.number().int().min(5).max(1440),
   attendanceTimezone: z.string().trim().min(1).max(60),
   attendanceGraceMinutes: z.number().int().min(0).max(120),
-  iceServers: z.string().trim().refine((v) => {
+  iceServers: z.string().trim().optional().refine((v) => v === undefined || (() => {
     try { const p = JSON.parse(v) as unknown; return Array.isArray(p) && p.every((s) => typeof s === 'object' && s !== null && 'urls' in s); } catch { return false; }
-  }, 'Enter a JSON array such as [{"urls":"stun:stun.l.google.com:19302"}].'),
+  })(), 'Enter a JSON array such as [{"urls":"stun:stun.l.google.com:19302"}].'),
 });
 export type SettingsInput = z.input<typeof settingsSchema>;

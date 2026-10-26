@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try { await api.post('/auth/logout'); } catch { /* signing out anyway */ }
     setCsrfToken(null);
+    try { sessionStorage.removeItem('acme-start-page-used'); } catch { /* nothing stored */ }
     // Tell the guards first (they send the browser to a plain /login), then drop the
     // previous user's data. The auth query itself is updated in place, never cleared:
     // clearing the cache detaches it, and the app would keep believing someone is signed in.

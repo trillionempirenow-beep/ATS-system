@@ -11,7 +11,7 @@
   border: 1px solid transparent;
   font-size: var(--fs-body);
   line-height: var(--lh-body);
-  font-weight: var(--fw-medium);
+  font-weight: var(--btn-fw);
   white-space: nowrap;
   text-decoration: none;
   transition: background-color .12s var(--ease), border-color .12s var(--ease), color .12s var(--ease);
@@ -31,11 +31,11 @@
 .lg { height: 48px; padding: 0 22px; font-size: var(--fs-lead); }
 .full { width: 100%; }
 
-.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); }
+.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); box-shadow: var(--btn-primary-shadow); }
 .primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .primary:active:not(:disabled) { background: var(--primary-subtle-fg); border-color: var(--primary-subtle-fg); }
 
-.secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+.secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); box-shadow: var(--btn-shadow); }
 .secondary:hover:not(:disabled) { background: var(--surface2); border-color: var(--text3); }
 .secondary:active:not(:disabled) { background: var(--sunken); }
 

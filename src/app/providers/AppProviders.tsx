@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { ApiError } from '@/lib/api';
 import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider } from './AuthProvider';
+import { PreferencesProvider } from './PreferencesProvider';
 import { ThemeProvider } from './ThemeProvider';
 
 function makeClient() {
@@ -25,7 +26,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={client}>
       <ThemeProvider>
         <ToastProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <PreferencesProvider>{children}</PreferencesProvider>
+          </AuthProvider>
         </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>

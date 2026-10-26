@@ -13,7 +13,9 @@ import { NotificationItem } from '@/features/notifications/NotificationItem';
 import { useMarkRead, useNotifications, useShellSummary } from '@/features/notifications/api';
 import { useAuth, useMe } from '../providers/AuthProvider';
 import { useTheme } from '../providers/ThemeProvider';
+import { usePreferences } from '../providers/PreferencesProvider';
 import { navFor, type NavItem } from './nav';
+import { useWorkspaceLook } from './useWorkspaceLook';
 import s from './AppShell.module.css';
 
 const COLLAPSE_KEY = 'acme-sidebar-collapsed';
@@ -340,6 +342,10 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
           <Icon name="user" size={18} />
           <span className={s.itemLabel}>My profile</span>
         </NavLink>
+        <NavLink to="/app/settings" onClick={onNavigate} className={({ isActive }) => cx(s.item, isActive && s.itemActive)} {...tipFor('Settings')}>
+          <Icon name="settings" size={18} />
+          <span className={s.itemLabel}>Settings</span>
+        </NavLink>
         {me.role !== 'employee' ? (
           <Link to="/" className={s.item} {...tipFor('Public careers site')}>
             <Icon name="public" size={18} />
@@ -411,6 +417,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
   const me = useMe();
   const { signOut } = useAuth();
   const { theme, toggle } = useTheme();
+  const { prefs } = usePreferences();
   const navigate = useNavigate();
   const location = useLocation();
   const summary = useShellSummary();
@@ -426,6 +433,8 @@ export function AppShell({ wide }: { wide?: boolean }) {
   });
   const live = summary.data?.liveMeeting;
   const inRoom = live && location.pathname.startsWith(`/app/interviews/${live.interviewId}/room`);
+  // The meeting keeps its own look; everything else in the workspace gets the modern layer.
+  useWorkspaceLook(!/^\/app\/interviews\/[^/]+\/room/.test(location.pathname));
 
   return (
     <div className={s.shell}>
@@ -471,7 +480,7 @@ export function AppShell({ wide }: { wide?: boolean }) {
             <ButtonLink size="sm" variant="secondary" to={`/app/interviews/${live.interviewId}/room`}>Back to meeting</ButtonLink>
           </div>
         ) : null}
-        <main id="main" className={cx(s.content, wide && s.contentWide)}>
+        <main id="main" key={prefs.timeFormat} className={cx(s.content, wide && s.contentWide)}>
           <Outlet />
         </main>
       </div>

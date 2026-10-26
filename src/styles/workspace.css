@@ -1,0 +1,219 @@
+/* The workspace look: a modern token layer.
+   It only applies while <html> has the `ws` class, which AppShell sets for every page in
+   the signed-in app except the meeting itself (see app/layouts/useWorkspaceLook.ts).
+   The careers site, sign-in screens and the meeting keep the tokens they already had.
+
+   Direction: cool paper, ink text, one electric-indigo action colour, soft layered depth,
+   generous radii, Figtree for type. Stage colours run one indigo ramp from slate (applied)
+   to deep indigo (offer), then green for hired: how far along someone is reads from colour.
+   Chart and stage ramps were run through the data-viz palette validator in both themes. */
+
+html.ws {
+  color-scheme: light;
+
+  --ink: #12152B;
+  --paper: #F5F6FB;
+  --sheet: #FFFFFF;
+  --rule: #E4E7F1;
+
+  --bg: var(--paper);
+  --surface: var(--sheet);
+  --surface2: #F3F4FA;
+  --sunken: #ECEEF6;
+  --border: var(--rule);
+  --border-strong: #CBD0E3;
+  --border-input: #858DA7;
+  --text: var(--ink);
+  --text2: #4A5070;
+  --text3: #5B6284;
+  --placeholder: #6B7290;
+
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --primary-fg: #FFFFFF;
+  --primary-subtle: #EEF0FF;
+  --primary-subtle-fg: #3730A3;
+  --primary-ring: rgba(79, 70, 229, .28);
+  --brand-grad: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  --jade: #4F46E5;
+
+  --success-bg: #E7F8F0;
+  --success-fg: #046C4E;
+  --success-border: #9BE3C4;
+  --success-solid: #059669;
+  --warning-bg: #FFF4DB;
+  --warning-fg: #8A4B00;
+  --warning-border: #F6CF7A;
+  --warning-solid: #D97706;
+  --danger-bg: #FFECEF;
+  --danger-fg: #B4132F;
+  --danger-border: #F8B4C0;
+  --danger-solid: #E11D48;
+  --danger-solid-fg: #FFFFFF;
+  --info-bg: #E6F0FF;
+  --info-fg: #1E429F;
+  --info-border: #B6CCFA;
+  --info-solid: #2563EB;
+  --teal-bg: #E1F6F4;
+  --teal-fg: #0F6B66;
+  --teal-border: #9ADAD4;
+  --teal-solid: #14948C;
+  --purple-bg: #F1ECFF;
+  --purple-fg: #5B35B5;
+  --purple-border: #D2C3F6;
+  --purple-solid: #7C4DDB;
+  --neutral-bg: #EEF0F6;
+  --neutral-fg: #4A5070;
+  --neutral-border: #D3D8E6;
+  --neutral-solid: #68708E;
+
+  --stage-new: #A7AED8;
+  --stage-screening: #8690E2;
+  --stage-interview: #6A73DD;
+  --stage-final: #5354D3;
+  --stage-offer: #4040AD;
+  --stage-hired: #059669;
+  --stage-rejected: #E11D48;
+
+  --scrim: rgba(14, 16, 38, .46);
+  --sh-xs: 0 1px 2px rgba(18, 21, 43, .05);
+  --sh-sm: 0 1px 2px rgba(18, 21, 43, .06), 0 1px 3px rgba(18, 21, 43, .06);
+  --sh-md: 0 10px 24px -10px rgba(18, 21, 43, .20), 0 2px 6px -2px rgba(18, 21, 43, .08);
+  --sh-lg: 0 30px 64px -18px rgba(18, 21, 43, .34), 0 10px 22px -10px rgba(18, 21, 43, .16);
+  --tooltip-bg: #12152B;
+  --tooltip-fg: #FFFFFF;
+
+  --font-sans: 'Figtree Variable', 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-tile: 12px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --sidebar-w: 268px;
+  --sidebar-w-collapsed: 76px;
+  --header-h: 64px;
+  --content-max: 1200px;
+
+  --chart-1: #4F46E5;
+  --chart-2: #EB6834;
+  --chart-3: #1BAF7A;
+  --chart-4: #EDA100;
+  --chart-5: #E87BA4;
+  --chart-6: #0284C7;
+  --chart-grid: #E8EAF3;
+  --chart-axis: #5B6284;
+
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+  --ease: cubic-bezier(.2, .7, .2, 1);
+
+  /* Component tokens: the shared components read these, and :root gives them a flat default. */
+  --card-shadow: var(--sh-xs);
+  --btn-fw: var(--fw-semibold);
+  --btn-shadow: var(--sh-xs);
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 1px 2px rgba(79, 70, 229, .35);
+  --ctrl-shadow: var(--sh-xs);
+  --badge-radius: var(--radius-full);
+  --chip-radius: var(--radius-full);
+  --modal-backdrop: blur(6px);
+}
+
+html.ws[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ink: #ECEFFB;
+  --paper: #0A0C16;
+  --sheet: #121528;
+  --rule: #232842;
+
+  --surface2: #181C33;
+  --sunken: #0D1020;
+  --border-strong: #343B5C;
+  --border-input: #5C6489;
+  --text2: #AEB5D3;
+  --text3: #8E96B8;
+  --placeholder: #7B83A6;
+
+  --primary: #8F91F8;
+  --primary-hover: #A8AAFF;
+  --primary-fg: #0B0C24;
+  --primary-subtle: #1E2147;
+  --primary-subtle-fg: #C3C5FF;
+  --primary-ring: rgba(143, 145, 248, .40);
+  --brand-grad: linear-gradient(135deg, #7C7FF5 0%, #A78BFA 100%);
+  --jade: #8F91F8;
+
+  --success-bg: #0F2E24;
+  --success-fg: #7BE0B5;
+  --success-border: #1F5A45;
+  --success-solid: #34D399;
+  --warning-bg: #33270E;
+  --warning-fg: #F5C76B;
+  --warning-border: #6A531C;
+  --warning-solid: #F5B544;
+  --danger-bg: #3A1520;
+  --danger-fg: #FF9DB0;
+  --danger-border: #74293D;
+  --danger-solid: #FB7185;
+  --danger-solid-fg: #1A0610;
+  --info-bg: #14233F;
+  --info-fg: #A9C5FF;
+  --info-border: #2A4573;
+  --info-solid: #7DA7FF;
+  --teal-bg: #0F2E2C;
+  --teal-fg: #82DAD3;
+  --teal-border: #1F5754;
+  --teal-solid: #3FCBBE;
+  --purple-bg: #271C45;
+  --purple-fg: #CDB8FF;
+  --purple-border: #473577;
+  --purple-solid: #A78BFA;
+  --neutral-bg: #1A1E34;
+  --neutral-fg: #AEB5D3;
+  --neutral-border: #343B5C;
+  --neutral-solid: #8E96B8;
+
+  --stage-new: #4144A3;
+  --stage-screening: #5458C8;
+  --stage-interview: #6A73DD;
+  --stage-final: #8690E2;
+  --stage-offer: #A7AED8;
+  --stage-hired: #34D399;
+  --stage-rejected: #FB7185;
+
+  --scrim: rgba(3, 4, 12, .72);
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, .40);
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, .45), 0 1px 3px rgba(0, 0, 0, .30);
+  --sh-md: 0 12px 26px -10px rgba(0, 0, 0, .65), 0 2px 6px -2px rgba(0, 0, 0, .45);
+  --sh-lg: 0 32px 70px -18px rgba(0, 0, 0, .80), 0 10px 22px -10px rgba(0, 0, 0, .55);
+  --tooltip-bg: #ECEFFB;
+  --tooltip-fg: #12152B;
+
+  --chart-1: #6B68EE;
+  --chart-2: #D95926;
+  --chart-3: #199E70;
+  --chart-4: #C98500;
+  --chart-5: #D55181;
+  --chart-6: #2F8FD0;
+  --chart-grid: #232842;
+  --chart-axis: #8E96B8;
+
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 2px rgba(0, 0, 0, .5);
+}
+
+/* ---- Preferences: density and reduced motion (set on <html> by PreferencesProvider) ---- */
+html.ws[data-density='compact'] {
+  --page-pad: 24px;
+  --compact-row: 44px;
+}
+html.ws[data-density='compact'] { --fs-body: 13.5px; --lh-body: 19px; --fs-small: 12.5px; --lh-small: 17px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.ws *, html.ws *::before, html.ws *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
+html.ws[data-motion='reduce'] *, html.ws[data-motion='reduce'] *::before, html.ws[data-motion='reduce'] *::after {
+  animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important;
+}
+html.ws[data-density='compact'] { --compact-trim: 28px; --content-pad-top: 24px; --radius-md: 12px; }

@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import type { PermissionKey, Role } from '@shared/domain/access';
 import { PageSpinner } from '@/components/ui/Feedback';
 import { useAuth } from './providers/AuthProvider';
+import { START_PAGE_PATHS, usePreferences } from './providers/PreferencesProvider';
 import { ForbiddenPage } from './system/StatusPages';
 
 /**
@@ -53,10 +54,23 @@ export function RequireCanPublish({ children }: { children?: ReactNode }) {
   return <>{children ?? <Outlet />}</>;
 }
 
+const START_FLAG = 'acme-start-page-used';
+const startPageUsed = () => { try { return Boolean(sessionStorage.getItem(START_FLAG)); } catch { return true; } };
+const markStartPageUsed = () => { try { sessionStorage.setItem(START_FLAG, '1'); } catch { /* nothing to remember */ } };
+
 /** /app itself: each role lands on its own home. */
 export function RoleLanding({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { prefs } = usePreferences();
+  const navigate = useNavigate();
+  // Once per sign-in, staff land on the page they chose in Settings. After that "Overview" means the overview.
+  const [redirecting] = useState(() => prefs.startPage !== 'overview' && !startPageUsed());
+  useEffect(() => {
+    if (!redirecting) return;
+    markStartPageUsed();
+    navigate(START_PAGE_PATHS[prefs.startPage], { replace: true });
+  }, [redirecting, navigate, prefs.startPage]);
   if (user?.role === 'super_admin') return <Navigate to="/app/admin/admins" replace />;
   if (user?.role === 'employee') return <Navigate to="/app/attendance" replace />;
-  return <>{children}</>;
+  return redirecting ? null : <>{children}</>;
 }

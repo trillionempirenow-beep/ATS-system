@@ -1,0 +1,64 @@
+.layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@container workspace (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+
+/* Theme picker: three cards, each with a small drawing of the app in that theme. */
+.themeGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@container workspace (max-width: 560px) { .themeGrid { grid-template-columns: 1fr; } }
+.themeCard {
+  position: relative; display: flex; flex-direction: column; gap: 12px; padding: 10px 10px 14px; text-align: left;
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text);
+  transition: border-color .15s var(--ease), box-shadow .15s var(--ease), transform .15s var(--ease);
+}
+.themeCard:hover { border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--sh-sm); }
+.themeCard:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.themeCardOn, .themeCardOn:hover { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); transform: none; }
+.themeText { display: flex; flex-direction: column; gap: 2px; padding: 0 4px; }
+.themeName { display: inline-flex; align-items: center; gap: 6px; font-weight: var(--fw-semibold); }
+.themeHint { font-size: var(--fs-small); color: var(--text3); }
+.tick {
+  position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--primary); color: var(--primary-fg); opacity: 0; transform: scale(.6); transition: opacity .15s var(--ease), transform .15s var(--ease);
+}
+.themeCardOn .tick { opacity: 1; transform: scale(1); }
+
+.swatch {
+  --sw-bg: #F5F6FB; --sw-side: #FFFFFF; --sw-card: #FFFFFF; --sw-line: #E4E7F1; --sw-bar: #CBD0E3; --sw-accent: #4F46E5;
+  display: grid; grid-template-columns: 22% 1fr; height: 78px; overflow: hidden; border-radius: var(--radius-sm);
+  background: var(--sw-bg); box-shadow: inset 0 0 0 1px var(--sw-line);
+}
+.swatchDark { --sw-bg: #0A0C16; --sw-side: #121528; --sw-card: #121528; --sw-line: #232842; --sw-bar: #343B5C; --sw-accent: #8F91F8; }
+.swatchPair { position: relative; display: block; }
+.swatchHalf { position: absolute; inset: 0; clip-path: inset(0 0 0 50%); }
+.swSide { background: var(--sw-side); border-right: 1px solid var(--sw-line); }
+.swSide::before { content: ''; display: block; width: 55%; height: 6px; margin: 10px 0 0 10px; border-radius: 3px; background: var(--sw-accent); }
+.swMain { display: flex; flex-direction: column; gap: 6px; padding: 10px; }
+.swBar { width: 45%; height: 6px; border-radius: 3px; background: var(--sw-bar); }
+.swCard { flex: 1; border-radius: 6px; background: var(--sw-card); box-shadow: inset 0 0 0 1px var(--sw-line); }
+
+/* Rows: a label with its control beside it. */
+.rows { display: flex; flex-direction: column; margin-top: 20px; border-top: 1px solid var(--border); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: 0; padding-bottom: 0; }
+.row > :first-child:not(.rowText) { flex: 1; }
+.rowText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rowText span { font-size: var(--fs-small); color: var(--text3); }
+@container workspace (max-width: 560px) { .row { flex-direction: column; align-items: flex-start; gap: 10px; } }
+
+.person { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
+.personText { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.personText span { font-size: var(--fs-small); color: var(--text3); }
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.note { margin: 12px 0 0; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text3); }
+
+/* Workspace tab */
+.fields { display: flex; flex-direction: column; gap: 16px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@container workspace (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+.preview {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 18px; border-radius: var(--radius-md);
+  background: var(--sunken); border: 1px solid var(--border);
+}
+.preview img { width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: contain; background: var(--surface); }
+.preview strong { display: block; }
+.preview span { font-size: var(--fs-small); color: var(--text2); }
