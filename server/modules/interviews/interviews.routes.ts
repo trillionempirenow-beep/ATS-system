@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
-  assistantChunkSchema, assistantToggleSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
+  assistantChunkSchema, assistantToggleSchema, recordingGrantSchema, recordingReportSchema, recordingSaveSchema, endMeetingSchema, guestDecisionSchema, guestJoinSchema, guestSessionSchema, liveNotesSchema, momentSchema, reviewSchema, scheduleInterviewSchema, scorecardDraftSchema, updateInterviewSchema,
 } from '../../../shared/api/interviews.js';
 import { body, idParam, parse } from '../../http/validate.js';
 import { requireStaff } from '../../middleware/guards.js';
@@ -10,6 +10,7 @@ import * as service from './interviews.service.js';
 import * as room from './room-access.service.js';
 import * as guests from './guest-access.service.js';
 import * as aiNotes from './interview-notes.service.js';
+import * as recordings from './interview-recordings.service.js';
 
 export const interviewsRouter = Router();
 
@@ -49,7 +50,7 @@ interviewsRouter.post('/interviews/:id/admit', async (req, res) => {
   res.json(ok);
 });
 
-// Final interviews: a host lets a waiting guest in, or turns them away.
+// Guests: a host lets a waiting guest in, or turns them away.
 interviewsRouter.post('/interviews/:id/guests/:guestId/decision', async (req, res) => {
   res.json({ data: await guests.decide(idParam(req), idParam(req, 'guestId'), body(req, guestDecisionSchema).decision, ctx(req)) });
 });
@@ -90,6 +91,19 @@ interviewsRouter.post('/interviews/:id/assistant/chunk', async (req, res) => {
   res.json({ data: await aiNotes.addChunk(idParam(req), body(req, assistantChunkSchema), req.auth!.user.id) });
 });
 
+interviewsRouter.post('/interviews/:id/recordings/grant', rateLimit({ name: 'recording-grant', max: 60, windowSeconds: 3600 }), async (req, res) => {
+  res.json({ data: await recordings.grant(idParam(req), req.auth!.user.id, body(req, recordingGrantSchema).mime) });
+});
+
+interviewsRouter.post('/interviews/:id/recordings', async (req, res) => {
+  res.status(201).json({ data: await recordings.save(idParam(req), req.auth!.user.id, body(req, recordingSaveSchema)) });
+});
+
+interviewsRouter.post('/interviews/:id/recordings/report', rateLimit({ name: 'recording-report', max: 60, windowSeconds: 3600 }), async (req, res) => {
+  await recordings.report(idParam(req), req.auth!.user.id, body(req, recordingReportSchema));
+  res.json(ok);
+});
+
 // ---- Candidate (interview token) ------------------------------------------
 const tokenOf = (req: Request) => parse(z.string().max(64), (req.body as { t?: unknown })?.t ?? req.query.t ?? '');
 const codeOf = (req: Request) => parse(z.string().regex(/^[A-Z0-9]{4,20}$/i), req.params.code).toUpperCase();
@@ -113,7 +127,7 @@ interviewsRouter.post('/room/:code/leave', roomLimit, async (req, res) => {
   res.json(ok);
 });
 
-// ---- Final-interview guest (guest link) ------------------------------------
+// ---- Interview guest (guest link) ------------------------------------------
 // Joining is limited harder than polling: each join puts a request in front of the hosts.
 const guestJoinLimit = rateLimit({ name: 'guest-join', max: 10, windowSeconds: 600 });
 const guestTokenOf = (req: Request) => parse(z.string().regex(/^[a-f0-9]{32}$/i), req.query.g ?? '');

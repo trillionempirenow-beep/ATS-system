@@ -24,6 +24,7 @@ interface Draft {
   interviewReminderMinutes: string;
   attendanceTimezone: string;
   attendanceGraceMinutes: string;
+  recordingRetentionDays: string;
 }
 
 const toDraft = (d: SettingsDto): Draft => ({
@@ -35,12 +36,14 @@ const toDraft = (d: SettingsDto): Draft => ({
   interviewReminderMinutes: String(d.interviewReminderMinutes),
   attendanceTimezone: d.attendanceTimezone,
   attendanceGraceMinutes: String(d.attendanceGraceMinutes),
+  recordingRetentionDays: String(d.recordingRetentionDays),
 });
 
 const NUMBER_RULES: Array<{ key: keyof Draft; min: number; max: number; label: string }> = [
   { key: 'interviewJoinWindowMinutes', min: 0, max: 240, label: 'Room opening time' },
   { key: 'interviewReminderMinutes', min: 5, max: 1440, label: 'Reminder time' },
   { key: 'attendanceGraceMinutes', min: 0, max: 120, label: 'Grace period' },
+  { key: 'recordingRetentionDays', min: 1, max: 3650, label: 'Recording retention' },
 ];
 
 const TIMEZONES = [
@@ -52,6 +55,7 @@ const TIMEZONES = [
 const JOIN_WINDOWS = [0, 5, 10, 15, 30, 60];
 const REMINDERS = [15, 30, 60, 120, 240, 1440];
 const GRACES = [0, 5, 10, 15, 30];
+const RETENTION = [30, 60, 90, 180, 365];
 
 const minutesLabel = (m: number) => (m === 0 ? 'Exactly at start time' : m >= 1440 ? '1 day before' : m >= 60 && m % 60 === 0 ? `${m / 60} hour${m === 60 ? '' : 's'} before` : `${m} minutes before`);
 
@@ -76,6 +80,7 @@ function WorkspaceForm({ data }: { data: SettingsDto }) {
     interviewJoinWindowMinutes: Number(f.interviewJoinWindowMinutes),
     interviewReminderMinutes: Number(f.interviewReminderMinutes),
     attendanceGraceMinutes: Number(f.attendanceGraceMinutes),
+    recordingRetentionDays: Number(f.recordingRetentionDays),
   }));
 
   const submit = () => {
@@ -146,6 +151,17 @@ function WorkspaceForm({ data }: { data: SettingsDto }) {
               />
             </Field>
           </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Meeting recordings" subtitle="How long recorded meetings are kept before they are deleted." />
+          <Field label="Keep recordings for" error={errors.recordingRetentionDays} hint="Counted from the day of the meeting. Deleted recordings cannot be brought back.">
+            <Select
+              value={f.recordingRetentionDays}
+              onChange={set('recordingRetentionDays')}
+              options={withCurrent(RETENTION, f.recordingRetentionDays).map((d) => ({ value: String(d), label: d === 365 ? '1 year' : `${d} days` }))}
+            />
+          </Field>
         </Card>
 
         <Card>

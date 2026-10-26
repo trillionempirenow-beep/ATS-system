@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import express, { Router } from 'express';
 import { createUploadSchema } from '../../../shared/api/uploads.js';
@@ -70,7 +70,7 @@ uploadsRouter.get('/jobs/:id/source-pdf', requireStaff, async (req, res) => {
 
 // Development-only endpoints backing the local storage driver.
 if (env.STORAGE_DRIVER === 'local') {
-  uploadsRouter.put('/uploads/local/:token', express.raw({ type: '*/*', limit: '12mb' }), async (req, res) => {
+  uploadsRouter.put('/uploads/local/:token', express.raw({ type: '*/*', limit: '30mb' }), async (req, res) => {
     const grant = verifyLocalGrant(String(req.params.token), 'put');
     if (!grant) throw new AppError(403, 'forbidden', 'Upload link expired.');
     const file = localStorageFile(grant.b, grant.p);
@@ -81,13 +81,17 @@ if (env.STORAGE_DRIVER === 'local') {
   uploadsRouter.get('/uploads/local/:token', async (req, res) => {
     const grant = verifyLocalGrant(String(req.params.token), 'get');
     if (!grant) throw new AppError(403, 'forbidden', 'Link expired.');
-    const data = await readFile(localStorageFile(grant.b, grant.p)).catch(() => null);
-    if (!data) throw notFound();
+    const file = path.resolve(localStorageFile(grant.b, grant.p));
+    if (!(await stat(file).catch(() => null))?.isFile()) throw notFound();
     const ext = path.extname(grant.p).slice(1);
-    const types: Record<string, string> = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+    const types: Record<string, string> = {
+      pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', webm: 'video/webm', mp4: 'video/mp4',
+    };
     res.set('Content-Type', types[ext] ?? 'application/octet-stream');
     res.set('Content-Security-Policy', 'sandbox');
     if (grant.n) res.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(grant.n)}`);
-    res.send(data);
+    // sendFile answers range requests, so recordings can be seeked.
+    res.sendFile(file, { dotfiles: 'allow' });
   });
 }

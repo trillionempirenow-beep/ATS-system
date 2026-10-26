@@ -8,6 +8,9 @@ import { Card, CardHeader } from '@/components/ui/Surface';
 import { formatDate, formatTime } from '@/lib/format';
 import { cx } from '@/lib/cx';
 import { QueryErrorPage } from '@/app/system/StatusPages';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { Recording as VideoPlayer } from '../../library/LibraryFileView';
+import { staffRecordingUrl } from '../../library/api';
 import { useRecordings } from '../api';
 import s from './Recordings.module.css';
 
@@ -36,7 +39,7 @@ function MomentsTrack({ rec }: { rec: RecordingDto }) {
   );
 }
 
-function Recording({ rec, query }: { rec: RecordingDto; query: string }) {
+function Recording({ rec, query, applicationId, canPlay }: { rec: RecordingDto; query: string; applicationId: number; canPlay: boolean }) {
   const [open, setOpen] = useState(false);
   const matches = query ? rec.transcript.filter((t) => t.text.toLowerCase().includes(query.toLowerCase())) : rec.transcript;
   const showTranscript = open || Boolean(query);
@@ -60,9 +63,21 @@ function Recording({ rec, query }: { rec: RecordingDto; query: string }) {
         </div>
         <div className={s.recBadges}>
           {rec.summary ? <Badge tone="purple" icon="sparkle" size="sm">AI summary</Badge> : <Badge tone="neutral" size="sm">No summary</Badge>}
+          {rec.parts.length ? <Badge tone="success" icon="video" size="sm">Video</Badge> : null}
           {rec.transcript.length ? <Badge tone="info" size="sm">{rec.transcript.length} transcript parts</Badge> : null}
         </div>
       </header>
+
+      {rec.parts.length ? (
+        <section className={s.block} aria-label="Video">
+          {canPlay ? (
+            <VideoPlayer
+              parts={rec.parts.map((p) => ({ id: p.id, seq: p.seq, durationSec: p.durationSec, sizeBytes: p.sizeBytes, startedAt: p.startedAt }))}
+              actions={{ documentUrl: () => Promise.reject(new Error('Not used here')), recordingUrl: (id) => staffRecordingUrl(applicationId, id), allowDownload: false }}
+            />
+          ) : <p className={s.locked}><Icon name="lock" size={14} />This meeting was recorded. Watching recordings needs the Library permission, which your account does not have.</p>}
+        </section>
+      ) : null}
 
       {rec.summary ? (
         <section className={s.block} aria-label="Summary">
@@ -140,6 +155,7 @@ function Recording({ rec, query }: { rec: RecordingDto; query: string }) {
 /** A library of what was kept from this candidate's meetings: summary, flagged moments and what was said. */
 export function RecordingsTab({ c }: { c: CandidateProfileDto }) {
   const q = useRecordings(c.applicationId, true);
+  const { can } = useAuth();
   const [search, setSearch] = useState('');
   const query = search.trim();
 
@@ -159,16 +175,16 @@ export function RecordingsTab({ c }: { c: CandidateProfileDto }) {
     <Card>
       <CardHeader
         title="Recordings"
-        subtitle={`${items.length} meeting${items.length === 1 ? '' : 's'} on record for ${c.firstName}. Audio and video are not stored: this is what was kept from each one.`}
+        subtitle={`${items.length} meeting${items.length === 1 ? '' : 's'} on record for ${c.firstName}: the video when it was recorded, the summary, flagged moments and what was said.`}
       />
       {items.length === 0 ? (
-        <EmptyState compact icon="video" title="No recordings yet" text="After a meeting in the Acme Room, its summary, flagged moments and transcript are kept here, for this candidate only." />
+        <EmptyState compact icon="video" title="No recordings yet" text="After a meeting in the Acme Room, its recording (if it was recorded), summary, flagged moments and transcript are kept here, for this candidate only." />
       ) : (
         <div className={s.lib}>
           <div className={s.search}>
             <TextInput icon="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search what was said, notes and moments" aria-label="Search recordings" />
           </div>
-          {shown.length ? shown.map((r) => <Recording key={r.interviewId} rec={r} query={query} />) : <p className={s.none}>No meeting matches “{query}”.</p>}
+          {shown.length ? shown.map((r) => <Recording key={r.interviewId} rec={r} query={query} applicationId={c.applicationId} canPlay={can.permission('library')} />) : <p className={s.none}>No meeting matches “{query}”.</p>}
         </div>
       )}
     </Card>

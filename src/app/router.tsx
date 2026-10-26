@@ -27,6 +27,7 @@ export const router = createBrowserRouter([
           { path: 'interview/:code/guest', element: page(() => import('@/features/room/GuestRoomPage'), 'GuestRoomPage') },
         ],
       },
+      { path: 'shared/:token', element: page(() => import('@/features/library/SharedFilePage'), 'SharedFilePage') },
       {
         element: <AuthLayout />,
         children: [

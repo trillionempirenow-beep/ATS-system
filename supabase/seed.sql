@@ -16,7 +16,7 @@ insert into users (id, name, email, password_hash, role, active, account_status,
 select setval(pg_get_serial_sequence('users','id'), 20);
 
 insert into user_permissions (user_id, permission, granted_by) values
-  (2,'manage_accounts',1),(2,'job_management',1),(2,'job_posting',1),(2,'audit_trail',1),(2,'applicant_portal',1),
+  (2,'manage_accounts',1),(2,'job_management',1),(2,'job_posting',1),(2,'audit_trail',1),(2,'applicant_portal',1),(2,'library',1),
   (3,'job_management',2),(3,'job_posting',2),(3,'audit_trail',2),
   (6,'job_management',2),(7,'job_management',2);
 

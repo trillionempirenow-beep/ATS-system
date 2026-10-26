@@ -231,6 +231,7 @@ export const recordingsFor = (candidateId: number) =>
     where a.candidate_id = ${candidateId}
       and (i.started_at is not null or i.ai_summary is not null
            or exists (select 1 from interview_transcripts t where t.interview_id = i.id)
+           or exists (select 1 from interview_recordings v where v.interview_id = i.id)
            or exists (select 1 from interview_moments m where m.interview_id = i.id))
     order by coalesce(i.started_at, i.starts_at) desc`;
 
@@ -244,3 +245,9 @@ export async function candidateIdForApplication(applicationId: number): Promise<
   const [row] = await sql<{ candidate_id: number }[]>`select candidate_id from applications where id = ${applicationId}`;
   return row?.candidate_id ?? null;
 }
+
+export const recordingPartsFor = (interviewIds: number[]) =>
+  interviewIds.length === 0
+    ? Promise.resolve([] as { id: number; interview_id: number; seq: number; duration_sec: number; size_bytes: number; started_at: Date }[])
+    : sql<{ id: number; interview_id: number; seq: number; duration_sec: number; size_bytes: number; started_at: Date }[]>`
+        select id, interview_id, seq, duration_sec, size_bytes, started_at from interview_recordings where interview_id in ${sql(interviewIds)} order by interview_id, seq`;

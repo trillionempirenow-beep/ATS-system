@@ -14,6 +14,7 @@ export const SETTING_DEFAULTS = {
   portal_accepting_applications: '1',
   portal_closed_message: '',
   interview_reminder_minutes: '60',
+  recording_retention_days: '90',
   ice_servers: '[{"urls":"stun:stun.l.google.com:19302"}]',
 } as const;
 

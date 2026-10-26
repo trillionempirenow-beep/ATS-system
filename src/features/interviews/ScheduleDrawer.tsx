@@ -32,6 +32,7 @@ interface Values {
   endsAt: string;
   notes: string;
   sendInvite: boolean;
+  recordMeeting: boolean;
 }
 const KNOWN = ['applicationId', 'interviewerId', 'meetingUrl', 'location', 'startsAt', 'endsAt'];
 
@@ -59,7 +60,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
     applicationId: applicationId ? String(applicationId) : '',
     meetingType: 'interview', interviewType: 'video', interviewerId: user ? String(user.id) : '',
     meetingMode: 'builtin', meetingProvider: 'Zoom', meetingUrl: '', location: '',
-    startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true,
+    startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true, recordMeeting: false,
   }), [applicationId, user]);
   const { register, handleSubmit, control, watch, reset, setError, setValue, formState: { errors } } = useForm<Values>({ defaultValues: defaults });
 
@@ -78,7 +79,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
   const interviewerId = watch('interviewerId');
   const meetingType = watch('meetingType');
   // Outside guests join through the built-in room's guest link.
-  const guestLink = meetingType === 'final' && format !== 'onsite' && mode === 'builtin';
+  const guestLink = format !== 'onsite' && mode === 'builtin';
   const clash = nearbyBooking(opts, interviewerId, watch('startsAt'));
   const clashName = opts?.interviewers.find((i) => String(i.id) === interviewerId)?.name;
   const interviewerKnown = opts?.interviewers.some((i) => String(i.id) === interviewerId);
@@ -109,9 +110,10 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
       notes: v.notes.trim(),
       sendInvite: v.sendInvite,
       finalInterview,
+      recordMeeting: !onsite && !external && v.recordMeeting,
     }, {
       onSuccess: (r) => {
-        toast.success(`${finalInterview ? 'Final interview' : 'Interview'} scheduled.${v.sendInvite ? deliveryNote(r) : ''}${r.guestLink ? ' Copy the guest link from the interview room.' : ''}`, 'Saved');
+        toast.success(`${finalInterview ? 'Final interview' : 'Interview'} scheduled.${v.sendInvite ? deliveryNote(r) : ''}${r.guestLink ? ' Copy the guest link from the interview room to invite managers.' : ''}`, 'Saved');
         onClose();
       },
       onError: (e) => setFormError(applyServerErrors(e, setError, KNOWN)),
@@ -169,9 +171,13 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
           {meetingType === 'final' ? (
             <Notice tone="info" title="Moves the candidate to Final interview">
               {guestLink
-                ? 'You get a shareable guest link for department heads or clients. Guests give their name and position and wait until someone in the room admits them.'
+                ? 'The interviewer gets a guest link for department heads or clients in the interview room. Guests give their name and position and wait until someone in the room admits them.'
                 : 'Guest links need the built-in Acme Room. With an external link or on-site, invite guests yourself.'}
             </Notice>
+          ) : null}
+          {format !== 'onsite' && mode === 'builtin' ? (
+            <Checkbox {...register('recordMeeting')} label="Record this interview"
+              description="Records everyone's camera and sound from the interviewer's browser, in the Library afterwards. Everyone is told before they join." />
           ) : null}
           <Field label="Notes" optional><Textarea rows={3} maxLength={2000} {...register('notes')} /></Field>
           <Checkbox {...register('sendInvite')} label="Email the invitation to the candidate" description={mode === 'builtin' && format !== 'onsite' ? 'Includes their private link to the Acme Room.' : 'Includes the time, format and meeting details.'} />

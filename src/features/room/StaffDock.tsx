@@ -60,6 +60,8 @@ export interface AiNotesPanel {
   state: 'off' | 'starting' | 'listening' | 'error';
   error: string | null;
   lastAt: string | null;
+  heard: Array<{ atSecond: number; text: string }>;
+  silent: boolean;
 }
 
 export function StaffDock({ room, tab, onTab, notes, moments, onFlag, elapsedSeconds, ai }: Props) {
@@ -105,6 +107,14 @@ export function StaffDock({ room, tab, onTab, notes, moments, onFlag, elapsedSec
             ) : null}
           </div>
           {ai.error && ai.on ? <p className={s.assistError} role="status">{ai.error} The next piece tries again.</p> : null}
+          {ai.on && !ai.error && ai.silent ? <p className={s.assistError} role="status">No speech in the last 30 seconds. If people were talking, check that your microphone is not muted.</p> : null}
+          {room.assistant.canUse && ai.on && ai.heard.length ? (
+            <div className={s.darkCard}>
+              <span className={s.overline}>Heard just now</span>
+              {ai.heard.map((h) => <div key={h.atSecond} className={s.moment}><time>{mmss(h.atSecond)}</time><span>{h.text}</span></div>)}
+              <p>Notes are only written when something matters for the decision, like experience, salary or availability.</p>
+            </div>
+          ) : null}
           {room.assistant.canUse ? (
             <div className={s.darkCard}>
               <span className={s.overline}>Notes so far</span>

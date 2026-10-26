@@ -4,7 +4,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '../config/env.js';
 import { hmac, safeEqual } from '../lib/crypto.js';
 
-export const BUCKETS = { resumes: 'resumes', photos: 'photos', jobDocuments: 'job-documents' } as const;
+export const BUCKETS = { resumes: 'resumes', photos: 'photos', jobDocuments: 'job-documents', recordings: 'recordings' } as const;
 export type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 export interface SignedUpload {

@@ -450,7 +450,7 @@ export async function recordings(applicationId: number, user: CurrentUser): Prom
   const candidateId = await repo.candidateIdForApplication(applicationId);
   if (candidateId === null) throw notFound('This application may have been removed.');
   const rows = await repo.recordingsFor(candidateId);
-  const transcripts = await repo.transcriptsFor(rows.map((r) => r.id));
+  const [transcripts, parts] = await Promise.all([repo.transcriptsFor(rows.map((r) => r.id)), repo.recordingPartsFor(rows.map((r) => r.id))]);
   const items = await Promise.all(rows.map(async (r): Promise<RecordingDto> => {
     const mine = r.interviewer_id === user.id;
     const [moments, notes] = await Promise.all([interviewRepo.momentsFor(r.id), mine ? interviewRepo.assistantNotesFor(r.id) : Promise.resolve([])]);
@@ -470,6 +470,7 @@ export async function recordings(applicationId: number, user: CurrentUser): Prom
       notes: notes.map((n) => ({ atSecond: n.at_second, topic: n.topic, text: n.text })),
       transcript: mine ? transcripts.filter((t) => t.interview_id === r.id).map((t) => ({ atSecond: t.at_second, text: t.text })) : [],
       detailLocked: !mine,
+      parts: parts.filter((x) => x.interview_id === r.id).map((x) => ({ id: x.id, seq: x.seq, durationSec: x.duration_sec, sizeBytes: Number(x.size_bytes), startedAt: isoOrThrow(x.started_at) })),
     };
   }));
   return { items };

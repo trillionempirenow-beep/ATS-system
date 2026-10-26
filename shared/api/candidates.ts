@@ -89,8 +89,8 @@ export interface CandidateInterviewRowDto {
 }
 
 /**
- * A meeting that was held, as it is kept: what was said (transcribed in short pieces), the notes
- * and flagged moments, and the summary written when it ended. Audio and video are not stored.
+ * A meeting that was held, as it is kept: the video when it was recorded (saved in short parts),
+ * what was said, the notes and flagged moments, and the summary written when it ended.
  */
 export interface RecordingDto {
   interviewId: number;
@@ -108,6 +108,8 @@ export interface RecordingDto {
   notes: AiNoteDto[];
   transcript: Array<{ atSecond: number; text: string }>;
   detailLocked: boolean;
+  /** The video, saved in short parts that play one after another. Empty when the meeting was not recorded. */
+  parts: Array<{ id: number; seq: number; durationSec: number; sizeBytes: number; startedAt: string }>;
 }
 export interface RecordingsDto { items: RecordingDto[] }
 

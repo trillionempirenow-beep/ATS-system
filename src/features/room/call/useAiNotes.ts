@@ -40,7 +40,10 @@ export function useAiNotes(opts: {
   const [state, setState] = useState<AiNotesState>(opts.enabled ? 'starting' : 'off');
   const [error, setError] = useState<string | null>(null);
   const [lastAt, setLastAt] = useState<string | null>(null);
-  const graph = useRef<{ ctx: AudioContext; dest: MediaStreamAudioDestinationNode; sources: Map<string, MediaStreamAudioSourceNode> } | null>(null);
+  /** What the last pieces sounded like, so the interviewer can see it is listening before any note appears. */
+  const [heard, setHeard] = useState<Array<{ atSecond: number; text: string }>>([]);
+  const [silent, setSilent] = useState(false);
+  const graph = useRef<{ ctx: AudioContext; dest: MediaStreamAudioDestinationNode; sources: Map<string, MediaStreamAudioSourceNode>; sinks: Map<string, HTMLAudioElement> } | null>(null);
   const elapsed = useRef(opts.elapsedSeconds);
   elapsed.current = opts.elapsedSeconds;
 
@@ -48,8 +51,11 @@ export function useAiNotes(opts: {
     if (blob.size < 2000) return; // silence or a stopped piece
     try {
       const audio = await toBase64(blob);
-      const r = await api.post<{ notes: AiNoteDto[] }>(`/interviews/${opts.interviewId}/assistant/chunk`, { audio, audioMime: mime, atSecond });
+      const r = await api.post<{ notes: AiNoteDto[]; heard?: string }>(`/interviews/${opts.interviewId}/assistant/chunk`, { audio, audioMime: mime, atSecond });
       if (r.notes.length) setNotes((list) => [...list, ...r.notes]);
+      const words = (r.heard ?? '').trim();
+      setSilent(!words);
+      if (words) setHeard((list) => [...list, { atSecond, text: words }].slice(-3));
       setLastAt(new Date().toISOString());
       setError(null);
       setState('listening');
@@ -67,7 +73,7 @@ export function useAiNotes(opts: {
     if (!mime) { setState('error'); setError('This browser cannot record audio for AI notes. Use Chrome or Edge.'); return undefined; }
     const ctx = new AudioContext();
     const dest = ctx.createMediaStreamDestination();
-    graph.current = { ctx, dest, sources: new Map() };
+    graph.current = { ctx, dest, sources: new Map(), sinks: new Map() };
     let stopped = false;
     let recorder: MediaRecorder | null = null;
     let timer: number | undefined;
@@ -88,6 +94,7 @@ export function useAiNotes(opts: {
       stopped = true;
       window.clearTimeout(timer);
       if (recorder && recorder.state !== 'inactive') recorder.stop();
+      for (const a of graph.current?.sinks.values() ?? []) a.srcObject = null;
       graph.current = null;
       void ctx.close().catch(() => undefined);
     };
@@ -104,11 +111,24 @@ export function useAiNotes(opts: {
     if (!g) return;
     const wanted = new Map(tracks.map(([id, t]) => [`${id}:${t.id}`, t]));
     for (const [k, node] of g.sources) {
-      if (!wanted.has(k)) { node.disconnect(); g.sources.delete(k); }
+      if (!wanted.has(k)) {
+        node.disconnect(); g.sources.delete(k);
+        const sink = g.sinks.get(k); if (sink) { sink.srcObject = null; g.sinks.delete(k); }
+      }
     }
     for (const [k, t] of wanted) {
       if (g.sources.has(k)) continue;
-      const node = g.ctx.createMediaStreamSource(new MediaStream([t]));
+      const stream = new MediaStream([t]);
+      // Chrome hands Web Audio silence for a remote call track unless a media element is
+      // also playing it; a muted element keeps the candidate's voice in the recording.
+      if (!k.startsWith('self:')) {
+        const sink = new Audio();
+        sink.muted = true;
+        sink.srcObject = stream;
+        void sink.play().catch(() => undefined);
+        g.sinks.set(k, sink);
+      }
+      const node = g.ctx.createMediaStreamSource(stream);
       node.connect(g.dest);
       g.sources.set(k, node);
     }
@@ -116,5 +136,5 @@ export function useAiNotes(opts: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, state]);
 
-  return { notes, state, error, lastAt };
+  return { notes, state, error, lastAt, heard, silent };
 }
