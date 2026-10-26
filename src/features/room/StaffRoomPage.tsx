@@ -357,7 +357,7 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
       onShare={() => void share()}
       emptyStage={(
         <div className={s.stageNote}>
-          <Avatar name={iv.candidateName} src={iv.avatarUrl} size={104} />
+          <span className={s.stageAvatar}><Avatar name={iv.candidateName} src={iv.avatarUrl} size={104} /></span>
           <strong>{pending ? `${pending.name} is in the waiting room` : `Waiting for ${iv.candidateName}`}</strong>
           <span>{pending ? 'Admit them from the banner above when you are ready.' : 'They will appear here once they join and you let them in.'}</span>
         </div>

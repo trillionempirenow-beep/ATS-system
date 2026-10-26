@@ -114,8 +114,8 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
       <div className={s.tileName} title={role ? `${label} · ${role}` : label}>
         <Icon name={micOn ? 'mic' : 'micoff'} size={small ? 13 : 15} />
         <b className={s.tileLabel}>{label}</b>{role ? <span>· {role}</span> : null}
-        {hand ? <Icon name="hand" size={15} /> : null}
       </div>
+      {hand ? <span className={s.handBadge} role="img" aria-label="Hand raised"><Icon name="hand" size={small ? 14 : 20} /></span> : null}
     </div>
   );
 }

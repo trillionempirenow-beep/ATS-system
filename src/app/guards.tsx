@@ -10,10 +10,10 @@ import { ForbiddenPage } from './system/StatusPages';
  * screen. They are a courtesy: every API call is authorised again on the server.
  */
 export function RequireAuth({ children }: { children?: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, signedOut } = useAuth();
   const location = useLocation();
   if (loading) return <PageSpinner />;
-  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  if (!user) return <Navigate to={signedOut ? '/login' : `/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   return <>{children ?? <Outlet />}</>;
 }
 
