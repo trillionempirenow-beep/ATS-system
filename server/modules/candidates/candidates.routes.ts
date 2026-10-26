@@ -42,6 +42,10 @@ candidatesRouter.get('/candidates/:id', async (req, res) => {
   res.json({ data: await service.profile(idParam(req)) });
 });
 
+candidatesRouter.get('/candidates/:id/recordings', async (req, res) => {
+  res.json({ data: await service.recordings(idParam(req), req.auth!.user) });
+});
+
 candidatesRouter.patch('/candidates/:id', async (req, res) => {
   await service.updateProfile(idParam(req), body(req, profileUpdateSchema), ctx(req));
   res.json(ok);

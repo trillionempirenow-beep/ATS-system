@@ -5,6 +5,7 @@ import {
 } from '../domain/pipeline.js';
 import type { DisplayInterviewState, InterviewType, MeetingType, Recommendation } from '../domain/interviews.js';
 import type { EmploymentType } from '../domain/jobs.js';
+import type { AiNoteDto, AiSummary } from './interviews.js';
 import type { EmployeeStatus } from '../domain/people.js';
 
 export const candidateListQuerySchema = z.object({
@@ -86,6 +87,29 @@ export interface CandidateInterviewRowDto {
   liveNotes: string | null;
   roomCode: string | null;
 }
+
+/**
+ * A meeting that was held, as it is kept: what was said (transcribed in short pieces), the notes
+ * and flagged moments, and the summary written when it ended. Audio and video are not stored.
+ */
+export interface RecordingDto {
+  interviewId: number;
+  meetingType: MeetingType;
+  interviewType: InterviewType;
+  startsAt: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  durationMinutes: number | null;
+  jobTitle: string;
+  interviewerName: string | null;
+  summary: AiSummary | null;
+  moments: Array<{ id: number; atSecond: number; label: string; author: string | null }>;
+  /** Short notes and the transcript are for the interviewer; everyone else sees the summary and moments. */
+  notes: AiNoteDto[];
+  transcript: Array<{ atSecond: number; text: string }>;
+  detailLocked: boolean;
+}
+export interface RecordingsDto { items: RecordingDto[] }
 
 export interface CandidateProfileDto {
   applicationId: number;

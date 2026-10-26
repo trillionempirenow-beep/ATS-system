@@ -18,11 +18,12 @@ import { ProfileTab } from './ProfileTab';
 import { ResumeTab } from './ResumeTab';
 import { AnalysisTab } from './AnalysisTab';
 import { InterviewsTab } from './InterviewsTab';
+import { RecordingsTab } from './RecordingsTab';
 import { ActivityTab } from './ActivityTab';
 import w from '../../workspace.module.css';
 import s from './Profile.module.css';
 
-const TABS = ['profile', 'resume', 'ai', 'interviews', 'activity'] as const;
+const TABS = ['profile', 'resume', 'ai', 'interviews', 'recordings', 'activity'] as const;
 type TabKey = (typeof TABS)[number];
 
 /** The stage rail for one application: what was reached (from the stage history), and how it ended. */
@@ -125,6 +126,7 @@ export function CandidateProfilePage() {
             { key: 'resume', label: 'Resume / CV', count: c.documents.length },
             { key: 'ai', label: 'AI analysis' },
             { key: 'interviews', label: 'Interview history', count: c.interviews.length },
+            { key: 'recordings', label: 'Recordings' },
             { key: 'activity', label: 'Activity' },
           ]}
         />
@@ -133,6 +135,7 @@ export function CandidateProfilePage() {
           {tab === 'resume' ? <ResumeTab c={c} /> : null}
           {tab === 'ai' ? <AnalysisTab c={c} /> : null}
           {tab === 'interviews' ? <InterviewsTab c={c} /> : null}
+          {tab === 'recordings' ? <RecordingsTab c={c} /> : null}
           {tab === 'activity' ? <ActivityTab c={c} /> : null}
         </div>
       </div>

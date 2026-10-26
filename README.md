@@ -3,11 +3,12 @@
 The Acme applicant tracking system, rebuilt from the PHP app as React + TypeScript on the front and a Node (Express) API on Supabase Postgres, deployable to Vercel.
 
 - **Careers site**: open roles, apply with CV parsing, application status, withdraw, referrals.
-- **Recruiting**: overview, drag-and-drop pipeline with stage rules, candidates and profiles (resume versions, analysis, notes, stage reviews), add candidate with CV auto-fill.
+- **Recruiting**: overview, drag-and-drop pipeline with stage rules, candidates and profiles (resume versions, analysis, notes, stage reviews, and a Recordings section with each meeting's summary, flagged moments and transcript), add candidate with CV auto-fill.
 - **Interviews**: scheduling (built-in room or external link), reminders, the Acme Room (waiting room, admit, video, screen share, chat, live notes, private scorecard), final interviews with a guest link for outside stakeholders (name and position on entry, admit or deny by any host), and reviews.
 - **Jobs**: postings with PDF import, the approval workflow, job management.
 - **People**: employees (including hired-candidate conversion) and attendance with review and CSV export.
-- **Administration**: Admins and seats (Super Admin), HR / Recruiter accounts, password reset approvals, applicant portal, audit trail, settings.
+- **Administration**: Admins and seats (Super Admin), HR / Recruiter accounts, password reset approvals, applicant portal, audit trail.
+- **Settings**: everyone sets their own theme (light, dark or match system), density, start page, time format and reduced motion; Admins also manage company details, hiring defaults, interview timing and attendance.
 - **Analytics**: personal and team views and the HR / Recruiter report, all from real data.
 
 **New here? Follow `SETUP.md`**: one step-by-step guide from unzip to live site.
@@ -103,7 +104,7 @@ npm run build          # typecheck + production build into dist/
    - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (server only), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
    - `STORAGE_DRIVER=supabase`, `REALTIME_DRIVER=supabase`
    - `EMAIL_PROVIDER` with its settings (`RESEND_API_KEY`, or the `SMTP_*` values), `EMAIL_FROM`
-5. **Video calls behind strict firewalls**: add a TURN server under Settings → Interview room connectivity. STUN alone connects most networks, but not all.
+5. **Video calls behind strict firewalls**: add a TURN relay with environment variables (`CLOUDFLARE_TURN_KEY_ID` and `CLOUDFLARE_TURN_API_TOKEN`, or `TURN_URLS`, `TURN_USERNAME`, `TURN_CREDENTIAL`). See "Video calls across networks (TURN relay)" in `SETUP.md`. STUN alone connects most networks, but not all.
 6. **Reminders**: Vercel Cron calls `/api/v1/cron/interview-reminders` daily (the Hobby plan limit). For reminders an hour before each interview, call that URL every 15 minutes from n8n or any scheduler, with `Authorization: Bearer <CRON_SECRET>`.
 
 Secrets stay on the server. The browser only receives the Supabase URL and the anon key, and with RLS on and no policies, that key can't read or write any table. Realtime channel names are unguessable HMAC keys issued by the API, and only to people allowed to join.

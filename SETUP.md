@@ -379,7 +379,7 @@ If anything fails, nothing is saved, and you can fix the problem and run it agai
 - **Reminders closer to interview time.** The free Vercel plan sends reminders once a day. For reminders about an hour before, use a free scheduler such as https://cron-job.org to call this every 15 minutes:
   - URL: `https://YOUR-SITE/api/v1/cron/interview-reminders`
   - Header: `Authorization: Bearer <your CRON_SECRET>`
-- **Video calls on strict company networks.** Add a TURN server in the app under **Settings → Interview room connectivity**.
+- **Video calls on strict company networks.** Add a TURN relay with environment variables (see "Video calls across networks (TURN relay)" above).
 - **n8n automations.** In Vercel set `N8N_ENABLED=true` and `N8N_WEBHOOK_URL=https://your-n8n/webhook/...`. The ATS works fine without it.
 
 ---

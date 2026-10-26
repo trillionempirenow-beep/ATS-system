@@ -7,7 +7,7 @@ import { jobTags } from '../../../shared/domain/jobs.js';
 import { interviewDisplayState } from '../../../shared/domain/interviews.js';
 import { formatBytes } from '../../../shared/api/uploads.js';
 import type {
-  ActivityDto, AddCandidateResultDto, CandidateListDto, CandidateProfileDto, ParseCvResultDto,
+  ActivityDto, AddCandidateResultDto, CandidateListDto, CandidateProfileDto, ParseCvResultDto, RecordingDto, RecordingsDto,
   addCandidateSchema, candidateListQuerySchema, convertEmployeeSchema, feedbackSchema, profileUpdateSchema, stageReviewSchema, suggestionSchema,
 } from '../../../shared/api/candidates.js';
 import { sql, transaction } from '../../db/client.js';
@@ -28,6 +28,7 @@ import { consumeUpload } from '../uploads/uploads.service.js';
 import { analyseApplication } from './application-analysis.js';
 import { analyseApplicationOnce, inBackground, matchingEnabled } from '../matching/matching.service.js';
 import * as repo from './candidates.repository.js';
+import * as interviewRepo from '../interviews/interviews.repository.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -439,4 +440,37 @@ export async function addCandidate(input: z.infer<typeof addCandidateSchema>, ct
 
 export async function openJobsForForms() {
   return sql<{ id: number; title: string }[]>`select id, title from jobs where status = 'open' order by title`;
+}
+
+/**
+ * Everything kept from this candidate's meetings. The transcript and the AI's short notes are
+ * the interviewer's (as in the room); the summary and the flagged moments are part of the review.
+ */
+export async function recordings(applicationId: number, user: CurrentUser): Promise<RecordingsDto> {
+  const candidateId = await repo.candidateIdForApplication(applicationId);
+  if (candidateId === null) throw notFound('This application may have been removed.');
+  const rows = await repo.recordingsFor(candidateId);
+  const transcripts = await repo.transcriptsFor(rows.map((r) => r.id));
+  const items = await Promise.all(rows.map(async (r): Promise<RecordingDto> => {
+    const mine = r.interviewer_id === user.id;
+    const [moments, notes] = await Promise.all([interviewRepo.momentsFor(r.id), mine ? interviewRepo.assistantNotesFor(r.id) : Promise.resolve([])]);
+    const minutes = r.started_at && r.ended_at ? Math.max(1, Math.round((r.ended_at.getTime() - r.started_at.getTime()) / 60_000)) : null;
+    return {
+      interviewId: r.id,
+      meetingType: r.meeting_type,
+      interviewType: r.interview_type,
+      startsAt: isoOrThrow(r.starts_at),
+      startedAt: iso(r.started_at),
+      endedAt: iso(r.ended_at),
+      durationMinutes: minutes,
+      jobTitle: r.job_title,
+      interviewerName: r.interviewer_name,
+      summary: r.ai_summary,
+      moments: moments.map((m) => ({ id: m.id, atSecond: m.at_second, label: m.label, author: m.author })),
+      notes: notes.map((n) => ({ atSecond: n.at_second, topic: n.topic, text: n.text })),
+      transcript: mine ? transcripts.filter((t) => t.interview_id === r.id).map((t) => ({ atSecond: t.at_second, text: t.text })) : [],
+      detailLocked: !mine,
+    };
+  }));
+  return { items };
 }

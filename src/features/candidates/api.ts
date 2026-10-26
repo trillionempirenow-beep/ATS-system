@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CandidateListDto, CandidateProfileDto } from '@shared/api/candidates';
+import type { CandidateListDto, CandidateProfileDto, RecordingsDto } from '@shared/api/candidates';
 import { api, qs } from '@/lib/api';
 
 export function useCandidates(filters: Record<string, string | undefined>) {
@@ -14,6 +14,15 @@ export function useCandidate(applicationId: number) {
   return useQuery({
     queryKey: ['candidate', applicationId],
     queryFn: () => api.get<CandidateProfileDto>(`/candidates/${applicationId}`),
+  });
+}
+
+/** What was kept from this candidate's meetings (loaded only when the Recordings section is open). */
+export function useRecordings(applicationId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['candidate', applicationId, 'recordings'],
+    queryFn: () => api.get<RecordingsDto>(`/candidates/${applicationId}/recordings`),
+    enabled,
   });
 }
 

@@ -4,6 +4,7 @@ import type { EmploymentType } from '../../../shared/domain/jobs.js';
 import type { EmployeeStatus } from '../../../shared/domain/people.js';
 import type { InterviewStatus, InterviewType, MeetingState, MeetingType, Recommendation } from '../../../shared/domain/interviews.js';
 import type { CandidateListQuery } from '../../../shared/api/candidates.js';
+import type { AiSummary } from '../../../shared/api/interviews.js';
 
 export const PAGE_SIZE = 25;
 
@@ -203,4 +204,43 @@ export async function applicationBasics(applicationId: number, db: Db = sql) {
            a.cover_letter, a.why_us, c.portfolio_url, c.resume_path, j.tags as job_tags
     from applications a join candidates c on c.id = a.candidate_id join jobs j on j.id = a.job_id where a.id = ${applicationId}`;
   return row ?? null;
+}
+
+export interface RecordingRow {
+  id: number;
+  meeting_type: MeetingType;
+  interview_type: InterviewType;
+  starts_at: Date;
+  started_at: Date | null;
+  ended_at: Date | null;
+  interviewer_id: number | null;
+  interviewer_name: string | null;
+  job_title: string;
+  ai_summary: AiSummary | null;
+}
+
+/** Meetings that actually happened (or left something behind), newest first. */
+export const recordingsFor = (candidateId: number) =>
+  sql<RecordingRow[]>`
+    select i.id, i.meeting_type, i.interview_type, i.starts_at, i.started_at, i.ended_at, i.interviewer_id, u.name as interviewer_name,
+           j.title as job_title, i.ai_summary
+    from interviews i
+    join applications a on a.id = i.application_id
+    join jobs j on j.id = a.job_id
+    left join users u on u.id = i.interviewer_id
+    where a.candidate_id = ${candidateId}
+      and (i.started_at is not null or i.ai_summary is not null
+           or exists (select 1 from interview_transcripts t where t.interview_id = i.id)
+           or exists (select 1 from interview_moments m where m.interview_id = i.id))
+    order by coalesce(i.started_at, i.starts_at) desc`;
+
+export const transcriptsFor = (interviewIds: number[]) =>
+  interviewIds.length === 0
+    ? Promise.resolve([] as { interview_id: number; at_second: number; text: string }[])
+    : sql<{ interview_id: number; at_second: number; text: string }[]>`
+        select interview_id, at_second, text from interview_transcripts where interview_id in ${sql(interviewIds)} order by interview_id, at_second`;
+
+export async function candidateIdForApplication(applicationId: number): Promise<number | null> {
+  const [row] = await sql<{ candidate_id: number }[]>`select candidate_id from applications where id = ${applicationId}`;
+  return row?.candidate_id ?? null;
 }
