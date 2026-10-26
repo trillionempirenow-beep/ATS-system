@@ -9,7 +9,8 @@ export async function brand(): Promise<Brand> {
   return {
     company: s.company_name || 'Acme',
     appUrl: env.APP_URL.replace(/\/$/, ''),
-    logoUrl: logo ? (/^https?:\/\//.test(logo) ? logo : `${env.APP_URL.replace(/\/$/, '')}/${logo.replace(/^\//, '')}`) : null,
+    logoUrl: logo ? (/^https?:\/\//.test(logo) ? logo : `${env.APP_URL.replace(/\/$/, '')}/${logo.replace(/^\//, '')}`) : `${env.APP_URL.replace(/\/$/, '')}/logo-email.png`,
+    logoIsDefault: !logo,
     supportEmail: env.EMAIL_REPLY_TO ?? null,
   };
 }

@@ -33,11 +33,18 @@ export function Icon({ name, size = 18, className, style, label }: IconProps) {
   );
 }
 
+/** The Acme logo. `size` is its height; it is wider than tall (about 1.4 : 1), so the width follows. */
+export const BRAND_LOGO_RATIO = 1.404;
 export function BrandMark({ size = 32, label = 'Acme logo' }: { size?: number; label?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" role="img" aria-label={label} style={{ flex: 'none' }}>
-      <rect width="32" height="32" rx="9" fill="var(--primary)" />
-      <path d="M9 23 16 8l7 15M11.9 18h8.2" fill="none" stroke="var(--primary-fg)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <img
+      src="/logo.webp"
+      width={Math.round(size * BRAND_LOGO_RATIO)}
+      height={size}
+      alt={label}
+      decoding="async"
+      draggable={false}
+      style={{ flex: 'none', display: 'block', width: 'auto', height: size }}
+    />
   );
 }

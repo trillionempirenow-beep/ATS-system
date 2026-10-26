@@ -46,7 +46,7 @@ export function PublicLayout() {
       <a href="#main" className="skip-link">Skip to content</a>
       <header className={s.header}>
         <Link to="/" className={s.logo} aria-label={`${company} careers home`}>
-          <BrandMark size={28} label={`${company} logo`} />
+          <BrandMark size={34} label={`${company} logo`} />
           <span>{company}<em>/</em>careers</span>
         </Link>
         <nav className={s.nav} aria-label="Careers">
@@ -72,7 +72,7 @@ export function PublicLayout() {
       <footer className={s.footer}>
         <div className={s.footerInner}>
           <div className={s.footerBrand}>
-            <div className={s.logo}><BrandMark size={24} label={`${company} logo`} /><span>{company}<em>/</em>careers</span></div>
+            <div className={s.logo}><BrandMark size={28} label={`${company} logo`} /><span>{company}<em>/</em>careers</span></div>
             <p className={s.footerText}>Small teams, big ownership. Interviews run inside {company}, and you can track every application.</p>
           </div>
           <div className={s.footerCols}>

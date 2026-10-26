@@ -7,7 +7,7 @@
 /* Logo left, toggle right. The toggle stays pinned to the right edge, so as the width animates it slides into
    the rail and lands centred over the nav icons (15px + 40px + 16px = the 71px rail inside its border). */
 .brand { display: flex; align-items: center; justify-content: space-between; height: var(--header-h); padding: 0 18px 0 17px; border-bottom: 1px solid var(--border); flex: none; }
-.brand svg { filter: drop-shadow(0 4px 8px color-mix(in srgb, var(--primary) 35%, transparent)); border-radius: 10px; }
+.brand img { filter: drop-shadow(0 4px 10px color-mix(in srgb, #1A6BFF 30%, transparent)); }
 .brandLogo { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; overflow: hidden; transition: opacity 0.2s ease 0.1s; }
 .brandText { display: flex; flex-direction: column; min-width: 0; }
 .toggleBtn {

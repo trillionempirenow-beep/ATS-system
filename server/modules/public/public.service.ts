@@ -29,7 +29,7 @@ export async function publicConfig(): Promise<PublicConfigDto> {
   return {
     companyName: b.company,
     careersHeadline: s.careers_headline || 'Do the best work of your career.',
-    logoUrl: b.logoUrl,
+    logoUrl: b.logoIsDefault ? null : b.logoUrl,
     acceptingApplications: s.portal_accepting_applications !== '0',
     closedMessage: s.portal_closed_message || 'We are not accepting applications at the moment. Please check back soon.',
   };

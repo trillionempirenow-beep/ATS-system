@@ -262,7 +262,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
     <aside id={SIDEBAR_ID} ref={asideRef} className={cx(s.sidebar, rail && s.collapsed, drawerOpen && s.drawerOpen)} aria-label="Main navigation">
       <div className={s.brand}>
         <div className={s.brandLogo} aria-hidden={rail || undefined}>
-          <BrandMark size={32} />
+          <BrandMark size={36} />
           <span className={s.brandText}>
             <span className={s.brandName}>Acme<em>/</em>people</span>
             <span className={s.brandRole}>{me.roleLabel}</span>
@@ -278,7 +278,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
           {...(mobile ? undefined : tipBind(toggleLabel))}
         >
           {/* Collapsed: the logo holds the toggle's place and gives way to the icon on hover or focus. */}
-          {rail ? <span className={s.toggleLogo} aria-hidden="true"><BrandMark size={32} /></span> : null}
+          {rail ? <span className={s.toggleLogo} aria-hidden="true"><BrandMark size={28} /></span> : null}
           <Icon className={s.toggleIcon} name={rail ? 'panelopen' : 'panelclose'} size={20} />
         </button>
       </div>

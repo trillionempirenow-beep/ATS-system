@@ -12,6 +12,8 @@ export interface Brand {
   company: string;
   appUrl: string;
   logoUrl: string | null;
+  /** True when no custom logo is set: the wide Acme logo is shown at its own proportions. */
+  logoIsDefault?: boolean;
   supportEmail: string | null;
 }
 
@@ -103,7 +105,9 @@ function blockText(b: Block): string {
 /** One responsive, table-based layout shared by every transactional email. */
 export function renderEmail(brand: Brand, subject: string, preheader: string, blocks: Block[]): RenderedEmail {
   const logo = brand.logoUrl
-    ? `<img src="${esc(brand.logoUrl)}" width="32" height="32" alt="${esc(brand.company)}" style="display:block;border-radius:8px">`
+    ? brand.logoIsDefault
+      ? `<img src="${esc(brand.logoUrl)}" width="51" height="36" alt="${esc(brand.company)}" style="display:block">`
+      : `<img src="${esc(brand.logoUrl)}" width="32" height="32" alt="${esc(brand.company)}" style="display:block;border-radius:8px">`
     : `<div style="width:32px;height:32px;border-radius:8px;background:${C.primary};color:#fff;font:700 16px/32px ${FONT};text-align:center">${esc(brand.company.charAt(0))}</div>`;
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

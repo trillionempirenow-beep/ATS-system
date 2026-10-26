@@ -3,6 +3,7 @@ import { Link, Outlet } from 'react-router-dom';
 import { BrandMark, Icon, type IconName } from '@/components/icon/Icon';
 import { IconButton } from '@/components/ui/Button';
 import { useTheme } from '../providers/ThemeProvider';
+import { AuthArt } from './AuthArt';
 import { useLegacyLook } from './useLegacyLook';
 import s from './AuthLayout.module.css';
 
@@ -19,7 +20,11 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
   return (
     <div className={s.split}>
       <section className={s.brand} aria-label="Acme People">
-        <div className={s.logo}><BrandMark size={32} /><span>Acme<em>/</em>people</span></div>
+        <div className={s.logo}>
+          <span className={s.logoTile}><BrandMark size={38} /></span>
+          <span className={s.wordmark}>Acme<em>/</em>people</span>
+        </div>
+        <div className={s.stage}><AuthArt /></div>
         <div className={s.pitch}>
           <h1>Welcome back</h1>
           <p>Pick up where the team left off: candidates, interviews and approvals, all in one place.</p>
