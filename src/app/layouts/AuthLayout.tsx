@@ -21,7 +21,7 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
     <div className={s.split}>
       <section className={s.brand} aria-label="Acme People">
         <div className={s.logo}>
-          <span className={s.logoTile}><BrandMark size={38} /></span>
+          <BrandMark size={44} src="/logo-light.webp" />
           <span className={s.wordmark}>Acme<em>/</em>people</span>
         </div>
         <div className={s.stage}><AuthArt /></div>

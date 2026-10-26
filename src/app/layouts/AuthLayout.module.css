@@ -13,11 +13,8 @@
   background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.4px); background-size: 26px 26px;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 70%); mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
 }
-.logo { display: flex; align-items: center; gap: 12px; }
-.logoTile {
-  display: inline-flex; align-items: center; justify-content: center; padding: 7px 12px; border-radius: 16px; background: #fff;
-  box-shadow: 0 10px 28px -8px rgba(2, 8, 36, 0.55);
-}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo img { filter: drop-shadow(0 6px 18px rgba(26, 107, 255, 0.55)); }
 .wordmark { font-weight: 700; font-size: 21px; letter-spacing: -0.02em; }
 .wordmark em { font-style: normal; color: var(--brand-panel-accent); font-weight: 500; }
 .stage { flex: 1 1 0; min-height: 260px; display: flex; align-items: center; justify-content: center; padding: 4px 0; }
@@ -38,7 +35,6 @@
   .split { flex-direction: column; }
   .brand { flex: none; padding: 20px; gap: 16px; }
   .stage { display: none; }
-  .logoTile { padding: 5px 9px; border-radius: 13px; }
   .wordmark { font-size: 18px; }
   .pitch h1 { font-size: 28px; line-height: 36px; }
   .pitch p { font-size: 15px; line-height: 23px; }

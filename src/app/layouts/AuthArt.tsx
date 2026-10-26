@@ -60,24 +60,10 @@ export function AuthArt() {
         {/* candidate */}
         <g clipPath="url(#aa-clipA)">
           <rect x="92" y="118" width="190" height="170" fill="url(#aa-tileA)" />
-          <circle cx="187" cy="200" r="86" fill="url(#aa-glow)" />
-          {/* back hair */}
-          <path d="M153 196c-3 24 4 44 18 52h32c14-8 21-28 18-52z" fill="#2B1B17" />
-          {/* blouse */}
-          <path d="M104 290c0-36 32-52 83-52s83 16 83 52z" fill="#F1F6FF" />
-          <path d="M168 238l19 24 19-24z" fill="#E9B891" />
-          {/* neck + head */}
-          <rect x="177" y="220" width="20" height="22" rx="8" fill="#E9B891" />
-          <circle cx="187" cy="196" r="31" fill="#F4C9A8" />
-          {/* front hair + bun */}
-          <path d="M155 198c-5-34 21-52 36-52 24 0 37 22 31 54-3-16-14-28-32-28-17 0-29 12-35 26z" fill="#2B1B17" />
-          <circle cx="214" cy="150" r="12" fill="#2B1B17" />
-          {/* face */}
-          <circle cx="177" cy="199" r="2.3" fill="#2B1B17" />
-          <circle cx="197" cy="199" r="2.3" fill="#2B1B17" />
-          <path d="M178 210q9 8 18 0" stroke="#A8574B" strokeWidth="2" strokeLinecap="round" fill="none" />
-          <circle cx="170" cy="207" r="5" fill="#F29A8E" opacity="0.35" />
-          <circle cx="204" cy="207" r="5" fill="#F29A8E" opacity="0.35" />
+          <circle cx="187" cy="190" r="84" fill="url(#aa-glow)" />
+          <circle cx="187" cy="190" r="48" fill="#DCE8FF" />
+          <circle cx="187" cy="190" r="48" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="3" />
+          <text x="187" y="201" textAnchor="middle" fill="#1D4ED8" fontSize="30" fontWeight="700">MC</text>
         </g>
         <rect x="92" y="118" width="190" height="170" rx="14" fill="none" stroke="#8EC1FF" strokeWidth="2.5" />
         <rect x="102" y="256" width="104" height="24" rx="12" fill="#06113A" fillOpacity="0.62" />
@@ -91,20 +77,9 @@ export function AuthArt() {
         {/* interviewer */}
         <g clipPath="url(#aa-clipB)">
           <rect x="294" y="118" width="164" height="170" fill="url(#aa-tileB)" />
-          <circle cx="376" cy="204" r="78" fill="url(#aa-glow)" opacity="0.8" />
-          <path d="M298 290c0-36 28-50 78-50s78 14 78 50z" fill="#1B2747" />
-          <path d="M358 240l18 28 18-28z" fill="#F1F6FF" />
-          <rect x="367" y="222" width="18" height="22" rx="7" fill="#C98C66" />
-          <circle cx="376" cy="200" r="29" fill="#DCA57F" />
-          <path d="M347 196c-3-28 13-42 30-42 19 0 31 14 29 40-6-14-14-20-29-20-14 0-24 6-30 22z" fill="#17171C" />
-          <g stroke="#0B1B3F" strokeWidth="2" fill="#FFFFFF" fillOpacity="0.12">
-            <circle cx="365" cy="201" r="8" />
-            <circle cx="387" cy="201" r="8" />
-            <path d="M373 201h6" fill="none" />
-          </g>
-          <circle cx="365" cy="201" r="2.1" fill="#17171C" />
-          <circle cx="387" cy="201" r="2.1" fill="#17171C" />
-          <path d="M367 214q9 7 18 0" stroke="#8A4A3C" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <circle cx="376" cy="190" r="78" fill="url(#aa-glow)" opacity="0.8" />
+          <circle cx="376" cy="190" r="44" fill="#CDEFE6" />
+          <text x="376" y="200" textAnchor="middle" fill="#0F766E" fontSize="27" fontWeight="700">DR</text>
         </g>
         <rect x="304" y="256" width="108" height="24" rx="12" fill="#06113A" fillOpacity="0.62" />
         <circle cx="318" cy="268" r="3.5" fill="#fff" opacity="0.8" />
