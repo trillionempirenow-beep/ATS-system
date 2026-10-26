@@ -8,9 +8,9 @@ import { useLegacyLook } from './useLegacyLook';
 import s from './AuthLayout.module.css';
 
 const POINTS: Array<[IconName, string]> = [
-  ['shield', 'Role-based access control'],
-  ['lock', 'Encrypted session, HTTP-only cookie'],
-  ['layers', 'Every action written to the audit trail'],
+  ['candidates', 'See every applicant and where they are in hiring'],
+  ['video', 'Schedule interviews and meet on video, right here'],
+  ['chat', 'Keep notes and feedback together for your team'],
 ];
 
 /** Split brand panel and form, for sign in, reset and session-ended screens. */
