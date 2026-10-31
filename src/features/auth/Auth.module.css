@@ -3,7 +3,7 @@
 .sub { color: var(--text2); }
 .form { display: flex; flex-direction: column; gap: 16px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.link { color: var(--primary); font-weight: 600; font-size: 14px; }
+.link { display: inline-flex; align-items: center; min-height: 24px; color: var(--primary); font-weight: 600; font-size: 14px; }
 .link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .foot { font-size: 13px; line-height: 20px; color: var(--text3); text-align: center; }
 .stateIcon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }

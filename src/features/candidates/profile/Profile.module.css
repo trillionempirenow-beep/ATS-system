@@ -1,4 +1,4 @@
-.header { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+.header { display: flex; flex-direction: column; gap: 16px; padding: var(--card-pad); }
 .headTop { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .headInfo { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
 .name { font-size: var(--fs-heading); line-height: 34px; font-weight: var(--fw-semibold); letter-spacing: -0.015em; }
@@ -6,7 +6,7 @@
 .headActions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .aiPill { display: inline-flex; align-items: center; gap: 8px; height: 22px; padding: 0 8px; border-radius: var(--radius-xs); background: var(--purple-bg); color: var(--purple-fg); font-size: var(--fs-caption); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
 
-.rail { margin: 0 -24px -24px; padding: 16px 24px 24px; border-top: 1px solid var(--border); }
+.rail { margin: 0 calc(-1 * var(--card-pad)) calc(-1 * var(--card-pad)); padding: 16px var(--card-pad) var(--card-pad); border-top: 1px solid var(--border); }
 
 .tabBody { padding-top: 24px; }
 .chipRow { display: flex; gap: 8px; flex-wrap: wrap; }

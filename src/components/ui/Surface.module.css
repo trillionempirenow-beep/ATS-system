@@ -75,11 +75,12 @@ td.alignRight > a[class*="_ghost_"], td.alignRight > button[class*="_ghost_"] { 
   .responsive thead { display: none; }
   .responsive, .responsive tbody, .responsive tr, .responsive td { display: block; width: 100%; }
   .responsive tr { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-  .responsive td { height: auto; padding: 4px 0; border: 0; }
+  .responsive td, .responsive td:first-child, .responsive td:last-child { height: auto; padding: 4px 0; border: 0; }
   .responsive td[data-label]::before { content: attr(data-label); display: block; font-size: var(--fs-caption); color: var(--text3); }
   .responsive td[data-primary] { font-size: var(--fs-body); }
   .responsive td[data-primary]::before { display: none; }
   .responsive .alignRight { text-align: left !important; }
+  .responsive td > a[class*="_ghost_"], .responsive td > button[class*="_ghost_"] { margin-left: -12px; margin-right: 0; }
 }
 
 /* Tabs: switching between views of the same thing. A soft rail with a raised active tab. */

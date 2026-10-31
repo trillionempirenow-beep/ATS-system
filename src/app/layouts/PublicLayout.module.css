@@ -15,9 +15,9 @@
 .footerBrand { display: flex; flex-direction: column; gap: 12px; max-width: 320px; }
 .footerText { color: var(--text2); font-size: 14px; line-height: 22px; }
 .footerCols { display: flex; gap: 72px; align-items: flex-start; flex-wrap: wrap; }
-.footerCol { display: flex; flex-direction: column; gap: 10px; }
+.footerCol { display: flex; flex-direction: column; gap: 6px; }
 .footerCol strong { font-size: 13px; }
-.footerCol a { color: var(--text2); font-size: 14px; }
+.footerCol a { display: inline-flex; align-items: center; align-self: flex-start; min-height: 24px; color: var(--text2); font-size: 14px; }
 .footerCol a:hover { color: var(--text); }
 .mobileNav { display: none; }
 

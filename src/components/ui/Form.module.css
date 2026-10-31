@@ -69,6 +69,7 @@
   content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
   background: var(--text3); transition: transform .15s var(--ease), background-color .15s var(--ease);
 }
+.toggle::before { content: ''; position: absolute; inset: -4px; }
 .toggle:hover:not(:disabled) { border-color: var(--text2); }
 .toggle[aria-checked='true'] { background: var(--primary); border-color: var(--primary); }
 .toggle[aria-checked='true']::after { transform: translateX(16px); background: var(--primary-fg); }

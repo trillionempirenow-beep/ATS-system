@@ -1,5 +1,5 @@
 .tableHead {
-  padding: 24px 24px 4px;
+  padding: var(--card-pad) var(--card-pad) 4px;
 }
 
 .adminCard {
@@ -240,7 +240,7 @@
 }
 
 .pager {
-  padding: 12px 24px;
+  padding: 12px var(--card-pad);
   border-top: 1px solid var(--border);
 }
 

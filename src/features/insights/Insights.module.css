@@ -12,7 +12,7 @@
 }
 
 .tableHead {
-  padding: 24px 24px 4px;
+  padding: var(--card-pad) var(--card-pad) 4px;
 }
 
 .outcomes {
