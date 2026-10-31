@@ -20,10 +20,10 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   min-height: 40px;
-  padding: 5px 8px;
+  padding: 4px 8px;
   border: 1px solid var(--border-input);
   border-radius: 8px;
   background: var(--surface);
@@ -84,7 +84,7 @@
 .steps li {
   counter-increment: step;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   font-size: var(--fs-body);
   color: var(--text2);
 }

@@ -1,7 +1,7 @@
 .meta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -23,7 +23,7 @@
 }
 
 .panelFoot {
-  margin-top: 14px;
+  margin-top: 16px;
   font-size: var(--fs-caption);
   color: var(--text3);
 }
@@ -31,7 +31,7 @@
 .running {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-size: var(--fs-small);
   color: var(--text2);
 }
@@ -59,14 +59,14 @@
   list-style: none;
 }
 
-.tier + .tier { margin-top: 18px; }
+.tier + .tier { margin-top: 16px; }
 
 .tierHead {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
   font-size: var(--fs-caption);
   font-weight: var(--fw-semibold);
@@ -92,17 +92,17 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  padding: 14px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border);
 }
 
-.match:first-child { padding-top: 10px; }
+.match:first-child { padding-top: 12px; }
 .match:last-child { border-bottom: 0; padding-bottom: 0; }
 
 .matchHead {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
 }
@@ -161,7 +161,7 @@ a.matchName:hover { color: var(--primary); }
 }
 
 .skills span {
-  margin-right: 6px;
+  margin-right: 8px;
   font-weight: var(--fw-semibold);
   color: var(--success-fg);
 }

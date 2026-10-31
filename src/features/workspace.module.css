@@ -3,7 +3,7 @@
 .cols21 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .cols11 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .cols12 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; align-items: start; }
-.aside340 { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.aside340 { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
 .stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .stack8 { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .row { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -25,7 +25,7 @@
 .dateChip span { font-size: var(--fs-micro); font-weight: var(--fw-semibold); }
 .dateChip strong { font-size: var(--fs-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
 
-.person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.person { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .personText { display: flex; flex-direction: column; min-width: 0; }
 .personName { font-weight: var(--fw-semibold); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .personSub { font-size: var(--fs-small); color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -39,8 +39,8 @@
   padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--sh-sm);
 }
 /* Inside a card the bar becomes the card's own footer. */
-.stickyInCard { margin: 0 -20px -20px; bottom: 0; border-width: 1px 0 0; border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: none; }
-.stickyStatus { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--text2); }
+.stickyInCard { margin: 0 -24px -24px; bottom: 0; border-width: 1px 0 0; border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: none; }
+.stickyStatus { margin-right: auto; display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--text2); }
 .stickyStatusOk { color: var(--success-fg); }
 @media (max-width: 520px) { .stickyActions > button { flex: 1 1 auto; } .stickyStatus { flex-basis: 100%; } }
 
@@ -48,8 +48,8 @@
 .kv dt { color: var(--text3); }
 .kv dd { margin: 0; font-weight: var(--fw-medium); text-align: right; overflow-wrap: anywhere; }
 
-.noteCard { padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface2); border: 1px solid var(--border); }
-.noteMeta { font-size: var(--fs-caption); color: var(--text3); margin-top: 6px; }
+.noteCard { padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface2); border: 1px solid var(--border); }
+.noteMeta { font-size: var(--fs-caption); color: var(--text3); margin-top: 8px; }
 
 .filterBar { display: flex; align-items: center; gap: 8px; padding: 12px; flex-wrap: wrap; }
 .filterSearch { flex: 1 1 240px; min-width: 200px; }
@@ -77,7 +77,7 @@
 }
 
 .overline { font-size: var(--fs-caption); line-height: 16px; font-weight: var(--fw-semibold);color: var(--text3); }
-.link { color: var(--primary); font-weight: var(--fw-semibold); }
+.link { color: var(--primary); font-weight: var(--fw-semibold); padding-block: 4px; margin-block: -4px; }
 .link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .filterClear:empty { display: none; }
 .up { color: var(--success-fg); font-weight: var(--fw-medium); }
@@ -85,20 +85,20 @@
 
 /* Small layout adjustments shared by feature pages (instead of one-off inline styles). */
 .mt4 { margin-top: 4px; }
-.mt6 { margin-top: 6px; }
+.mt6 { margin-top: 8px; }
 .mt8 { margin-top: 8px; }
 .mt12 { margin-top: 12px; }
 .mt16 { margin-top: 16px; }
-.mb6 { margin-bottom: 6px; }
+.mb6 { margin-bottom: 8px; }
 .mb8 { margin-bottom: 8px; }
 .mb16 { margin-bottom: 16px; }
 .gap2 { gap: 2px; }
-.gap6 { gap: 6px; }
+.gap6 { gap: 8px; }
 .gap8 { gap: 8px; }
 .wrapRow { flex-wrap: wrap; }
 .grow { flex: 1; min-width: 0; }
 .selfStart { align-self: flex-start; }
 .pushLeft { margin-right: auto; align-self: center; }
 .pad16 { padding: 16px; }
-.bulletList { margin: 0; padding-left: 18px; }
+.bulletList { margin: 0; padding-left: 16px; }
 .endRow { display: flex; justify-content: flex-end; }

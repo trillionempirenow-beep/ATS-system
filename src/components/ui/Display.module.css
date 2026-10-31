@@ -54,5 +54,6 @@
 .rating { display: inline-flex; align-items: center; gap: 1px; }
 .star { color: var(--border-strong); background: none; border: 0; padding: 1px; display: inline-flex; border-radius: var(--radius-xs); }
 .starOn { color: var(--warning-solid); }
+.starBtn { padding: 4px; }
 .starBtn:hover { color: var(--warning-solid); }
 .starBtn:focus-visible { box-shadow: var(--focus-ring); }

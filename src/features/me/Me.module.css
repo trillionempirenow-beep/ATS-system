@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .identity h2 {
@@ -19,8 +19,8 @@
 .complete {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 24px;
   font-size: var(--fs-small);
   color: var(--text3);
 }
@@ -28,8 +28,8 @@
 .perms {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
@@ -58,7 +58,7 @@
 .photoRow {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 

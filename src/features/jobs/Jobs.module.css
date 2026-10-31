@@ -1,11 +1,11 @@
 .tableHead {
-  padding: 20px 20px 4px;
+  padding: 24px 24px 4px;
 }
 
 .role {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -20,7 +20,7 @@
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .tag {
@@ -39,7 +39,7 @@
 .applicants {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -67,7 +67,7 @@
 .statusEdit {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 180px;
 }
 
@@ -90,7 +90,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   background: var(--sunken);
 }
@@ -102,7 +102,7 @@
 
 .flow {
   margin: 0;
-  padding: 0 0 0 18px;
+  padding: 0 0 0 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -142,7 +142,7 @@
 }
 
 .section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .section h3 {
@@ -160,7 +160,7 @@
 }
 
 .section ul {
-  padding-left: 18px;
+  padding-left: 16px;
 }
 
 .creator {

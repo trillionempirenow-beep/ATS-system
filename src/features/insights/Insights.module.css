@@ -12,15 +12,15 @@
 }
 
 .tableHead {
-  padding: 20px 20px 4px;
+  padding: 24px 24px 4px;
 }
 
 .outcomes {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: 8px 24px;
   margin-top: 16px;
-  padding-top: 14px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
   font-size: var(--fs-small);
   color: var(--text2);

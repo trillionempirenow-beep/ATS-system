@@ -12,17 +12,17 @@
 .ticksRejected .tick { background: color-mix(in srgb, var(--stage-rejected) 30%, transparent); }
 
 .tag { display: inline-flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; font-size: var(--fs-small); line-height: var(--lh-small); font-weight: var(--fw-medium); color: var(--text); }
-.tagSm { gap: 6px; font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.tagSm { gap: 8px; font-size: var(--fs-caption); line-height: var(--lh-caption); }
 /* In the tag the rail shrinks to one dot in the stage's colour, on a soft tint of it. */
 .tag {
-  padding: 3px 11px 3px 9px; gap: 7px; border-radius: var(--radius-full);
+  padding: 4px 12px 4px 8px; gap: 8px; border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--c, var(--primary)) 13%, var(--surface));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--primary)) 26%, transparent);
   color: color-mix(in srgb, var(--c, var(--primary)) 55%, var(--text));
 }
 .tag .ticks { display: none; }
 .tag::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--primary)); }
-.tagSm { padding: 2px 9px 2px 8px; gap: 6px; }
+.tagSm { padding: 2px 8px 2px 8px; gap: 8px; }
 .tagLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .tagRejected { color: var(--danger-fg); }
 .tagRejected .tagLabel { color: var(--danger-fg); }
@@ -63,7 +63,7 @@
 
 @container (max-width: 460px) {
   .steps { grid-template-columns: minmax(0, 1fr); }
-  .step { flex-direction: row; align-items: flex-start; gap: 12px; padding: 0 0 14px; }
+  .step { flex-direction: row; align-items: flex-start; gap: 12px; padding: 0 0 16px; }
   .step:last-child { padding-bottom: 0; }
   .step:not(:last-child)::before { top: 20px; bottom: 2px; left: 7px; right: auto; width: 2px; height: auto; }
   .linkEnd:not(:last-child)::before, .linkQuiet:not(:last-child)::before { width: 0; height: auto; border-top: 0; border-left: 2px dashed var(--stage-rejected); }
@@ -79,13 +79,13 @@
 .seg { flex: 1 1 0; min-width: 4px; background: var(--c, var(--primary)); }
 .cells { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; row-gap: 4px; }
 .cell {
-  display: flex; flex-direction: column; gap: 4px; min-height: 64px; padding: 10px 0 8px;
+  display: flex; flex-direction: column; gap: 4px; min-height: 64px; padding: 12px 0 8px;
   border-top: 1px solid var(--border); color: var(--text); text-decoration: none; transition: border-color .1s var(--ease);
 }
 a.cell:hover { border-top-color: var(--c, var(--primary)); box-shadow: inset 0 1px 0 var(--c, var(--primary)); }
 a.cell:hover .cellTop { color: var(--text); }
 a.cell:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; box-shadow: none; border-radius: var(--radius-xs); }
 .cellTop { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cellCount { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; padding-left: 11px; }
+.cellCount { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; padding-left: 12px; }
 .cellCount[data-zero] { color: var(--text3); font-weight: var(--fw-medium); }
 @container (min-width: 640px) { .cells { grid-template-columns: repeat(6, minmax(0, 1fr)); } }

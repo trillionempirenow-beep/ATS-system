@@ -1,5 +1,5 @@
 .tableHead {
-  padding: 20px 20px 4px;
+  padding: 24px 24px 4px;
 }
 
 .adminCard {
@@ -22,13 +22,13 @@
 .adminStatus {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .permGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px 20px;
+  gap: 12px 24px;
 }
 
 .seatRow {
@@ -36,7 +36,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
   gap: 16px;
   align-items: start;
-  padding: 14px;
+  padding: 16px;
   border-radius: var(--radius-md);
   background: var(--sunken);
 }
@@ -65,7 +65,7 @@
 
 .confirmList {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -79,7 +79,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -146,7 +146,7 @@
 
 .rowActions {
   display: inline-flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: flex-end;
 }
 
@@ -155,7 +155,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  padding-top: 14px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 
@@ -166,8 +166,8 @@
 .resetCard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
@@ -193,7 +193,7 @@
 .link {
   display: block;
   margin-top: 8px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-family: var(--font-mono);
@@ -204,7 +204,7 @@
 .inlineEdit {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 170px;
 }
 
@@ -240,15 +240,15 @@
 }
 
 .pager {
-  padding: 12px 20px;
+  padding: 12px 24px;
   border-top: 1px solid var(--border);
 }
 
 .logoPreview {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px 16px;
   border-radius: var(--radius-md);
   background: var(--sunken);
 }

@@ -11,7 +11,7 @@
 }
 
 .tableHead {
-  padding: 20px 20px 4px;
+  padding: 24px 24px 4px;
 }
 
 .todayList {
@@ -23,7 +23,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 16px;
+  gap: 12px 16px;
   padding: 12px 0;
   border-top: 1px solid var(--border);
 }
@@ -54,7 +54,7 @@
 .criteria {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .criterion {
@@ -115,7 +115,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 16px;
+  padding: 16px 16px;
   border-radius: var(--radius-md);
   background: var(--sunken);
 }
@@ -145,7 +145,7 @@
 }
 
 .scoreLabel b {
-  margin-left: 6px;
+  margin-left: 8px;
   color: var(--text);
 }
 
@@ -184,7 +184,7 @@
 }
 
 .fact {
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   background: var(--sunken);
 }
@@ -211,7 +211,7 @@
 
 .next li {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .next li > span:first-child {
@@ -232,11 +232,11 @@
 .assist {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .assistNote {
-  padding: 10px 12px;
+  padding: 12px 12px;
   border-left: 3px solid var(--purple-solid);
   border-radius: var(--radius-sm);
   background: var(--purple-bg);
@@ -251,8 +251,8 @@
 }
 
 .summaryList {
-  margin: 6px 0 0;
-  padding-left: 20px;
+  margin: 8px 0 0;
+  padding-left: 24px;
   display: flex;
   flex-direction: column;
   gap: 4px;

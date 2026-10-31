@@ -1,4 +1,4 @@
-.item { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 14px 16px; border: 0; border-bottom: 1px solid var(--border); background: var(--surface); text-align: left; color: var(--text); position: relative; }
+.item { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 16px 16px; border: 0; border-bottom: 1px solid var(--border); background: var(--surface); text-align: left; color: var(--text); position: relative; }
 .item:last-child { border-bottom: 0; }
 .item:hover { background: var(--surface2); }
 .unread { background: color-mix(in srgb, var(--primary-subtle) 55%, var(--surface)); }

@@ -1,5 +1,5 @@
 .tableHead {
-  padding: 20px 20px 4px;
+  padding: 24px 24px 4px;
 }
 
 .checklist {
@@ -79,7 +79,7 @@
 .saver {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 190px;
 }
 
@@ -93,8 +93,8 @@
 .summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .nowrap {

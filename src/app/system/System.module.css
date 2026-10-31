@@ -2,7 +2,7 @@
 .wrap { display: flex; justify-content: center; padding: 32px 0 48px; }
 .card {
   display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-  width: min(560px, 100%); padding: 28px 28px 24px; background: var(--surface); border: 1px solid var(--border);
+  width: min(560px, 100%); padding: 24px 24px 24px; background: var(--surface); border: 1px solid var(--border);
   border-top: 2px solid var(--primary); border-radius: var(--radius-md);
 }
 .code { font-size: var(--fs-small); line-height: var(--lh-small); font-weight: var(--fw-medium); color: var(--text3); font-variant-numeric: tabular-nums; }
@@ -13,4 +13,4 @@
 .text { max-width: 480px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text2); }
 .note { max-width: 480px; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text3); }
 .actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-@media (max-width: 767px) { .card { padding: 24px 20px 20px; } }
+@media (max-width: 767px) { .card { padding: 24px 24px 24px; } }
