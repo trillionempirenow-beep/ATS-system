@@ -1,10 +1,12 @@
 /* Page-level layout shared by the internal workspace screens. */
-.page { display: flex; flex-direction: column; gap: 24px; }
-.cols21 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.cols11 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.cols12 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; align-items: start; }
-.aside340 { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.page { display: flex; flex-direction: column; gap: var(--section-gap); }
+.cols21 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--section-gap); align-items: stretch; }
+.cols11 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--section-gap); align-items: stretch; }
+.cols12 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--section-gap); align-items: start; }
+.aside340 { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--section-gap); align-items: start; }
 .stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* A column of cards: the same gap as between the page's sections. */
+.cardStack { display: flex; flex-direction: column; gap: var(--section-gap); min-width: 0; }
 .stack8 { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .row { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .rowBetween { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
@@ -36,7 +38,7 @@
 /* Solid, so form text never shows through it while scrolling. */
 .stickyActions {
   position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
-  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--sh-sm);
+  padding: 12px var(--card-pad); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--sh-sm);
 }
 /* Inside a card the bar becomes the card's own footer. */
 .stickyInCard { margin: 0 -24px -24px; bottom: 0; border-width: 1px 0 0; border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: none; }
@@ -51,11 +53,11 @@
 .noteCard { padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface2); border: 1px solid var(--border); }
 .noteMeta { font-size: var(--fs-caption); color: var(--text3); margin-top: 8px; }
 
-.filterBar { display: flex; align-items: center; gap: 8px; padding: 12px; flex-wrap: wrap; }
+.filterBar { display: flex; align-items: center; gap: 12px; padding: 16px var(--card-pad); flex-wrap: wrap; }
 .filterSearch { flex: 1 1 240px; min-width: 200px; }
 .filterSelect { flex: 0 1 200px; min-width: 150px; }
 /* A filter grid for a fixed set of controls: search, four selects, then Clear. Clear always has its own cell. */
-.filterGrid { display: grid; grid-template-columns: minmax(200px, 1fr) repeat(4, minmax(0, 160px)) 72px; align-items: center; gap: 8px; padding: 12px; }
+.filterGrid { display: grid; grid-template-columns: minmax(200px, 1fr) repeat(4, minmax(0, 160px)) 72px; align-items: center; gap: 12px; padding: 16px var(--card-pad); }
 .filterGrid .filterSearch, .filterGrid .filterSelect { min-width: 0; }
 .filterClear { justify-self: start; }
 @container workspace (max-width: 960px) {

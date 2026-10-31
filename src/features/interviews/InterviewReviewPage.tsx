@@ -99,7 +99,7 @@ export function InterviewReviewPage() {
       {justSubmitted ? <Notice tone="success">Interview review saved to the candidate profile.</Notice> : null}
 
       <div className={w.cols21}>
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           <Card>
             <div className={w.stack}>
               {identity}
@@ -154,7 +154,7 @@ export function InterviewReviewPage() {
           ) : null}
         </div>
 
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           <Card>
             <CardHeader title="Score and review" subtitle="Only the hiring team sees this" />
             {reviewed ? (

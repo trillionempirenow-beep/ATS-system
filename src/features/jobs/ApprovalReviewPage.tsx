@@ -92,7 +92,7 @@ export function ApprovalReviewPage() {
           <Section title="Experience required" text={job.experienceRequired} />
           <Section title="Education required" text={job.educationRequired} />
         </Card>
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           {pending ? (
             <Card>
               <CardHeader title="Decision" />

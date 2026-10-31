@@ -1,5 +1,5 @@
-.layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 24px; align-items: start; }
-.col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: var(--section-gap); align-items: start; }
+.col { display: flex; flex-direction: column; gap: var(--section-gap); min-width: 0; }
 @container workspace (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
 
 /* Theme picker: three cards, each with a small drawing of the app in that theme. */

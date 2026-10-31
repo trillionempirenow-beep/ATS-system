@@ -1,5 +1,5 @@
 /* Alerts: the tint names the kind, the words say what happened and what to do. */
-.notice { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid; font-size: var(--fs-body); line-height: var(--lh-body); }
+.notice { display: flex; align-items: flex-start; gap: 12px; padding: 12px var(--notice-pad-x); border-radius: var(--radius-md); border: 1px solid; font-size: var(--fs-body); line-height: var(--lh-body); }
 .notice > svg { margin-top: 1px; flex: none; }
 .noticeText { flex: 1; min-width: 0; }
 .noticeTitle { font-weight: var(--fw-semibold); }

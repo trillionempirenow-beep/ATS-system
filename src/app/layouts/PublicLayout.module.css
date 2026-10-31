@@ -1,5 +1,5 @@
 .page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
-.header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; height: 72px; padding: 0 40px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; height: 72px; padding: 0 max(40px, calc((100% - 1120px) / 2)); background: var(--surface); border-bottom: 1px solid var(--border); }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
 .logo em { font-style: normal; color: var(--text3); font-weight: 500; }
 .nav { display: flex; align-items: center; gap: 4px; }
@@ -10,8 +10,8 @@
 .menuBtn { display: none; }
 .main { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 32px 40px 72px; }
 .mainFull { max-width: none; padding: 0; }
-.footer { border-top: 1px solid var(--border); background: var(--surface); padding: 48px 40px; }
-.footerInner { max-width: 1120px; margin: 0 auto; display: flex; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
+.footer { border-top: 1px solid var(--border); background: var(--surface); padding: 48px max(40px, calc((100% - 1120px) / 2)); }
+.footerInner { margin: 0; display: flex; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
 .footerBrand { display: flex; flex-direction: column; gap: 12px; max-width: 320px; }
 .footerText { color: var(--text2); font-size: 14px; line-height: 22px; }
 .footerCols { display: flex; gap: 72px; align-items: flex-start; flex-wrap: wrap; }
@@ -22,8 +22,9 @@
 .mobileNav { display: none; }
 
 @media (max-width: 1023px) {
-  .header { padding: 0 24px; }
+  .header { padding: 0 max(24px, calc((100% - 1120px) / 2)); }
   .main { padding: 32px 24px 56px; }
+  .footer { padding-inline: max(24px, calc((100% - 1120px) / 2)); }
 }
 @media (max-width: 767px) {
   .header { height: 60px; padding: 0 16px; }

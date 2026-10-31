@@ -109,6 +109,10 @@ html.ws {
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
   --ease: cubic-bezier(.2, .7, .2, 1);
 
+  --card-pad: 24px;
+  --notice-pad-x: 16px;
+  --section-gap: 24px;
+
   /* Component tokens: the shared components read these, and :root gives them a flat default. */
   --card-shadow: var(--sh-xs);
   --btn-fw: var(--fw-semibold);
@@ -217,3 +221,8 @@ html.ws[data-motion='reduce'] *, html.ws[data-motion='reduce'] *::before, html.w
   animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important;
 }
 html.ws[data-density='compact'] { --compact-trim: 28px; --content-pad-top: 24px; --radius-md: 12px; }
+
+/* Phones: the same rhythm, one step tighter. */
+@media (max-width: 767px) {
+  html.ws { --card-pad: 16px; --section-gap: 16px; }
+}

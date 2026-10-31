@@ -149,7 +149,7 @@ export function AddCandidatePage() {
     <div className={w.page}>
       <PageHeader title="Add a candidate" description="Upload a CV to pre-fill details, or enter them by hand." crumbs={[{ label: 'Recruiting' }, { label: 'Candidates', to: '/app/candidates' }, { label: 'Add candidate' }]} />
       <div className={w.aside340}>
-        <form className={w.stack} noValidate onSubmit={(e) => { e.preventDefault(); void submit('submit')(); }}>
+        <form className={w.cardStack} noValidate onSubmit={(e) => { e.preventDefault(); void submit('submit')(); }}>
           <Card>
             <CardHeader title="Upload CV / resume to auto-fill" subtitle="Nothing is saved until you review the suggestions and submit." />
             {parse.state === 'working' ? <FileRow name={parse.name} progress={parse.pct} sub={parse.pct < 100 ? `Uploading… ${parse.pct}%` : 'Reading the document…'} /> : null}
@@ -216,7 +216,7 @@ export function AddCandidatePage() {
           </Card>
         </form>
 
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           {can.adminLevel && options.data ? <FieldSettings required={options.data.required} /> : null}
           <Card>
             <CardHeader title="Before you submit" />

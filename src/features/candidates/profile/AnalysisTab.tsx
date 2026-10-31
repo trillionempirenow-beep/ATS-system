@@ -41,7 +41,7 @@ export function AnalysisTab({ c }: { c: CandidateProfileDto }) {
 
   return (
     <div className={w.cols21}>
-      <div className={w.stack}>
+      <div className={w.cardStack}>
         <Card>
           <CardHeader
             title="Application analysis"

@@ -129,7 +129,7 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
 
   return (
     <div className={w.cols21}>
-      <div className={w.stack}>
+      <div className={w.cardStack}>
         {c.stage === 'hired' ? <ConvertEmployeeCard c={c} /> : null}
         <Card>
           <CardHeader title="Profile and contact" actions={<Button size="sm" variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Button>} />
@@ -162,7 +162,7 @@ export function ProfileTab({ c }: { c: CandidateProfileDto }) {
         ) : null}
         <NotesCard c={c} />
       </div>
-      <div className={w.stack}>
+      <div className={w.cardStack}>
         <Card>
           <CardHeader title="Application" />
           <dl className={w.kv}>

@@ -155,7 +155,7 @@ function Editor({ id, data }: { id: number | null; data: JobEditorDto }) {
       {formError ? <Notice tone="danger">{formError}</Notice> : null}
 
       <div className={w.aside340}>
-        <form className={w.stack} noValidate onSubmit={(e) => { e.preventDefault(); void submit(data.canPublish ? 'publish' : 'submit')(); }}>
+        <form className={w.cardStack} noValidate onSubmit={(e) => { e.preventDefault(); void submit(data.canPublish ? 'publish' : 'submit')(); }}>
           <Card>
             <CardHeader title="Role basics" />
             <div className={formStyles.stack}>
@@ -204,7 +204,7 @@ function Editor({ id, data }: { id: number | null; data: JobEditorDto }) {
           </div>
         </form>
 
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           <Card>
             <CardHeader title="Job description to job posting" subtitle="Upload a job description PDF in any layout and we will pre-fill the form. It still goes through approval." />
             {pdf.state === 'working' ? <FileRow name={pdf.name} progress={pdf.pct} sub={pdf.pct < 100 ? `Uploading… ${pdf.pct}%` : 'Reading the PDF…'} /> : null}

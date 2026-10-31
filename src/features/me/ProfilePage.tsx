@@ -33,7 +33,7 @@ export function ProfilePage() {
       {!p ? <div className={w.cols12}><Skeleton height={420} /><Skeleton height={520} /></div> : (
         <div className={w.cols12}>
           <Summary p={p} />
-          <div className={w.stack}>
+          <div className={w.cardStack}>
             <EditProfile key={`${p.name}|${p.email}|${p.avatarUrl ?? ''}`} p={p} />
             <ChangePassword />
           </div>

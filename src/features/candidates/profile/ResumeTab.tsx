@@ -83,7 +83,7 @@ export function ResumeTab({ c }: { c: CandidateProfileDto }) {
               : <EmptyState compact icon="doc" title="Preview is available for PDF files" text="Download this Word document to read it." />}
         </div>
       </Card>
-      <div className={w.stack}>
+      <div className={w.cardStack}>
         <Card>
           <CardHeader title="Versions" subtitle={`${c.documents.length} version${c.documents.length === 1 ? '' : 's'}${c.resumeIndexed ? ' · text indexed' : ''}`} />
           <div className={w.stack8}>

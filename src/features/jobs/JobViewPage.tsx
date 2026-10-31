@@ -131,7 +131,7 @@ export function JobViewPage() {
           <span>Created by {j.mine ? 'you' : (j.creatorName ?? 'someone who left')} · {formatDate(j.createdAt)}</span>
         </span>} />
       <div className={w.aside340}>
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           <Card>
             <article className={s.posting}>
               <header className={c.detailHead}>

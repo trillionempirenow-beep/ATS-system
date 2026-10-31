@@ -180,13 +180,13 @@ export function AdminsPage() {
         </Notice>
       ) : null}
       <div className={w.cols21}>
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           <Card>
             <CardHeader title="Admin permissions" subtitle="Changes are confirmed before they save." />
             {!d ? <Skeleton height={320} /> : d.admins.length === 0 ? (
               <EmptyState icon="users" title="No Admin accounts yet" text="There are no Admin accounts yet. Create one to start delegating recruiter accounts." />
             ) : (
-              <div className={w.stack}>{d.admins.map((a) => <AdminCard key={a.id} admin={a} onConfirm={setConfirm} />)}</div>
+              <div className={w.cardStack}>{d.admins.map((a) => <AdminCard key={a.id} admin={a} onConfirm={setConfirm} />)}</div>
             )}
           </Card>
           <Card>
@@ -209,7 +209,7 @@ export function AdminsPage() {
             ) : <p className={`${w.faint} ${w.mt12}`}>No approval activity yet.</p>}
           </Card>
         </div>
-        <div className={w.stack}>
+        <div className={w.cardStack}>
           <CreateAdmin />
           <Card>
             <CardHeader title="All accounts" subtitle="Every HR / Recruiter across all Admins, with approvals and reactivation requests." />

@@ -180,6 +180,11 @@
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 
+  /* Layout rhythm: the gutter inside a card, and the gap between cards. */
+  --card-pad: 20px;
+  --notice-pad-x: 14px;
+  --section-gap: 24px;
+
   /* Component tokens: flat defaults. styles/workspace.css gives the signed-in app depth. */
   --card-shadow: none;
   --btn-fw: var(--fw-medium);
