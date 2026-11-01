@@ -119,7 +119,7 @@ function ManageDrawer({ account, onClose, onConfirm, iAmSuper }: { account: Acco
         <PermissionPicker value={perms} onChange={setPerms} grantable={grantable} />
         {a.accountStatus === 'active' ? (
           <div className={s.dangerZone}>
-            <span className={w.overline}>Account status</span>
+            <span className={s.sectionLabel}>Account status</span>
             <div className={`${w.row} ${w.gap8}`}>
               <Button size="sm" variant="secondary" onClick={() => status('suspended')}>Suspend</Button>
               <Button size="sm" variant="dangerGhost" onClick={() => status('disabled')}>Disable</Button>
@@ -136,7 +136,7 @@ function ManageDrawer({ account, onClose, onConfirm, iAmSuper }: { account: Acco
           </div>
         ) : null}
         <div className={s.dangerZone}>
-          <span className={w.overline}>Delete account and free seat</span>
+          <span className={s.sectionLabel}>Delete account and free seat</span>
           <p className={w.faint}>Their candidates stay in the pipeline. This cannot be undone.</p>
           <Button size="sm" variant="danger" onClick={() => onConfirm({
             title: `Delete ${a.name}?`, confirmLabel: 'Delete account', danger: true,

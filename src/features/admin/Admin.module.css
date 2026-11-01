@@ -210,14 +210,23 @@
 
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
 }
 
+/* Row one: search (3 wide), action, user, role. Row two: from, to, then the buttons. */
+.filters > :first-child { grid-column: span 3; }
+
 .filterButtons {
+  grid-column: span 4;
   display: flex;
   gap: 8px;
+}
+
+@container workspace (max-width: 880px) {
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters > :first-child, .filterWide, .filterButtons { grid-column: 1 / -1; }
 }
 
 .when {
@@ -229,7 +238,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.nowrap { white-space: nowrap; }
+
+.sectionLabel {
+  font-size: var(--fs-small);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
 }
 
 .detail {

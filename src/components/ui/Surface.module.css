@@ -121,7 +121,7 @@ td.alignRight > a[class*="_ghost_"], td.alignRight > button[class*="_ghost_"] { 
 .toolbar { display: flex; align-items: center; gap: 8px; padding: 16px var(--card-pad); flex-wrap: wrap; }
 .toolbarSearch { flex: 1 1 240px; min-width: 200px; }
 
-.dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(160px, 45%), 1fr)); gap: 16px 24px; }
 .dl dt { font-size: var(--fs-small); color: var(--text3); margin-bottom: 2px; }
 .dl dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 767px) { .dl { grid-template-columns: 1fr; } }

@@ -44,9 +44,9 @@ export function AuditPage() {
   const columns: Column<Row>[] = [
     { key: 'when', header: 'Date / time', cell: (r) => <span className={s.when}>{formatDate(r.createdAt)} · {formatTime(r.createdAt)}</span>, label: 'Date / time' },
     { key: 'user', header: 'User', cell: (r) => r.userName ?? 'System', primary: true },
-    { key: 'role', header: 'Role', cell: (r) => (r.userRole ? ROLE_LABELS[r.userRole] : '—'), label: 'Role' },
+    { key: 'role', header: 'Role', cell: (r) => <span className={s.nowrap}>{r.userRole ? ROLE_LABELS[r.userRole] : '—'}</span>, label: 'Role' },
     { key: 'action', header: 'Action', cell: (r) => <span className={s.actionCell}><Badge tone={CATEGORY_TONES[r.category]} size="sm">{r.category}</Badge>{actionLabel(r.action)}</span>, label: 'Action' },
-    { key: 'related', header: 'Related', cell: (r) => (r.entityType && r.entityId ? `${actionLabel(r.entityType)} #${r.entityId}` : '—'), label: 'Related' },
+    { key: 'related', header: 'Related', cell: (r) => <span className={s.nowrap}>{r.entityType && r.entityId ? `${actionLabel(r.entityType)} #${r.entityId}` : '—'}</span>, label: 'Related' },
     { key: 'detail', header: 'Details', cell: (r) => <span className={s.detail}>{[r.subject, r.detail].filter(Boolean).join(' · ') || '—'}</span>, label: 'Details' },
   ];
 
@@ -70,7 +70,7 @@ export function AuditPage() {
           {!d?.ownOnly ? (
             <>
               <Field label="User"><Select value={draft.user ?? ''} onChange={(e) => set('user', e.target.value)} placeholder="All users" options={(d?.options.users ?? []).map((u) => ({ value: u.id, label: u.name }))} /></Field>
-              <Field label="Role"><Select value={draft.role ?? ''} onChange={(e) => set('role', e.target.value)} placeholder="All roles" options={ROLES.map((r: Role) => ({ value: r, label: ROLE_LABELS[r] }))} /></Field>
+              <Field label="Role" className={s.filterWide}><Select value={draft.role ?? ''} onChange={(e) => set('role', e.target.value)} placeholder="All roles" options={ROLES.map((r: Role) => ({ value: r, label: ROLE_LABELS[r] }))} /></Field>
             </>
           ) : null}
           <Field label="From"><TextInput type="date" value={draft.from ?? ''} onChange={(e) => set('from', e.target.value)} /></Field>

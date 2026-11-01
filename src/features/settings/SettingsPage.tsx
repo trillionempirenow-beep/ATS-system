@@ -24,7 +24,7 @@ export function SettingsPage({ initialTab = 'preferences' }: { initialTab?: TabK
         crumbs={[{ label: 'Account' }, { label: 'Settings' }]}
       />
       {can.adminLevel ? (
-        <div className={w.mb16}>
+        <div>
           <Tabs<TabKey>
             label="Settings sections"
             value={tab}
