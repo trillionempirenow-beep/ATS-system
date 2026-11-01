@@ -529,7 +529,8 @@
   background: var(--call-ink);
 }
 
-.tileSmall .tileVideo {
+.tileSmall .tileVideo,
+.tileVideo.fitCover {
   object-fit: cover;
 }
 
@@ -624,6 +625,8 @@
 }
 
 .tileName {
+  z-index: 1;
+  pointer-events: none;
   position: absolute;
   left: 16px;
   bottom: 16px;
@@ -645,6 +648,8 @@
 }
 
 .handBadge {
+  z-index: 1;
+  pointer-events: none;
   position: absolute;
   top: 14px;
   right: 14px;
@@ -1255,11 +1260,11 @@
   .stage { padding: 12px; }
   .pip { right: 10px; bottom: 10px; }
   .tileSmall { width: 120px; height: 160px; }
-  .controls { gap: 6px; padding: 0 8px; height: 76px; overflow-x: auto; justify-content: center; }
-  .ctrl { min-width: 48px; }
-  .ctrlBtn { width: 44px; height: 44px; }
+  .controls { gap: 4px; padding: 0 8px; height: 76px; overflow-x: auto; justify-content: safe center; }
+  .ctrl { min-width: 40px; }
+  .ctrlBtn { width: 40px; height: 40px; }
   .ctrlLabel, .ctrlSep { display: none; }
-  .endBtn { height: 44px; padding: 0 16px; flex: none; }
+  .endBtn { height: 40px; padding: 0 12px; flex: none; }
   .endText { display: none; }
   .side { padding: 8px; }
   .facts { grid-template-columns: 1fr; }
@@ -1486,4 +1491,111 @@ button.topLink {
   font-weight: var(--fw-semibold);
 
   color: var(--call-text-3);
+}
+
+
+/* ---- Spotlight: one tile large, everyone else in a row beneath (like Discord). ---- */
+.tileHit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: inherit;
+}
+
+.tileHint {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--call-ink) 66%, transparent);
+  color: var(--call-text);
+  line-height: 0;
+  opacity: 0;
+  transition: opacity .15s var(--ease);
+}
+
+.tileHit:hover .tileHint,
+.tileHit:focus-visible .tileHint {
+  opacity: 1;
+}
+
+.tileHit:focus-visible {
+  outline: 3px solid var(--call-accent);
+  outline-offset: -3px;
+}
+
+/* The spotlight is centred and held to 16:9, so it fits the stage instead of stretching across it. */
+.spotArea {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+
+.spotArea:fullscreen {
+  background: var(--call-ink);
+}
+
+.spotFrame {
+  position: relative;
+  width: min(100cqw, calc(100cqh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  max-height: 100cqh;
+}
+
+.spotFrame > .tile {
+  position: absolute;
+  inset: 0;
+  box-shadow: var(--call-shadow), inset 0 0 0 1px var(--call-line);
+}
+
+.spotBar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+}
+
+.spotBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--call-line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--call-ink) 72%, transparent);
+  color: var(--call-text);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.spotBtn:hover {
+  background: color-mix(in srgb, var(--call-ink) 88%, transparent);
+}
+
+.spotBtn:focus-visible {
+  outline: 2px solid var(--call-accent);
+  outline-offset: 2px;
+}
+
+.audience {
+  justify-content: safe center;
+}
+
+@media (max-width: 720px) {
+  .spotBtn { height: 28px; padding: 0 8px; }
 }

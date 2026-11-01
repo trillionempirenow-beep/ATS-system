@@ -73,8 +73,12 @@ export function Elapsed({ since }: { since: string | null }) {
   return <span className={cx(s.pill, s.timer)}><Icon name="clock" size={15} />{mmss(seconds)}</span>;
 }
 
-function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, hand, small, highlight }: {
+function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, hand, small, highlight, onSpot, fit }: {
   stream: MediaStream | null; name: string; role?: string; position?: string; mirrored?: boolean; muted?: boolean; hasVideo: boolean; micOn: boolean; hand?: boolean; small?: boolean; highlight?: boolean;
+  /** Makes the whole tile clickable: it becomes the big spotlight. */
+  onSpot?: () => void;
+  /** A screen share is never cropped; a camera fills its frame. */
+  fit?: 'cover' | 'contain';
 }) {
   // "John Doe - Tech Lead": the full text stays readable on hover when the pill truncates it.
   const label = position ? `${name} - ${position}` : name;
@@ -116,9 +120,14 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
   const showVideo = hasVideo && (painting || Boolean(muted));
   return (
     <div className={cx(s.tile, small && s.tileSmall, highlight && s.tileSpeaking)}>
-      <video ref={ref} autoPlay playsInline muted={muted} className={cx(s.tileVideo, mirrored && s.mirrored)} style={{ opacity: showVideo ? 1 : 0 }} />
+      <video ref={ref} autoPlay playsInline muted={muted} className={cx(s.tileVideo, fit === 'cover' && s.fitCover, mirrored && s.mirrored)} style={{ opacity: showVideo ? 1 : 0 }} />
       {!showVideo ? (
         <div className={s.tileEmpty}><span className={s.glow} /><Avatar name={name} size={small ? 48 : 104} /></div>
+      ) : null}
+      {onSpot ? (
+        <button type="button" className={s.tileHit} onClick={onSpot} aria-label={`Spotlight ${name}`} title="Click to spotlight">
+          <span className={s.tileHint}><Icon name="expand" size={small ? 14 : 16} /></span>
+        </button>
       ) : null}
       <div className={s.tileName} title={role ? `${label} · ${role}` : label}>
         <Icon name={micOn ? 'mic' : 'micoff'} size={small ? 13 : 15} />
@@ -291,12 +300,39 @@ export function CallStage(p: Props) {
   const presenter = sharing ?? call.peers[0] ?? null;
   const others = call.peers.filter((x) => x !== presenter);
   const speaking = useSpeaking(call.peers);
+  // Spotlight (like Discord): click any tile to make it the big one, everyone else drops to a row.
+  // Someone presenting is spotlit automatically until you pick somebody else.
+  const SELF = 'self';
+  const [pinned, setPinned] = useState<string | null>(null);
+  const pinnedValid = pinned !== null && (pinned === SELF || call.peers.some((x) => x.meta.id === pinned));
+  const spotId = pinnedValid ? pinned : sharing?.meta.id ?? null;
+  const spotRef = useRef<HTMLDivElement>(null);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const on = () => setFull(document.fullscreenElement === spotRef.current && spotRef.current !== null);
+    document.addEventListener('fullscreenchange', on);
+    return () => document.removeEventListener('fullscreenchange', on);
+  }, []);
+  const toggleFull = () => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    else void spotRef.current?.requestFullscreen?.().catch(() => undefined);
+  };
   const selfHasVideo = Boolean(media.screen || (media.stream?.getVideoTracks().length && media.camOn));
   const selfStream = media.screen ?? media.stream;
   const hasMic = Boolean(media.stream?.getAudioTracks().length);
   const hasCam = Boolean(media.stream?.getVideoTracks().length);
   const selfMic = media.micOn && hasMic;
   const toggle = (panel: Exclude<SidePanel, null>) => p.onPanel(p.panel === panel ? null : panel);
+
+  const peerTile = (o: RemotePeer, small: boolean, spot: boolean) => (
+    <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand}
+      small={small} highlight={speaking.has(o.meta.id)} fit={o.meta.screen ? 'contain' : 'cover'} onSpot={spot ? undefined : () => setPinned(o.meta.id)} />
+  );
+  const selfTile = (small: boolean, spot: boolean) => (
+    <Tile key="self" stream={selfStream} name="You" position={small && !selfLead ? p.self.position : undefined} muted mirrored={!media.screen}
+      hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small={small} fit={media.screen ? 'contain' : 'cover'} onSpot={spot ? undefined : () => setPinned(SELF)} />
+  );
+  const spotPeer = spotId && spotId !== SELF ? call.peers.find((x) => x.meta.id === spotId) ?? null : null;
 
   return createPortal(
     <div className={s.room} role="application" aria-label={p.title}>
@@ -319,43 +355,59 @@ export function CallStage(p: Props) {
 
       <div className={s.body}>
         <div className={s.stage}>
-          {panelMode ? (
+          {spotId ? (
+            <>
+              <div className={s.main}>
+                <div className={s.spotArea} ref={spotRef}>
+                  <div className={s.spotFrame}>
+                    {spotId === SELF ? selfTile(false, true) : spotPeer ? peerTile(spotPeer, false, true) : null}
+                    <div className={s.spotBar}>
+                      {pinnedValid ? (
+                        <button type="button" className={s.spotBtn} onClick={() => setPinned(null)}><Icon name="close" size={15} />Exit spotlight</button>
+                      ) : null}
+                      <button type="button" className={s.spotBtn} onClick={toggleFull} aria-pressed={full}><Icon name="expand" size={15} />{full ? 'Exit full screen' : 'Full screen'}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className={cx(s.strip, s.audience)} aria-label="Everyone else in the room">
+                {call.peers.filter((x) => x.meta.id !== spotId).map((o) => peerTile(o, true, false))}
+                {spotId !== SELF ? selfTile(true, false) : null}
+              </div>
+            </>
+          ) : panelMode ? (
             <>
               <div className={s.main}>
                 {leads.length + (selfLead ? 1 : 0) ? (
                   <div className={s.grid} style={{ '--cols': leads.length + (selfLead ? 1 : 0) } as CSSProperties}>
-                    {leads.map((o) => (
-                      <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} highlight={speaking.has(o.meta.id)} />
-                    ))}
-                    {selfLead ? <Tile stream={selfStream} name="You" muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} /> : null}
+                    {leads.map((o) => peerTile(o, false, false))}
+                    {selfLead ? selfTile(false, false) : null}
                   </div>
                 ) : (
                   <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
                 )}
               </div>
               <div className={cx(s.strip, s.audience)} aria-label="Also in the room">
-                {audience.map((o) => (
-                  <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} small highlight={speaking.has(o.meta.id)} />
-                ))}
-                {!selfLead ? <Tile stream={selfStream} name="You" position={p.self.position} muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small /> : null}
+                {audience.map((o) => peerTile(o, true, false))}
+                {!selfLead ? selfTile(true, false) : null}
               </div>
             </>
           ) : (
             <>
               <div className={s.main}>
                 {presenter ? (
-                  <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)}
+                  <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)} fit="cover"
                     hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight={speaking.has(presenter.meta.id)} />
                 ) : (
                   <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
                 )}
                 <div className={s.pip}>
-                  <Tile stream={selfStream} name="You" muted mirrored={!media.screen} hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small />
+                  {selfTile(true, false)}
                 </div>
               </div>
               {others.length ? (
                 <div className={s.strip}>
-                  {others.map((o) => <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand} small />)}
+                  {others.map((o) => peerTile(o, true, false))}
                 </div>
               ) : null}
             </>
