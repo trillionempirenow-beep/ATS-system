@@ -396,14 +396,23 @@ export function CallStage(p: Props) {
             <>
               <div className={s.main}>
                 {presenter ? (
-                  <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)} fit="cover"
-                    hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight={speaking.has(presenter.meta.id)} />
+                  <div className={s.spotArea}>
+                    <div className={s.spotFrame}>
+                      <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)} fit="cover"
+                        hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight={speaking.has(presenter.meta.id)} />
+                      <div className={s.pip}>
+                        {selfTile(true, false)}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
+                  <>
+                    <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
+                    <div className={s.pip}>
+                      {selfTile(true, false)}
+                    </div>
+                  </>
                 )}
-                <div className={s.pip}>
-                  {selfTile(true, false)}
-                </div>
               </div>
               {others.length ? (
                 <div className={s.strip}>
