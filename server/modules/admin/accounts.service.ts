@@ -90,19 +90,34 @@ async function applyStatus(db: Db, userId: number, status: AccountStatus, actorI
 // Super Admin: Admins, permissions and seat limits
 // ---------------------------------------------------------------------------
 
+/** Logs a step that is slow, or that has not finished after 4 seconds, so a stalled page can be traced to its query. */
+async function traced<T>(label: string, work: () => PromiseLike<T>): Promise<T> {
+  const started = Date.now();
+  const waiting = setTimeout(() => console.warn(`[admins] "${label}" is still waiting after 4s`), 4_000);
+  try {
+    return await work();
+  } finally {
+    clearTimeout(waiting);
+    const ms = Date.now() - started;
+    if (ms >= 500) console.warn(`[admins] "${label}" took ${ms}ms`);
+  }
+}
+
 export async function adminsOverview(user: CurrentUser): Promise<AdminsOverviewDto> {
-  const [admins, requests, [counts], jobRows, activity] = await Promise.all([
-    sql<AccountRow[]>`${ACCOUNT_SELECT} where u.role = 'admin' order by u.name`,
-    openRequests(),
-    sql<{ pending: number; reactivations: number }[]>`
+  // One query at a time: the page used to fire five at once, which meant five new connections
+  // opened in the same instant through the pooler, and that is where requests went missing.
+  // Each query takes a few milliseconds, so running them in turn costs nothing.
+  const admins = await traced('admins', () => sql<AccountRow[]>`${ACCOUNT_SELECT} where u.role = 'admin' order by u.name`);
+  const requests = await traced('open requests', () => openRequests());
+  const [counts] = await traced('pending counts', () => sql<{ pending: number; reactivations: number }[]>`
       select (select count(*)::int from users where role = 'recruiter' and account_status = 'pending') as pending,
-             (select count(*)::int from account_requests where status = 'pending') as reactivations`,
-    sql<{ status: JobStatus; approval_status: ApprovalStatus; n: number }[]>`select status, approval_status, count(*)::int as n from jobs group by status, approval_status`,
-    sql<{ id: number; action: string; note: string | null; title: string; actor_name: string | null; created_at: Date }[]>`
+             (select count(*)::int from account_requests where status = 'pending') as reactivations`);
+  const jobRows = await traced('job counts', () => sql<{ status: JobStatus; approval_status: ApprovalStatus; n: number }[]>`select status, approval_status, count(*)::int as n from jobs group by status, approval_status`);
+  const activity = await traced('recent activity', () => sql<{ id: number; action: string; note: string | null; title: string; actor_name: string | null; created_at: Date }[]>`
       select ja.id, ja.action, ja.note, j.title, u.name as actor_name, ja.created_at from job_approvals ja join jobs j on j.id = ja.job_id
-      left join users u on u.id = ja.actor_id order by ja.created_at desc limit 8`,
-  ]);
-  const accounts = await Promise.all(admins.map((a) => toAccount(a, user, requests)));
+      left join users u on u.id = ja.actor_id order by ja.created_at desc limit 8`);
+  const accounts: AccountDto[] = [];
+  for (const a of admins) accounts.push(await traced(`seats of admin ${a.id}`, () => toAccount(a, user, requests)));
   const jobs: AdminsOverviewDto['stats']['jobs'] = {};
   for (const r of jobRows) { const s = jobState(r); jobs[s] = (jobs[s] ?? 0) + r.n; }
   return {
