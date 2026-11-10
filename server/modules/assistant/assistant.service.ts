@@ -24,6 +24,7 @@ import * as jobs from '../jobs/jobs.service.js';
 import * as candidates from '../candidates/candidates.service.js';
 import { type ActionData, when } from './assistant.tools.js';
 import { TOKEN_PATTERN, readToken, signToken } from './assistant.tokens.js';
+import { viewsFromSteps } from './assistant.views.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 type SignedAction = ActionData & { title: string; lines: string[]; confirmLabel: string };
@@ -99,6 +100,7 @@ export async function message(input: z.infer<typeof assistantMessageSchema>, ctx
     audio: text(body.audio),
     audioMime: text(body.audioMime) ?? (text(body.audio) ? 'audio/mpeg' : null),
     actions: actions.slice(-5),
+    views: viewsFromSteps(body.steps),
   };
 }
 

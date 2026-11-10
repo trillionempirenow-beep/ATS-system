@@ -63,6 +63,28 @@ export type AssistantPreview =
 /** An email exactly as the recipient will get it (the HTML is shown in a sandboxed frame). */
 export interface PreviewEmail { to: string; subject: string; html: string }
 
+/** One cell of a result table. Links and stages are plain values the page draws. */
+export type AssistantCell = string | number | null;
+
+export interface AssistantViewColumn {
+  key: string;
+  label: string;
+  /** stage: the pipeline stage key, drawn as the stage tag. badge: a short status. count: a number. date: kept on one line. */
+  kind?: 'text' | 'stage' | 'badge' | 'count' | 'date';
+  /** Another field of the row shown in small print under this one (a name over its email). */
+  sub?: string;
+}
+
+/** A list the assistant looked up, drawn as a table the person can search and sort. */
+export interface AssistantView {
+  id: string;
+  title: string;
+  subtitle?: string;
+  columns: AssistantViewColumn[];
+  /** Field names starting with an underscore are not columns: `_link` is where the row opens. */
+  rows: Array<Record<string, AssistantCell>>;
+}
+
 export interface AssistantReplyDto {
   reply: string;
   /** What the person said, when they used the mic. */
@@ -71,6 +93,8 @@ export interface AssistantReplyDto {
   audio: string | null;
   audioMime: string | null;
   actions: AssistantActionDto[];
+  /** Lists the assistant looked up, as tables. */
+  views: AssistantView[];
 }
 
 export const assistantTokenSchema = z.object({ token: z.string().min(10).max(4000) });

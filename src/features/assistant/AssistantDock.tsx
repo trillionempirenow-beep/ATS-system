@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import type { AssistantActionDto, AssistantConfirmDto, AssistantReplyDto } from '@shared/api/assistant';
+import type { AssistantActionDto, AssistantConfirmDto, AssistantReplyDto, AssistantView } from '@shared/api/assistant';
 import { Icon, type IconName } from '@/components/icon/Icon';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Avatar, Badge } from '@/components/ui/Display';
@@ -9,6 +9,7 @@ import { api, errorMessage } from '@/lib/api';
 import { cx } from '@/lib/cx';
 import { useMe } from '@/app/providers/AuthProvider';
 import { ActionPreview } from './ActionPreview';
+import { ViewCard, ViewModal } from './AssistantViews';
 import s from './AssistantDock.module.css';
 
 /**
@@ -43,6 +44,8 @@ interface Message {
   voice?: boolean;
   error?: boolean;
   actions?: AssistantActionDto[];
+  /** Lists the assistant looked up, drawn as tables. */
+  views?: AssistantView[];
 }
 
 type ActionState =
@@ -76,6 +79,11 @@ function toBase64(blob: Blob): Promise<string> {
     r.onerror = () => reject(r.error);
     r.readAsDataURL(blob);
   });
+}
+
+/** The assistant writes **bold** now and then; show it as bold instead of with asterisks. */
+function RichText({ text }: { text: string }) {
+  return <>{text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part))}</>;
 }
 
 /** A change the assistant prepared: what it will do, and Confirm / Cancel. */
@@ -137,6 +145,8 @@ export function AssistantDock() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [actionStates, setActionStates] = useState<Record<string, ActionState>>({});
+  /** The list window that is open: which reply, and which of its tables. */
+  const [openView, setOpenView] = useState<{ message: number; view: string } | null>(null);
   const [draft, setDraft] = useState('');
   const [thinking, setThinking] = useState(false);
   const [recording, setRecording] = useState<{ since: number; cancel: boolean } | null>(null);
@@ -167,7 +177,8 @@ export function AssistantDock() {
   useEffect(() => {
     if (!open) return;
     const t = window.setTimeout(() => inputRef.current?.focus(), 260);
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    // A window opened from the chat (a table, a preview) answers Escape first; the chat stays open behind it.
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('[aria-modal="true"]')) close(); };
     document.addEventListener('keydown', onKey);
     return () => { window.clearTimeout(t); document.removeEventListener('keydown', onKey); };
   }, [open]);
@@ -225,6 +236,7 @@ export function AssistantDock() {
     setThinking(false);
     setMessages([]);
     setActionStates({});
+    setOpenView(null);
     voiceRef.current?.pause();
     inputRef.current?.focus();
   }
@@ -237,11 +249,15 @@ export function AssistantDock() {
     try {
       const res = await api.post<AssistantReplyDto>('/assistant/message', { ...input, history: history(), page: location.pathname });
       if (myTurn !== turn.current) return;
+      const botId = Date.now();
+      const views = res.views ?? [];
       setMessages((m) => [
         // A spoken message shows what was heard.
         ...m.map((x) => (x.id === placeholderId && res.transcript ? { ...x, text: res.transcript } : x)),
-        { id: Date.now(), from: 'bot', text: res.reply, at: new Date(), actions: res.actions },
+        { id: botId, from: 'bot', text: res.reply, at: new Date(), actions: res.actions, views },
       ]);
+      // A list opens in its own window right away; the card in the chat reopens it.
+      if (views[0]) setOpenView({ message: botId, view: views[0].id });
       if (res.audio) {
         voiceRef.current?.pause();
         voiceRef.current = new Audio(`data:${res.audioMime ?? 'audio/mpeg'};base64,${res.audio}`);
@@ -400,6 +416,7 @@ export function AssistantDock() {
   };
 
   const botHead = <img className={s.head} src={HEAD_SRC} alt="" />;
+  const shownView = openView ? messages.find((m) => m.id === openView.message)?.views?.find((v) => v.id === openView.view) ?? null : null;
 
   return (
     <div className={cx(s.dock, open && s.dockOpen)}>
@@ -429,7 +446,8 @@ export function AssistantDock() {
                 {m.from === 'bot' ? botHead : <Avatar name={me.name} src={me.avatarUrl} size={28} />}
                 <div className={s.entryMain}>
                   <div className={s.meta}><strong>{m.from === 'bot' ? 'Strtm assistant' : 'You'}</strong><span>{clock(m.at)}</span>{m.voice ? <Icon name="mic" size={12} className={s.metaIcon} /> : null}</div>
-                  {m.text ? <p className={cx(s.text, m.error && s.textError)}>{m.text}</p> : <p className={cx(s.text, s.textPending)}>Listening back…</p>}
+                  {m.text ? <p className={cx(s.text, m.error && s.textError)}><RichText text={m.text} /></p> : <p className={cx(s.text, s.textPending)}>Listening back…</p>}
+                  {m.views?.map((v) => <ViewCard key={v.id} view={v} onOpen={() => setOpenView({ message: m.id, view: v.id })} />)}
                   {m.actions?.map((a) => (
                     <ActionCard
                       key={a.token}
@@ -545,6 +563,7 @@ export function AssistantDock() {
         ) : null}
         <img className={s.chipHead} src={HEAD_SRC} alt="" draggable={false} />
       </button>
+      {shownView ? <ViewModal view={shownView} open onClose={() => setOpenView(null)} /> : null}
     </div>
   );
 }
