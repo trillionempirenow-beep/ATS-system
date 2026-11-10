@@ -9,6 +9,13 @@ export function notFoundHandler(_req: Request, res: Response): void {
 
 /** Every failure leaves as { error: { code, message } }. No stack traces, SQL or secrets reach the client. */
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
+  if (res.headersSent) {
+    // Already answered (a retried or timed-out attempt got there first), so there is nothing left to send.
+    // Without this check the failed attempt also crashed here with ERR_HTTP_HEADERS_SENT and hid the real error.
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn(`[api] ${req.method} ${req.originalUrl} failed after its response was sent: ${reason.slice(0, 200)}`);
+    return;
+  }
   if (err instanceof AppError) {
     const body: ApiErrorBody = { error: { code: err.code, message: err.message } };
     if (err.fields) body.error.fields = err.fields;

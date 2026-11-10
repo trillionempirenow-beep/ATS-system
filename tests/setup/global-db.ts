@@ -12,7 +12,7 @@ export default async function setup() {
   }, () => undefined);
   await db.exec(await readSeed());
   const port = 54400 + Math.floor(Math.random() * 500);
-  const server = new PGLiteSocketServer({ db, port, host: '127.0.0.1', maxConnections: 4 });
+  const server = new PGLiteSocketServer({ db, port, host: '127.0.0.1', maxConnections: 16 });
   await server.start();
   process.env.DATABASE_URL = `postgres://postgres:postgres@127.0.0.1:${port}/postgres`;
   return async () => {
