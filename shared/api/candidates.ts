@@ -18,6 +18,8 @@ export const candidateListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
 });
 export type CandidateListQuery = z.input<typeof candidateListQuerySchema>;
+/** What the route hands the service after parsing: defaults applied, so sort and page are always set. */
+export type CandidateListFilters = z.infer<typeof candidateListQuerySchema>;
 
 export interface CandidateRowDto {
   applicationId: number;

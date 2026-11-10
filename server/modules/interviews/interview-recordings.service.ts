@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { RecordingGrantDto, recordingSaveSchema } from '../../../shared/api/interviews.js';
+import type { RecordingGrantDto, RecordingReportInput, recordingSaveSchema } from '../../../shared/api/interviews.js';
 import { sql } from '../../db/client.js';
 import { audit } from '../../core/audit.js';
 import { AppError, conflict, forbidden } from '../../http/errors.js';
@@ -55,7 +55,7 @@ export async function save(id: number, userId: number, input: z.infer<typeof rec
 }
 
 /** What the recording browser says happened, kept in the audit trail. */
-export async function report(id: number, userId: number, input: { stage: string; message: string }): Promise<void> {
+export async function report(id: number, userId: number, input: RecordingReportInput): Promise<void> {
   await recorderRow(id, userId);
   await audit({ userId, action: input.stage === 'started' ? 'interview_recording_started' : 'interview_recording_problem', entityType: 'interview', entityId: id,
     details: { stage: input.stage, message: input.message } });

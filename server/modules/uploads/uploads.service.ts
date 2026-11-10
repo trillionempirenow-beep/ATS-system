@@ -39,7 +39,7 @@ function typeError(purpose: UploadPurpose): AppError {
   return new AppError(415, 'unsupported_type', `Upload failed: only ${UPLOAD_RULES[purpose].label.split(',')[0]} files are supported.`);
 }
 
-export async function createUploadTicket(input: CreateUploadInput & { contentType: string }, user: CurrentUser | null): Promise<UploadTicketDto> {
+export async function createUploadTicket(input: CreateUploadInput, user: CurrentUser | null): Promise<UploadTicketDto> {
   const purpose = input.purpose;
   if (purpose === 'user_photo' && !user) throw unauthenticated();
   if (purpose === 'job_pdf') {

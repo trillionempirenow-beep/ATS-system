@@ -134,6 +134,8 @@ export const recordingReportSchema = z.object({
 });
 export interface RecordingGrantDto { path: string; uploadUrl: string; headers: Record<string, string>; token: string }
 
+export type RecordingReportInput = z.infer<typeof recordingReportSchema>;
+
 export const assistantToggleSchema = z.object({ enabled: z.boolean() });
 
 /** About 30 seconds of the meeting's sound, recorded in the interviewer's browser. */
@@ -142,6 +144,8 @@ export const assistantChunkSchema = z.object({
   audioMime: z.string().max(80),
   atSecond: z.number().int().min(0).max(86_400),
 });
+
+export type AssistantChunkInput = z.infer<typeof assistantChunkSchema>;
 
 export interface AiNoteDto { atSecond: number; topic: string | null; text: string }
 

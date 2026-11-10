@@ -1,4 +1,4 @@
-import type { AiNoteDto, AiSummary } from '../../../shared/api/interviews.js';
+import type { AiNoteDto, AiSummary, AssistantChunkInput } from '../../../shared/api/interviews.js';
 import { env } from '../../config/env.js';
 import { sql } from '../../db/client.js';
 import { AppError, conflict, forbidden } from '../../http/errors.js';
@@ -68,7 +68,7 @@ export async function setEnabled(id: number, enabled: boolean, userId: number): 
 }
 
 /** One piece of the meeting: transcribe it, keep the words, add any new notes. */
-export async function addChunk(id: number, input: { audio: string; audioMime: string; atSecond: number }, userId: number): Promise<{ notes: AiNoteDto[]; heard: string }> {
+export async function addChunk(id: number, input: AssistantChunkInput, userId: number): Promise<{ notes: AiNoteDto[]; heard: string }> {
   const row = await interviewerRow(id, userId);
   if (!row.assistant_enabled) throw conflict('AI notes are off for this meeting.');
   const [tail, recent] = await Promise.all([
