@@ -3,7 +3,7 @@ import type { ExperienceLevel, FeedbackFit, ReviewStage, Stage } from '../../../
 import type { EmploymentType } from '../../../shared/domain/jobs.js';
 import type { EmployeeStatus } from '../../../shared/domain/people.js';
 import type { InterviewStatus, InterviewType, MeetingState, MeetingType, Recommendation } from '../../../shared/domain/interviews.js';
-import type { CandidateListQuery } from '../../../shared/api/candidates.js';
+import type { CandidateListFilters } from '../../../shared/api/candidates.js';
 import type { AiSummary } from '../../../shared/api/interviews.js';
 
 export const PAGE_SIZE = 25;
@@ -36,7 +36,7 @@ const SORTS = {
 } as const;
 
 /** Active applications, filtered in SQL so counts and rows always agree. */
-export async function listCandidates(q: CandidateListQuery & { sort: keyof typeof SORTS; page: number }): Promise<ListRow[]> {
+export async function listCandidates(q: CandidateListFilters): Promise<ListRow[]> {
   const search = q.q ? q.q.trim() : '';
   const tsQuery = search
     .split(/\s+/)
