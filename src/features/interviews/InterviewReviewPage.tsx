@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useBlocker, useParams } from 'react-router-dom';
 import type { AiSummary, StaffRoomDto } from '@shared/api/interviews';
 import { RECOMMENDATIONS } from '@shared/domain/interviews';
 import { Icon } from '@/components/icon/Icon';
@@ -8,7 +8,9 @@ import { Avatar, Badge, StatusBadge } from '@/components/ui/Display';
 import { EmptyState, Notice, Skeleton } from '@/components/ui/Feedback';
 import { Card, CardHeader, DescriptionList, PageHeader } from '@/components/ui/Surface';
 import { QueryErrorPage } from '@/app/system/StatusPages';
+import { Modal } from '@/components/ui/Overlay';
 import { formatDateTime, formatTime, formatWeekday, mmss, plural } from '@/lib/format';
+import { scrollToTop } from '@/lib/motion';
 import { useInterview } from './api';
 import { FORMAT_LABELS } from './ScheduleDrawer';
 import { ReviewForm, ScoreSummary, ScorecardRatings } from './ReviewForm';
@@ -20,7 +22,7 @@ function AiSummaryCard({ summary }: { summary: AiSummary }) {
   const list = (title: string, items: string[]) => (items.length ? (
     <div>
       <div className={w.overline}>{title}</div>
-      <ul className={s.summaryList}>{items.map((x) => <li key={x}>{x}</li>)}</ul>
+      <ul className={s.summaryList}>{items.map((x, n) => <li key={`${n}-${x}`}>{x}</li>)}</ul>
     </div>
   ) : null);
   return (
@@ -49,6 +51,16 @@ export function InterviewReviewPage() {
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [prefill, setPrefill] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
+  // A half-written review is lost if the page is left: ask first (links) and warn on tab close.
+  const [dirty, setDirty] = useState(false);
+  const onDirtyChange = useCallback((d: boolean) => setDirty(d), []);
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   useEffect(() => { document.title = 'Interview review · Strtm People'; }, []);
   // The AI summary is written in the background right after the meeting: check back for a few minutes.
@@ -104,7 +116,7 @@ export function InterviewReviewPage() {
             <div className={w.stack}>
               {identity}
               <div className={s.facts}>
-                <div className={s.fact}><strong>{minutes !== null ? `${minutes} min` : '—'}</strong><span>Duration</span></div>
+                <div className={s.fact}><strong>{minutes !== null ? `${minutes}\u00A0min` : '—'}</strong><span>Duration</span></div>
                 <div className={s.fact}><strong>{assistNotes.length}</strong><span>AI notes</span></div>
                 <div className={s.fact}><strong>{data.moments.length}</strong><span>Flagged moments</span></div>
               </div>
@@ -137,7 +149,7 @@ export function InterviewReviewPage() {
 
           <Card>
             <CardHeader title="Notes recorded during the meeting" actions={iv.liveNotes && iv.liveNotes.length > 600
-              ? <Button variant="ghost" size="sm" onClick={() => setShowNotes((v) => !v)}>{showNotes ? 'Show less' : 'View my notes'}</Button> : null} />
+              ? <Button variant="ghost" size="sm" aria-expanded={showNotes} onClick={() => setShowNotes((v) => !v)}>{showNotes ? 'Show less' : 'View my notes'}</Button> : null} />
             {iv.liveNotes ? <p className={w.pre}>{showNotes || iv.liveNotes.length <= 600 ? iv.liveNotes : `${iv.liveNotes.slice(0, 600)}…`}</p>
               : <EmptyState compact icon="edit" title="No notes were recorded" text="Notes typed in the room are saved here automatically." />}
           </Card>
@@ -169,7 +181,7 @@ export function InterviewReviewPage() {
                 {iv.feedback ? <div className={w.noteCard}><div className={w.overline}>Review</div><p className={`${w.pre} ${w.mt6}`}>{iv.feedback}</p></div> : null}
               </div>
             ) : iv.acceptsReview ? (
-              <ReviewForm room={data} prefillReview={prefill} onSubmitted={() => { setJustSubmitted(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+              <ReviewForm room={data} prefillReview={prefill} onDirtyChange={onDirtyChange} onSubmitted={() => { setJustSubmitted(true); scrollToTop(); }} />
             ) : (
               <div className={w.stack8}>
                 <Notice tone="info">End the meeting from the room before submitting a score and review.</Notice>
@@ -194,6 +206,10 @@ export function InterviewReviewPage() {
           ) : null}
         </div>
       </div>
+      <Modal open={blocker.state === 'blocked'} onClose={() => blocker.reset?.()} title="Leave without submitting?" role="alertdialog"
+        footer={<><Button variant="secondary" onClick={() => blocker.reset?.()}>Keep editing</Button><Button variant="danger" onClick={() => blocker.proceed?.()}>Leave and discard</Button></>}>
+        <p style={{ color: 'var(--text2)' }}>Your score, recommendation or written review haven&rsquo;t been submitted. Ratings are saved as you go; the rest is lost if you leave.</p>
+      </Modal>
     </div>
   );
 }

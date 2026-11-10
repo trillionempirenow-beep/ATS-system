@@ -6,6 +6,12 @@ import s from './Overlay.module.css';
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
+/**
+ * Open dialogs, innermost last. Only the top one answers Escape and traps Tab, so a
+ * confirmation opened over a drawer closes on its own instead of taking the drawer with it.
+ */
+const dialogStack: object[] = [];
+
 /** Traps Tab inside the dialog, closes on Escape, and returns focus to the opener. */
 function useDialog(ref: RefObject<HTMLElement>, onClose: () => void, open: boolean) {
   const close = useRef(onClose);
@@ -18,7 +24,10 @@ function useDialog(ref: RefObject<HTMLElement>, onClose: () => void, open: boole
     first?.focus();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const token = {};
+    dialogStack.push(token);
     const onKey = (e: KeyboardEvent) => {
+      if (dialogStack[dialogStack.length - 1] !== token) return;
       if (e.key === 'Escape') { e.stopPropagation(); close.current(); return; }
       if (e.key !== 'Tab' || !el) return;
       const nodes = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((n) => n.offsetParent !== null);
@@ -30,6 +39,7 @@ function useDialog(ref: RefObject<HTMLElement>, onClose: () => void, open: boole
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
+      dialogStack.splice(dialogStack.indexOf(token), 1);
       document.body.style.overflow = prevOverflow;
       opener?.focus?.();
     };

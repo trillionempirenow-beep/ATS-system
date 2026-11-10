@@ -237,6 +237,7 @@
 
 .assistNote {
   padding: 12px 12px;
+  overflow-wrap: anywhere;
   border-left: 3px solid var(--purple-solid);
   border-radius: var(--radius-sm);
   background: var(--purple-bg);

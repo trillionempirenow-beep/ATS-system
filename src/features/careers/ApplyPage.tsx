@@ -19,6 +19,7 @@ import { api, ApiError, errorMessage } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { uploadFile } from '@/lib/upload';
 import { cx } from '@/lib/cx';
+import { scrollToTop } from '@/lib/motion';
 import { usePublicJob } from './api';
 import { RoleNotFound } from './RoleNotFound';
 import s from './Careers.module.css';
@@ -128,8 +129,7 @@ export function ApplyPage() {
       const payload: ApplyInput = { ...values, confirm: true, resumeUploadId: resume.state!.id!, photoUploadId: photo.state?.id ?? null } as ApplyInput;
       const res = await api.post<ApplyResultDto>(`/public/jobs/${encodeURIComponent(j.slug)}/apply`, payload);
       setResult(res);
-      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'reduce';
-      window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
+      scrollToTop();
     } catch (e) {
       if (e instanceof ApiError && (e.fields.resume || e.fields.resumeUploadId)) {
         setResumeError(e.fields.resume ?? e.fields.resumeUploadId ?? e.message);

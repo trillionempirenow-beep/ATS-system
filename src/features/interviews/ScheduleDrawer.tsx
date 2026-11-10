@@ -4,6 +4,7 @@ import type { ScheduleOptionsDto } from '@shared/api/interviews';
 import { INTERVIEW_TYPES, type InterviewType, type MeetingType } from '@shared/domain/interviews';
 import { STAGE_LABELS } from '@shared/domain/pipeline';
 import { Button } from '@/components/ui/Button';
+import { useDiscardGuard } from '@/components/ui/DiscardGuard';
 import { Checkbox, Field, SegmentedControl, Select, TextInput, Textarea, formStyles } from '@/components/ui/Form';
 import { Notice, Skeleton } from '@/components/ui/Feedback';
 import { Drawer } from '@/components/ui/Overlay';
@@ -35,6 +36,7 @@ interface Values {
   recordMeeting: boolean;
 }
 const KNOWN = ['applicationId', 'interviewerId', 'meetingUrl', 'location', 'startsAt', 'endsAt'];
+const FORM_ID = 'schedule-interview-form';
 
 function nextHalfHour(offsetMinutes = 0): string {
   const d = new Date(Date.now() + 24 * 3600_000);
@@ -62,7 +64,9 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
     meetingMode: 'builtin', meetingProvider: 'Zoom', meetingUrl: '', location: '',
     startsAt: nextHalfHour(), endsAt: nextHalfHour(45), notes: '', sendInvite: true, recordMeeting: false,
   }), [applicationId, user]);
-  const { register, handleSubmit, control, watch, reset, setError, setValue, formState: { errors } } = useForm<Values>({ defaultValues: defaults });
+  const { register, handleSubmit, control, watch, reset, setError, setValue, formState: { errors, isDirty } } = useForm<Values>({ defaultValues: defaults });
+  const discard = useDiscardGuard(open && isDirty && !schedule.isPending, 'interview details');
+  const close = () => discard.guard(onClose);
 
   useEffect(() => { if (open) { reset(defaults); setFormError(null); } }, [open, defaults, reset]);
 
@@ -86,12 +90,14 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
 
   const onSubmit = handleSubmit((v) => {
     setFormError(null);
+    // Checked in page order; the first problem gets focus.
     let bad = false;
-    if (!v.applicationId) { setError('applicationId', { message: 'Please select an application.' }); bad = true; }
-    if (!v.startsAt) { setError('startsAt', { message: 'Choose when the interview starts.' }); bad = true; }
-    if (v.endsAt && v.startsAt && new Date(v.endsAt) <= new Date(v.startsAt)) { setError('endsAt', { message: 'The end time must be after the start time.' }); bad = true; }
-    if (v.meetingMode === 'external' && v.meetingUrl && !/^https?:\/\//i.test(v.meetingUrl)) { setError('meetingUrl', { message: 'Enter a full link that starts with https://.' }); bad = true; }
-    if (v.interviewType === 'onsite' && !v.location.trim()) { setError('location', { message: 'Add the address for an onsite interview.' }); bad = true; }
+    const fail = (name: keyof Values, message: string) => { setError(name, { message }, { shouldFocus: !bad }); bad = true; };
+    if (!v.applicationId) fail('applicationId', 'Please select an application.');
+    if (v.interviewType === 'onsite' && !v.location.trim()) fail('location', 'Add the address for an onsite interview.');
+    if (v.meetingMode === 'external' && v.meetingUrl && !/^https?:\/\//i.test(v.meetingUrl)) fail('meetingUrl', 'Enter a full link that starts with https://.');
+    if (!v.startsAt) fail('startsAt', 'Choose when the interview starts.');
+    if (v.endsAt && v.startsAt && new Date(v.endsAt) <= new Date(v.startsAt)) fail('endsAt', 'The end time must be after the start time.');
     if (bad) return;
     const onsite = v.interviewType === 'onsite';
     const external = !onsite && v.meetingMode === 'external';
@@ -121,16 +127,16 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
   });
 
   return (
-    <Drawer open={open} onClose={onClose} width={520} title="Schedule interview" subtitle="Pick the candidate, set the time, and choose how the meeting happens."
+    <Drawer open={open} onClose={close} width={520} title="Schedule interview" subtitle="Pick the candidate, set the time, and choose how the meeting happens."
       footer={<>
-        <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => void onSubmit()} loading={schedule.isPending} disabled={!opts}>Save interview</Button>
+        <Button variant="ghost" onClick={close}>Cancel</Button>
+        <Button type="submit" form={FORM_ID} loading={schedule.isPending} disabled={!opts}>Save interview</Button>
       </>}>
       {!opts ? (
         options.isError ? <Notice tone="danger">The scheduling options could not be loaded. Close this panel and try again.</Notice>
           : <div className={formStyles.stack}>{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={44} />)}</div>
       ) : (
-        <form className={formStyles.stack} noValidate onSubmit={(e) => { e.preventDefault(); void onSubmit(); }}>
+        <form id={FORM_ID} className={formStyles.stack} noValidate onSubmit={(e) => { e.preventDefault(); void onSubmit(); }}>
           {formError ? <Notice tone="danger">{formError}</Notice> : null}
           {opts.applications.length === 0 ? <Notice tone="info">There are no active applications to schedule. Candidates who are hired or rejected cannot be scheduled.</Notice> : null}
           <Field label="Candidate / role" required error={errors.applicationId?.message}>
@@ -151,7 +157,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
               ]} />
           </Field>
           {format === 'onsite' ? (
-            <Field label="Address" required error={errors.location?.message}><TextInput {...register('location')} placeholder="Office, floor and room" /></Field>
+            <Field label="Address" required error={errors.location?.message}><TextInput {...register('location')} placeholder="Office, floor and room…" /></Field>
           ) : (
             <Controller control={control} name="meetingMode" render={({ field }) => (
               <Field label="Meeting"><SegmentedControl label="Meeting" value={field.value} onChange={field.onChange} options={[{ value: 'builtin', label: 'Built-in Strtm Room' }, { value: 'external', label: 'External link' }]} /></Field>
@@ -160,7 +166,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
           {format !== 'onsite' && mode === 'external' ? (
             <div className={formStyles.grid2}>
               <Field label="External provider"><Select {...register('meetingProvider')} options={PROVIDERS.map((p) => ({ value: p, label: p }))} /></Field>
-              <Field label="Meeting link" hint="Enter a full link that starts with https://." error={errors.meetingUrl?.message}><TextInput type="url" {...register('meetingUrl')} placeholder="https://" /></Field>
+              <Field label="Meeting link" hint="Enter a full link that starts with https://." error={errors.meetingUrl?.message}><TextInput type="url" autoComplete="off" spellCheck={false} {...register('meetingUrl')} placeholder="https://…" /></Field>
             </div>
           ) : null}
           <div className={formStyles.grid2}>
@@ -183,6 +189,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
           <Checkbox {...register('sendInvite')} label="Email the invitation to the candidate" description={mode === 'builtin' && format !== 'onsite' ? 'Includes their private link to the Strtm Room.' : 'Includes the time, format and meeting details.'} />
         </form>
       )}
+      {discard.dialog}
     </Drawer>
   );
 }

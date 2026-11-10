@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { InterviewListItemDto } from '@shared/api/interviews';
 import { Icon } from '@/components/icon/Icon';
 import { Button, ButtonLink, IconButton } from '@/components/ui/Button';
+import { useDiscardGuard } from '@/components/ui/DiscardGuard';
 import { Avatar, Badge, StatusBadge } from '@/components/ui/Display';
 import { EmptyState, Notice, Skeleton } from '@/components/ui/Feedback';
 import { Drawer, Menu } from '@/components/ui/Overlay';
@@ -72,7 +73,10 @@ export function InterviewsPage() {
   const openRoom = (iv: InterviewListItemDto) => navigate(`/app/interviews/${iv.id}/room`);
   const copyExternal = (iv: InterviewListItemDto) => {
     if (!iv.meetingUrl) return;
-    void navigator.clipboard.writeText(iv.meetingUrl).then(() => toast.success('Meeting link copied.'));
+    navigator.clipboard.writeText(iv.meetingUrl).then(
+      () => toast.success('Meeting link copied.'),
+      () => toast.error('Couldn’t copy the link. Open the meeting and copy it from the address bar.'),
+    );
   };
 
   const action = (iv: InterviewListItemDto) => {
@@ -80,7 +84,7 @@ export function InterviewsPage() {
     if (LIVE.has(iv.state) && iv.builtInRoom) {
       return <Button size="sm" icon="video" onClick={(e) => { e.stopPropagation(); openRoom(iv); }}>{iv.candidateWaiting ? 'Admit candidate' : 'Join room'}</Button>;
     }
-    if (LIVE.has(iv.state) && iv.meetingUrl) return <ButtonLink size="sm" variant="secondary" icon="external" to={iv.meetingUrl} target="_blank" rel="noopener noreferrer">Open link</ButtonLink>;
+    if (LIVE.has(iv.state) && iv.meetingUrl) return <ButtonLink size="sm" variant="secondary" icon="external" to={iv.meetingUrl} target="_blank" rel="noopener noreferrer">Open link<span className="sr-only"> (opens in a new tab)</span></ButtonLink>;
     return <ButtonLink size="sm" variant="ghost" to={`/app/candidates/${iv.applicationId}`}>View candidate</ButtonLink>;
   };
 
@@ -180,14 +184,19 @@ export function InterviewsPage() {
 }
 
 function ReviewDrawer({ id, onClose }: { id: number | null; onClose: () => void }) {
+  const [dirty, setDirty] = useState(false);
+  const onDirtyChange = useCallback((d: boolean) => setDirty(d), []);
+  const discard = useDiscardGuard(id !== null && dirty, 'review');
+  const close = () => discard.guard(onClose);
   return (
-    <Drawer open={id !== null} onClose={onClose} width={560} title="Score and review" subtitle="Recorded against the candidate’s interview history.">
-      {id !== null ? <ReviewDrawerBody id={id} onClose={onClose} /> : null}
+    <Drawer open={id !== null} onClose={close} width={560} title="Score and review" subtitle="Recorded against the candidate’s interview history.">
+      {id !== null ? <ReviewDrawerBody id={id} onClose={onClose} onCancel={close} onDirtyChange={onDirtyChange} /> : null}
+      {discard.dialog}
     </Drawer>
   );
 }
 
-function ReviewDrawerBody({ id, onClose }: { id: number; onClose: () => void }) {
+function ReviewDrawerBody({ id, onClose, onCancel, onDirtyChange }: { id: number; onClose: () => void; onCancel: () => void; onDirtyChange: (dirty: boolean) => void }) {
   const toast = useToast();
   const room = useInterview(id);
   if (room.isError) return <Notice tone="danger">This interview could not be loaded.</Notice>;
@@ -207,7 +216,7 @@ function ReviewDrawerBody({ id, onClose }: { id: number; onClose: () => void }) 
         <div className={w.noteCard}><div className={w.overline}>Notes recorded during the meeting</div><p className={`${w.pre} ${w.mt6}`}>{iv.liveNotes}</p></div>
       ) : null}
       {iv.acceptsReview ? (
-        <ReviewForm room={room.data} onCancel={onClose} onSubmitted={() => { toast.success('Interview review saved to the candidate profile.', 'Review submitted'); onClose(); }} />
+        <ReviewForm room={room.data} onCancel={onCancel} onDirtyChange={onDirtyChange} onSubmitted={() => { toast.success('Interview review saved to the candidate profile.', 'Review submitted'); onClose(); }} />
       ) : (
         <Notice tone="info" title="This interview has not ended yet">End the meeting from the room before submitting a score and review.</Notice>
       )}

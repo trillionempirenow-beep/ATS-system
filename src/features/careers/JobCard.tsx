@@ -19,7 +19,7 @@ export function JobCard({ job }: { job: PublicJobCardDto }) {
         <h3 className={s.cardTitle}>{job.title}</h3>
         <span className={s.cardMeta}>{job.location || 'Location flexible'} · {EMPLOYMENT_TYPE_LABELS[job.employmentType]}</span>
         {job.tags.length ? (
-          <div className={s.tags}>{job.tags.map((t) => <span key={t} className={s.tag}><Icon name="tag" size={11} />{t}</span>)}</div>
+          <div className={s.tags}>{job.tags.map((t, n) => <span key={`${n}-${t}`} className={s.tag}><Icon name="tag" size={11} />{t}</span>)}</div>
         ) : null}
       </div>
       <div className={s.cardFoot}>

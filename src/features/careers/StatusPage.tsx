@@ -98,7 +98,11 @@ function SubmissionCard({ app }: { app: ApplicationStatusDto }) {
     ['Applied', formatDate(app.appliedAt)],
     ...(resumeName ? [['Resume', resumeName] as [string, ReactNode]] : []),
     ...(portfolio ? [['Portfolio', /^https?:\/\//i.test(portfolio)
-      ? <a href={portfolio} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, overflowWrap: 'anywhere' }}>{portfolio}</a>
+      ? (
+        <a href={portfolio} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, overflowWrap: 'anywhere' }}>
+          {portfolio}<Icon name="external" size={13} style={{ marginLeft: 4, verticalAlign: '-2px' }} /><span className="sr-only">(opens in a new tab)</span>
+        </a>
+      )
       : portfolio] as [string, ReactNode]] : []),
     ...(source ? [['How you heard about us', source] as [string, ReactNode]] : []),
   ];
