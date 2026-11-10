@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { lockScroll } from '@/lib/scrollLock';
 import { Icon, type IconName } from '../icon/Icon';
 import { cx } from '@/lib/cx';
 import s from './Overlay.module.css';
@@ -22,8 +23,7 @@ function useDialog(ref: RefObject<HTMLElement>, onClose: () => void, open: boole
     const el = ref.current;
     const first = el?.querySelector<HTMLElement>('[data-autofocus]') ?? el?.querySelector<HTMLElement>(FOCUSABLE);
     first?.focus();
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlockScroll = lockScroll();
     const token = {};
     dialogStack.push(token);
     const onKey = (e: KeyboardEvent) => {
@@ -40,7 +40,7 @@ function useDialog(ref: RefObject<HTMLElement>, onClose: () => void, open: boole
     return () => {
       document.removeEventListener('keydown', onKey);
       dialogStack.splice(dialogStack.indexOf(token), 1);
-      document.body.style.overflow = prevOverflow;
+      unlockScroll();
       opener?.focus?.();
     };
   }, [open, ref]);

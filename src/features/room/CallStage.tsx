@@ -7,6 +7,7 @@ import { formatTime, mmss } from '@/lib/format';
 import type { Call, ChatScope, ParticipantMeta, ParticipantRole, RemotePeer } from './call/useCall';
 import type { LocalMedia } from './call/useLocalMedia';
 import s from './Room.module.css';
+import { lockScroll } from '@/lib/scrollLock';
 
 const ROLE_LABELS: Record<ParticipantRole, string> = { interviewer: 'Interviewer', staff: 'Hiring team', candidate: 'Candidate', guest: 'Guest' };
 
@@ -282,11 +283,7 @@ export function CallStage(p: Props) {
     // Only on entering the call; later choices (joining without devices) stand.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, []);
+  useEffect(() => lockScroll(), []);
 
   const sharing = call.peers.find((x) => x.meta.screen) ?? null;
   // The interview itself is between the interviewer and the candidate. Everyone else
