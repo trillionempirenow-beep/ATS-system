@@ -9,9 +9,10 @@ const connect = () => postgres(env.DATABASE_URL, {
   // or land on the wrong query (rows of one query returned for another).
   // A supported option that postgres.js 3.4 leaves out of its types.
   ...({ max_pipeline: 1 } as object),
-  // Keep connections for as long as prepareDb trusts them (REPLACE_AFTER_MS), so a click after a
-  // pause reuses one instead of paying a new TLS handshake and pooler sign-in.
-  idle_timeout: 240,
+  // Let idle connections go quickly. With Supabase's pooler in session mode each open connection
+  // holds one of a small number of slots (15 on the free plan); servers that Vercel has frozen or
+  // replaced must not sit on them, or new requests are refused ("max clients reached").
+  idle_timeout: 20,
   connect_timeout: 10,
   ssl: env.DATABASE_SSL ? 'require' : undefined,
   types: {
