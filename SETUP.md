@@ -58,7 +58,7 @@ Pausing keeps all its data, and you can restore it anytime. Or upgrade to the Pr
 2. Fill in:
    - **Name:** `acme-ats`
    - **Database password:** click **Generate a password** and **copy it into a note now**. You'll need it in Step 3.
-   - **Region:** **Southeast Asia (Singapore)**. The API runs in Vercel's Singapore region (`sin1` in `vercel.json`), next to the database. If you pick another region here, change `regions` in `vercel.json` to match: every page makes several database calls, and each one crosses that distance.
+   - **Region:** **Northeast Asia (Seoul)**. The API runs in Vercel's Seoul region (`icn1` in `vercel.json`), next to the database. If you pick another region here, change `regions` in `vercel.json` to match (Singapore is `sin1`): every page makes several database calls, and each one crosses that distance.
 3. Click **Create new project** and wait about 2 minutes until it's ready.
 
 That's it. The project is an empty database for now; Step 3 fills it.

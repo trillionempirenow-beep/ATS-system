@@ -17,6 +17,7 @@ import { useTheme } from '../providers/ThemeProvider';
 import { usePreferences } from '../providers/PreferencesProvider';
 import { navFor, type NavItem } from './nav';
 import { useWorkspaceLook } from './useWorkspaceLook';
+import { prefetchPages } from '../lazyPage';
 import s from './AppShell.module.css';
 
 const COLLAPSE_KEY = 'acme-sidebar-collapsed';
@@ -424,6 +425,8 @@ export function AppShell({ wide }: { wide?: boolean }) {
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
+  // Fetch the other pages' code while the user reads this one, so sidebar clicks only wait for data.
+  useEffect(() => { prefetchPages(); }, []);
   const toggleCollapsed = () => setCollapsed((c) => {
     try { localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1'); } catch { /* per-browser preference only */ }
     return !c;

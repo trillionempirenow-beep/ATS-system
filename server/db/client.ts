@@ -9,7 +9,9 @@ const connect = () => postgres(env.DATABASE_URL, {
   // or land on the wrong query (rows of one query returned for another).
   // A supported option that postgres.js 3.4 leaves out of its types.
   ...({ max_pipeline: 1 } as object),
-  idle_timeout: 20,
+  // Keep connections for as long as prepareDb trusts them (REPLACE_AFTER_MS), so a click after a
+  // pause reuses one instead of paying a new TLS handshake and pooler sign-in.
+  idle_timeout: 240,
   connect_timeout: 10,
   ssl: env.DATABASE_SSL ? 'require' : undefined,
   types: {
