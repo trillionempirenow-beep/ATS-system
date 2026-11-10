@@ -52,9 +52,9 @@ export function ReferPage() {
           {error ? <Notice tone="danger">{error}</Notice> : null}
           <div className={formStyles.grid2}>
             <Field label="Your name" required error={errors.referrerName?.message}><TextInput autoComplete="name" {...register('referrerName')} /></Field>
-            <Field label="Your email" required error={errors.referrerEmail?.message}><TextInput type="email" autoComplete="email" {...register('referrerEmail')} /></Field>
-            <Field label="Friend’s name" required error={errors.candidateName?.message}><TextInput {...register('candidateName')} /></Field>
-            <Field label="Friend’s email" required error={errors.candidateEmail?.message}><TextInput type="email" {...register('candidateEmail')} /></Field>
+            <Field label="Your email" required error={errors.referrerEmail?.message}><TextInput type="email" autoComplete="email" spellCheck={false} {...register('referrerEmail')} /></Field>
+            <Field label="Friend’s name" required error={errors.candidateName?.message}><TextInput autoComplete="off" {...register('candidateName')} /></Field>
+            <Field label="Friend’s email" required error={errors.candidateEmail?.message}><TextInput type="email" autoComplete="off" spellCheck={false} {...register('candidateEmail')} /></Field>
           </div>
           <Field label="Position they’re a fit for">
             <Select {...register('jobId')} placeholder="General / not sure" options={(jobs.data?.jobs ?? []).map((j) => ({ value: j.id, label: j.title }))} />

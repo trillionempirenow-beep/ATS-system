@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useBlocker, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { applyFieldsSchema, refineApply, type ApplyInput, type ApplyResultDto } from '@shared/api/public';
 import { APPLY_SOURCES } from '@shared/domain/pipeline';
@@ -14,6 +14,7 @@ import { Checkbox, Dropzone, Field, FilePickButton, FileRow, Select, TextInput, 
 import { surfaceStyles } from '@/components/ui/Surface';
 import { usePublicConfig } from '@/app/layouts/PublicLayout';
 import { ErrorState, Notice, Skeleton } from '@/components/ui/Feedback';
+import { Modal } from '@/components/ui/Overlay';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { applyServerErrors } from '@/lib/forms';
 import { uploadFile } from '@/lib/upload';
@@ -52,13 +53,23 @@ export function ApplyPage() {
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplyResultDto | null>(null);
-  const { register, handleSubmit, control, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, control, setError, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: '', email: '', phoneCountry: 'PH', phoneNumber: '', coverLetter: '', whyUs: '', source: undefined, sourceOther: '', portfolio: '', confirm: false },
   });
   const v = useWatch({ control });
   useEffect(() => { if (job.data) document.title = `Apply · ${job.data.title}`; }, [job.data]);
   useEffect(() => () => { if (photoPreview) URL.revokeObjectURL(photoPreview); }, [photoPreview]);
+
+  // Leaving with a half-written application loses it: ask first, both for in-app links and for closing the tab.
+  const unsaved = !result && !isSubmitting && (isDirty || Boolean(resume.state) || Boolean(photo.state));
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => unsaved && currentLocation.pathname !== nextLocation.pathname);
+  useEffect(() => {
+    if (!unsaved) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [unsaved]);
 
   const progress = useMemo(() => [
     { label: 'Name', done: Boolean(v.name?.trim()) },
@@ -104,15 +115,21 @@ export function ApplyPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
-    let bad = false;
-    if (!resume.state?.id) { setResumeError('Attach your resume to continue.'); bad = true; } else setResumeError(null);
-    if (!values.confirm) { setConfirmError('Please confirm your details are accurate before submitting.'); bad = true; } else setConfirmError(null);
-    if (bad) return;
+    const uploading = resume.state?.progress !== null && resume.state?.progress !== undefined;
+    const resumeMissing = !resume.state?.id;
+    if (uploading) setResumeError('Your resume is still uploading. Submit again when it finishes.');
+    else if (resumeMissing) setResumeError('Attach your resume to continue.');
+    else setResumeError(null);
+    if (!values.confirm) setConfirmError('Please confirm your details are accurate before submitting.'); else setConfirmError(null);
+    // Take the user to the first problem, in page order.
+    if (uploading || resumeMissing) { document.getElementById('apply-resume')?.querySelector<HTMLElement>('[role="button"], button')?.focus(); return; }
+    if (!values.confirm) { setFocus('confirm'); return; }
     try {
       const payload: ApplyInput = { ...values, confirm: true, resumeUploadId: resume.state!.id!, photoUploadId: photo.state?.id ?? null } as ApplyInput;
       const res = await api.post<ApplyResultDto>(`/public/jobs/${encodeURIComponent(j.slug)}/apply`, payload);
       setResult(res);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'reduce';
+      window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
     } catch (e) {
       if (e instanceof ApiError && (e.fields.resume || e.fields.resumeUploadId)) {
         setResumeError(e.fields.resume ?? e.fields.resumeUploadId ?? e.message);
@@ -138,12 +155,12 @@ export function ApplyPage() {
           {formError ? <Notice tone="danger">{formError}</Notice> : null}
           <div className={formStyles.grid2}>
             <Field label="Full name" required error={errors.name?.message}><TextInput autoComplete="name" {...register('name')} /></Field>
-            <Field label="Email" required error={errors.email?.message}><TextInput type="email" autoComplete="email" {...register('email')} /></Field>
+            <Field label="Email" required error={errors.email?.message}><TextInput type="email" autoComplete="email" spellCheck={false} {...register('email')} /></Field>
           </div>
           <Field label="Phone" optional error={errors.phoneNumber?.message}>
             <div className={s.phoneRow}>
               <Select aria-label="Country code" {...register('phoneCountry')} options={PHONE_COUNTRIES.map(([iso, , dial]) => ({ value: iso, label: `${iso} (+${dial})` }))} />
-              <TextInput type="tel" autoComplete="tel-national" placeholder="917 555 0199" {...register('phoneNumber')} aria-label="Phone number" />
+              <TextInput type="tel" autoComplete="tel-national" placeholder="917 555 0199…" {...register('phoneNumber')} aria-label="Phone number" />
             </div>
           </Field>
           <div className={formStyles.grid2}>
@@ -151,7 +168,7 @@ export function ApplyPage() {
               <Select placeholder="Select an option" {...register('source')} options={Object.entries(APPLY_SOURCES).map(([value, label]) => ({ value, label }))} />
             </Field>
             {v.source === 'other' ? (
-              <Field label="Tell us where" required error={errors.sourceOther?.message}><TextInput maxLength={70} {...register('sourceOther')} /></Field>
+              <Field label="Tell us where" required error={errors.sourceOther?.message}><TextInput maxLength={70} autoComplete="off" {...register('sourceOther')} /></Field>
             ) : <div />}
           </div>
           <Field label="Cover letter" required error={errors.coverLetter?.message}>
@@ -161,7 +178,7 @@ export function ApplyPage() {
             <Textarea rows={4} maxLength={4000} {...register('whyUs')} />
           </Field>
           <Field label="Portfolio URL" optional error={errors.portfolio?.message}>
-            <TextInput type="url" icon="link" placeholder="https://yourportfolio.com" {...register('portfolio')} />
+            <TextInput type="url" icon="link" autoComplete="url" spellCheck={false} placeholder="https://yourportfolio.com…" {...register('portfolio')} />
           </Field>
 
           <div className={formStyles.field}>
@@ -169,7 +186,7 @@ export function ApplyPage() {
             <div className={s.photoRow}>
               <Avatar name={v.name || 'You'} src={photoPreview} size={56} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 13, color: 'var(--text3)' }}>JPG, PNG or WEBP · max 3 MB</span>
+                <span style={{ fontSize: 13, color: 'var(--text3)' }}>JPG, PNG or WEBP · max 3{' '}MB</span>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <FilePickButton accept="image/jpeg,image/png,image/webp" icon="image" label={photo.state ? 'Change photo' : 'Upload photo'}
                     onFile={(f) => { setPhotoPreview(URL.createObjectURL(f)); void photo.pick(f); }} />
@@ -180,7 +197,7 @@ export function ApplyPage() {
             </div>
           </div>
 
-          <div className={formStyles.field}>
+          <div className={formStyles.field} id="apply-resume">
             <span className={formStyles.label}>Resume <span className={formStyles.req} aria-hidden>*</span></span>
             {resume.state && !resume.state.error ? (
               <FileRow name={resume.state.name} progress={resume.state.progress}
@@ -215,8 +232,8 @@ export function ApplyPage() {
               <dt>Portfolio</dt><dd>{v.portfolio?.trim() ? 'Provided' : 'Not provided'}</dd>
             </dl>
             <Checkbox label="I confirm the information above is accurate and I consent to reviewing my application." {...register('confirm')} />
-            {confirmError ? <span className={formStyles.error}><Icon name="alert" size={14} />{confirmError}</span> : null}
-            <Button type="submit" size="lg" fullWidth loading={isSubmitting} disabled={resume.state?.progress !== null && resume.state?.progress !== undefined}>
+            {confirmError ? <span className={formStyles.error} role="alert"><Icon name="alert" size={14} />{confirmError}</span> : null}
+            <Button type="submit" size="lg" fullWidth loading={isSubmitting}>
               {isSubmitting ? 'Submitting…' : 'Submit application'}
             </Button>
           </div>
@@ -232,6 +249,10 @@ export function ApplyPage() {
           ) : null}
         </aside>
       </form>
+      <Modal open={blocker.state === 'blocked'} onClose={() => blocker.reset?.()} title="Leave your application?" role="alertdialog"
+        footer={<><Button variant="secondary" onClick={() => blocker.reset?.()}>Keep editing</Button><Button variant="danger" onClick={() => blocker.proceed?.()}>Leave and discard</Button></>}>
+        <p style={{ color: 'var(--text2)' }}>Your application hasn't been submitted. If you leave now, what you've entered and uploaded is lost.</p>
+      </Modal>
     </div>
   );
 }

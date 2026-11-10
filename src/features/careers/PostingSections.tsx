@@ -11,7 +11,7 @@ export function Bullets({ title, text }: { title: string; text: string | null })
   return (
     <section className={s.block}>
       <h2 className={s.blockTitle}>{title}</h2>
-      <ul className={s.bullets}>{items.map((i) => <li key={i}>{i}</li>)}</ul>
+      <ul className={s.bullets}>{items.map((item, n) => <li key={`${n}-${item}`}>{item}</li>)}</ul>
     </section>
   );
 }
@@ -22,7 +22,7 @@ export function Tags({ title, text }: { title: string; text: string | null }) {
   return (
     <section className={s.block}>
       <h2 className={s.blockTitle}>{title}</h2>
-      <div className={s.tags}>{items.map((t) => <span key={t} className={s.tag}>{t}</span>)}</div>
+      <div className={s.tags}>{items.map((t, n) => <span key={`${n}-${t}`} className={s.tag}>{t}</span>)}</div>
     </section>
   );
 }

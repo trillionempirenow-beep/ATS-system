@@ -9,7 +9,7 @@ import s from './Careers.module.css';
 
 export function JobCard({ job }: { job: PublicJobCardDto }) {
   return (
-    <Link to={`/jobs/${job.slug}`} className={cx(s.card, job.full && s.cardFull)} aria-label={`${job.title}, ${job.department ?? 'Strtm'}, ${job.location ?? 'Location flexible'}`}>
+    <Link to={`/jobs/${job.slug}`} className={cx(s.card, job.full && s.cardFull)}>
       <div className={s.cardTop}>
         <div className={s.cardBadges}>
           <Badge tone="neutral">{job.department ?? 'Strtm'}</Badge>

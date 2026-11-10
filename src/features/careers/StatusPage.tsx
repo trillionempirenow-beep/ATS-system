@@ -53,7 +53,9 @@ function InterviewCard({ iv }: { iv: CandidateInterviewDto }) {
               : <Button icon="video" fullWidth disabled>Join interview</Button>}
           </>
         ) : iv.externalUrl ? (
-          <a href={iv.externalUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600 }}>Open meeting link</a>
+          <a href={iv.externalUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            Open meeting link<Icon name="external" size={14} /><span className="sr-only">(opens in a new tab)</span>
+          </a>
         ) : (
           <p style={{ color: 'var(--text2)' }}>Joining details will be shared by your recruiter closer to the time.</p>
         )}
@@ -228,10 +230,10 @@ export function StatusPage() {
         <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} noValidate
           onSubmit={handleSubmit((v) => setParams({ email: v.email.trim(), ...(v.applicationId ? { id: v.applicationId } : {}) }))}>
           <Field label="Email" required error={errors.email?.message ?? (notFound ? (id ? 'We could not find an application for that email and ID.' : 'We could not find any applications under that email.') : undefined)}>
-            <TextInput type="email" icon="mail" autoComplete="email" {...register('email')} />
+            <TextInput type="email" icon="mail" autoComplete="email" spellCheck={false} {...register('email')} />
           </Field>
           <Field label="Application ID" optional error={errors.applicationId?.message}>
-            <TextInput inputMode="numeric" {...register('applicationId')} />
+            <TextInput inputMode="numeric" autoComplete="off" spellCheck={false} {...register('applicationId')} />
           </Field>
           <Button type="submit" fullWidth loading={lookup.isFetching}>Check application status</Button>
         </form>

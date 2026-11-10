@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { IconName } from '@/components/icon/Icon';
 import { Icon } from '@/components/icon/Icon';
 import { ButtonLink } from '@/components/ui/Button';
@@ -10,9 +10,12 @@ import { usePublicHome } from './api';
 import { JobCard } from './JobCard';
 import s from './Careers.module.css';
 
-const STEPS: Array<[IconName, string, string]> = [
+/** The company name, kept out of browser auto-translation. */
+const Brand = ({ name }: { name: string }) => <span translate="no">{name}</span>;
+
+const steps = (company: string): Array<[IconName, string, ReactNode]> => [
   ['edit', '1. Apply in minutes', 'Submit your details and resume. No account required to get started.'],
-  ['video', '2. Meet the team, built-in', 'Interviews run right inside Strtm, with no external links or extra apps to install.'],
+  ['video', '2. Meet the team, built-in', <>Interviews run right inside <Brand name={company} />, with no external links or extra apps to install.</>],
   ['checkcircle', '3. Fast, transparent decisions', 'Track your application status and hear back quickly at every stage.'],
 ];
 
@@ -35,10 +38,10 @@ export function HomePage() {
             <span className={s.kicker}><span className={s.kickerDot} />Now hiring across {stats.openRoles} open role{stats.openRoles === 1 ? '' : 's'}</span>
           ) : null}
           <h1 id="hero-title" className={s.display}>{config.data?.careersHeadline || 'Small teams. Big ownership.'}</h1>
-          <p className={s.lead}>Join a company where interviews run inside {company} and every application is visible to you, start to finish.</p>
+          <p className={s.lead}>Join a company where interviews run inside <Brand name={company} /> and every application is visible to you, start to finish.</p>
           <div className={s.heroActions}>
             <ButtonLink to="/jobs" size="lg" iconRight="arrowr">Explore open roles</ButtonLink>
-            <ButtonLink to="/#why" size="lg" variant="secondary" iconRight="chevron">Why {company}</ButtonLink>
+            <ButtonLink to="/#why" size="lg" variant="secondary" iconRight="chevron">Why <Brand name={company} /></ButtonLink>
           </div>
           <div className={s.heroBadges}>
             {stats && stats.remoteRoles > 0 ? <Badge tone="success" icon="public">Remote-friendly</Badge> : null}
@@ -48,19 +51,22 @@ export function HomePage() {
         <aside className={s.principle} aria-label="How we hire">
           <span className={surface.eyebrow} style={{ color: 'var(--text3)' }}>Our operating principle</span>
           <p className={s.principleQuote}>Decide fast. Give feedback. Keep candidates informed.</p>
-          <div className={s.facts}>
-            <div className={s.fact}><span className={s.factValue}>{stats ? stats.openRoles : '—'}</span><span className={s.factLabel}>Open roles right now</span></div>
-            <div className={s.fact}><span className={s.factValue}>{stats ? stats.departmentsHiring : '—'}</span><span className={s.factLabel}>Teams hiring</span></div>
-            <div className={s.fact}><span className={s.factValue}>{stats ? stats.remoteRoles : '—'}</span><span className={s.factLabel}>Remote-friendly roles</span></div>
-            <div className={s.fact}><span className={s.factValue}>Live</span><span className={s.factLabel}>Status tracking for every application</span></div>
-          </div>
+          {/* Numbers only once they have loaded; if they fail, the card keeps its principle and drops the empty figures. */}
+          {stats ? (
+            <div className={s.facts}>
+              <div className={s.fact}><span className={s.factValue}>{stats.openRoles}</span><span className={s.factLabel}>Open roles right now</span></div>
+              <div className={s.fact}><span className={s.factValue}>{stats.departmentsHiring}</span><span className={s.factLabel}>Teams hiring</span></div>
+              <div className={s.fact}><span className={s.factValue}>{stats.remoteRoles}</span><span className={s.factLabel}>Remote-friendly roles</span></div>
+              <div className={s.fact}><span className={s.factValue}>Live</span><span className={s.factLabel}>Status tracking for every application</span></div>
+            </div>
+          ) : home.isLoading ? <Skeleton height={176} radius={12} /> : null}
         </aside>
       </section>
 
       <section aria-labelledby="steps-title">
         <div className={s.sectionHead}><h2 id="steps-title" className={s.h2}>Three simple steps.</h2></div>
         <div className={s.steps}>
-          {STEPS.map(([icon, title, text]) => (
+          {steps(company).map(([icon, title, text]) => (
             <div key={title} className={s.step}>
               <span className={s.stepIcon}><Icon name={icon} size={18} /></span>
               <h3 className={s.stepTitle}>{title}</h3>

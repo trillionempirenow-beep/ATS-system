@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Icon } from '@/components/icon/Icon';
 import { Button } from '@/components/ui/Button';
 import { Select, TextInput } from '@/components/ui/Form';
 import { EmptyState, ErrorState, Notice, Skeleton } from '@/components/ui/Feedback';
@@ -53,7 +54,7 @@ export function RolesPage() {
       <div>
         <div className={s.filters} role="search">
           <div className={s.filterRow}>
-            <TextInput icon="search" placeholder="Search jobs, tags, locations…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search roles" />
+            <TextInput type="search" name="q" autoComplete="off" spellCheck={false} icon="search" placeholder="Search jobs, tags, locations…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search roles" />
             <Select aria-label="Department" value={filters.dept ?? ''} onChange={(e) => update('dept', e.target.value || null)} placeholder="All departments"
               options={(data?.facets.departments ?? []).map((d) => ({ value: d, label: d }))} />
             <Select aria-label="Location" value={filters.loc ?? ''} onChange={(e) => update('loc', e.target.value || null)} placeholder="All locations"
@@ -65,10 +66,18 @@ export function RolesPage() {
               return <button key={q} type="button" className={surfaceStyles.pill} aria-pressed={active} onClick={() => update('loc', active ? null : q)}>{q}</button>;
             })}
             <button type="button" className={surfaceStyles.pill} aria-pressed={filters.urgent === '1'} onClick={() => update('urgent', filters.urgent === '1' ? null : '1')}>Urgent hiring</button>
-            {filters.tag ? <button type="button" className={surfaceStyles.pill} aria-pressed onClick={() => update('tag', null)}>#{filters.tag} ×</button> : null}
+            {filters.tag ? (
+              <button type="button" className={surfaceStyles.pill} aria-pressed aria-label={`Remove tag filter: ${filters.tag}`} onClick={() => update('tag', null)}>
+                #{filters.tag}<Icon name="close" size={12} />
+              </button>
+            ) : null}
           </div>
         </div>
 
+        {/* Announce the new count when filters change; the visible count below stays as it was. */}
+        <span className="sr-only" aria-live="polite">
+          {data ? (data.jobs.length ? `${data.jobs.length} of ${data.total} roles shown` : 'No roles match your search') : ''}
+        </span>
         {data && data.jobs.length > 0 ? (
           <div className={s.resultMeta}>
             <span className="num">{data.jobs.length} of {data.total} roles</span>
