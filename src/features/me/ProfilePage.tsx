@@ -24,7 +24,7 @@ const KEY = ['profile'] as const;
 
 export function ProfilePage() {
   const q = useQuery({ queryKey: KEY, queryFn: () => api.get<ProfileDto>('/profile') });
-  useEffect(() => { document.title = 'My profile · Acme People'; }, []);
+  useEffect(() => { document.title = 'My profile · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const p = q.data;
   return (

@@ -44,7 +44,7 @@ function useUpload(purpose: 'resume' | 'candidate_photo') {
 export function ApplyPage() {
   const { slug = '' } = useParams();
   const job = usePublicJob(slug);
-  const company = usePublicConfig().data?.companyName ?? 'Acme';
+  const company = usePublicConfig().data?.companyName ?? 'Strtm';
   const resume = useUpload('resume');
   const photo = useUpload('candidate_photo');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -126,7 +126,7 @@ export function ApplyPage() {
     <div>
       <header className={s.applyHead}>
         <div className={s.cardBadges}>
-          <span style={{ color: 'var(--text2)' }}>{j.department ?? 'Acme'}</span>
+          <span style={{ color: 'var(--text2)' }}>{j.department ?? 'Strtm'}</span>
           <span style={{ color: 'var(--text3)' }}>·</span>
           <span style={{ color: 'var(--text2)' }}>{j.location || 'Location flexible'}</span>
         </div>

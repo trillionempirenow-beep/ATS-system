@@ -59,7 +59,7 @@ export function PipelinePage() {
   const [over, setOver] = useState<BoardStage | null>(null);
   const [move, setMove] = useState<PendingMove | null>(null);
   const [preview, setPreview] = useState<PipelineCardDto | null>(null);
-  useEffect(() => { document.title = 'Hiring pipeline · Acme People'; }, []);
+  useEffect(() => { document.title = 'Hiring pipeline · Strtm People'; }, []);
   const set = (key: string, value: string | null) => setUrl({ [key]: value });
   const requestMove = (card: PipelineCardDto, to: Stage) => {
     if (card.stage === to) return;

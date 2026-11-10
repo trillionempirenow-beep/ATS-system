@@ -33,9 +33,9 @@ export function Icon({ name, size = 18, className, style, label }: IconProps) {
   );
 }
 
-/** The Acme logo. `size` is its height; it is wider than tall (about 1.4 : 1), so the width follows. */
-export const BRAND_LOGO_RATIO = 1.404;
-export function BrandMark({ size = 32, label = 'Acme logo', src = '/logo.webp' }: { size?: number; label?: string; src?: string }) {
+/** The Strtm cube mark. `size` is its height; it is slightly taller than wide (about 0.95 : 1), so the width follows. */
+export const BRAND_LOGO_RATIO = 0.947;
+export function BrandMark({ size = 32, label = 'Strtm logo', src = '/logo.webp' }: { size?: number; label?: string; src?: string }) {
   return (
     <img
       src={src}

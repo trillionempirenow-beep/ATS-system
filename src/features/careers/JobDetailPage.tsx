@@ -57,7 +57,7 @@ export function JobDetailPage() {
         <article className={s.detailMain}>
           <header className={s.detailHead}>
             <div className={s.cardBadges}>
-              <Badge tone="neutral">{j.department ?? 'Acme'}</Badge>
+              <Badge tone="neutral">{j.department ?? 'Strtm'}</Badge>
               {j.isUrgent ? <Badge tone="warning" icon="flag">Urgent hiring</Badge> : null}
               <Badge tone="info">{EMPLOYMENT_TYPE_LABELS[j.employmentType]}</Badge>
             </div>

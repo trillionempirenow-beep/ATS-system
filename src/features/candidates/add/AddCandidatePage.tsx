@@ -57,7 +57,7 @@ export function AddCandidatePage() {
   const [parse, setParse] = useState<Parse>({ state: 'idle' });
   const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => { document.title = 'Add candidate · Acme People'; }, []);
+  useEffect(() => { document.title = 'Add candidate · Strtm People'; }, []);
 
   const save = useMutation({
     mutationFn: (input: AddCandidateInput) => api.post<AddCandidateResultDto>('/candidates', input),

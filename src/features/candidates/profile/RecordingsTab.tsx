@@ -178,7 +178,7 @@ export function RecordingsTab({ c }: { c: CandidateProfileDto }) {
         subtitle={`${items.length} meeting${items.length === 1 ? '' : 's'} on record for ${c.firstName}: the video when it was recorded, the summary, flagged moments and what was said.`}
       />
       {items.length === 0 ? (
-        <EmptyState compact icon="video" title="No recordings yet" text="After a meeting in the Acme Room, its recording (if it was recorded), summary, flagged moments and transcript are kept here, for this candidate only." />
+        <EmptyState compact icon="video" title="No recordings yet" text="After a meeting in the Strtm Room, its recording (if it was recorded), summary, flagged moments and transcript are kept here, for this candidate only." />
       ) : (
         <div className={s.lib}>
           <div className={s.search}>

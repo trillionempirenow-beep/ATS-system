@@ -23,7 +23,7 @@ export function NotificationsPage() {
   const markRead = useMarkRead();
   const clearRead = useClearRead();
   const toast = useToast();
-  useEffect(() => { document.title = 'Notifications · Acme People'; }, []);
+  useEffect(() => { document.title = 'Notifications · Strtm People'; }, []);
   // The page follows the shell's 30-second poll: when the unread count moves, refresh the list.
   const unread = shell.data?.unread;
   const refetch = list.refetch;

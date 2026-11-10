@@ -1,7 +1,7 @@
 import { sql, type Db } from '../db/client.js';
 
 export const SETTING_DEFAULTS = {
-  company_name: 'Acme',
+  company_name: 'Strtm',
   careers_headline: 'Do the best work of your career.',
   default_applicant_limit: '',
   logo_path: '',

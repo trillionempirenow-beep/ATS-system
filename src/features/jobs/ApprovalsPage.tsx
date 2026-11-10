@@ -22,7 +22,7 @@ function Person({ name }: { name: string | null }) {
 export function ApprovalsPage() {
   const q = useApprovalQueue();
   const navigate = useNavigate();
-  useEffect(() => { document.title = 'Job approvals · Acme People'; }, []);
+  useEffect(() => { document.title = 'Job approvals · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
 

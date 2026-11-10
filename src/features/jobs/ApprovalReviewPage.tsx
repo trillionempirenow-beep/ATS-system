@@ -37,7 +37,7 @@ export function ApprovalReviewPage() {
   const [note, setNote] = useState('');
   const [noteError, setNoteError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  useEffect(() => { document.title = 'Review posting · Acme People'; }, []);
+  useEffect(() => { document.title = 'Review posting · Strtm People'; }, []);
 
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   if (!q.data) return <div className={w.page}><Skeleton height={36} width={300} /><div className={w.aside340}><Skeleton height={520} /><Skeleton height={400} /></div></div>;

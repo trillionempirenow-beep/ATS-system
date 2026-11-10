@@ -153,7 +153,7 @@ const activityVerb = (a: string) => (a in JOB_APPROVAL_ACTION_LABELS ? JOB_APPRO
 export function AdminsPage() {
   const q = useQuery({ queryKey: adminKeys.admins, queryFn: () => api.get<AdminsOverviewDto>('/admin/admins') });
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
-  useEffect(() => { document.title = 'Admins and permissions · Acme People'; }, []);
+  useEffect(() => { document.title = 'Admins and permissions · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
   const jobs = d?.stats.jobs ?? {};

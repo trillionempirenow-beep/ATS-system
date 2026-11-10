@@ -12,7 +12,7 @@ export interface Brand {
   company: string;
   appUrl: string;
   logoUrl: string | null;
-  /** True when no custom logo is set: the wide Acme logo is shown at its own proportions. */
+  /** True when no custom logo is set: the Strtm cube mark is shown at its own proportions. */
   logoIsDefault?: boolean;
   supportEmail: string | null;
 }
@@ -26,16 +26,16 @@ export const esc = (v: unknown): string =>
     .replace(/'/g, '&#39;');
 
 const C = {
-  bg: '#F5F7FA',
+  bg: '#F4F7F9',
   surface: '#FFFFFF',
-  border: '#E2E7EF',
-  text: '#0E1626',
-  text2: '#435068',
-  text3: '#596680',
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  primarySoft: '#EFF4FF',
-  sunken: '#F6F8FB',
+  border: '#DFE6EB',
+  text: '#0B1D2B',
+  text2: '#435866',
+  text3: '#56697A',
+  primary: '#0A6580',
+  primaryDark: '#08526A',
+  primarySoft: '#E2F1F5',
+  sunken: '#F2F6F8',
 };
 const FONT = "Figtree, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const MONO = "'IBM Plex Mono', SFMono-Regular, Menlo, Consolas, monospace";
@@ -106,7 +106,7 @@ function blockText(b: Block): string {
 export function renderEmail(brand: Brand, subject: string, preheader: string, blocks: Block[]): RenderedEmail {
   const logo = brand.logoUrl
     ? brand.logoIsDefault
-      ? `<img src="${esc(brand.logoUrl)}" width="51" height="36" alt="${esc(brand.company)}" style="display:block">`
+      ? `<img src="${esc(brand.logoUrl)}" width="34" height="36" alt="${esc(brand.company)}" style="display:block">`
       : `<img src="${esc(brand.logoUrl)}" width="32" height="32" alt="${esc(brand.company)}" style="display:block;border-radius:8px">`
     : `<div style="width:32px;height:32px;border-radius:8px;background:${C.primary};color:#fff;font:700 16px/32px ${FONT};text-align:center">${esc(brand.company.charAt(0))}</div>`;
   const html = `<!doctype html>
@@ -122,7 +122,7 @@ export function renderEmail(brand: Brand, subject: string, preheader: string, bl
       <td style="vertical-align:middle;padding-left:10px;font-size:15px;font-weight:700;color:${C.text}">${esc(brand.company)}<span style="color:${C.text3};font-weight:600">/careers</span></td>
     </tr></table></td></tr>
     <tr><td style="background:${C.surface};border:1px solid ${C.border};border-radius:14px;overflow:hidden">
-      <div style="height:6px;background:${C.primary};background-image:linear-gradient(90deg,${C.primary},#60A5FA);font-size:0;line-height:0">&nbsp;</div>
+      <div style="height:6px;background:${C.primary};background-image:linear-gradient(90deg,${C.primary},#F5A100);font-size:0;line-height:0">&nbsp;</div>
       <div class="pad" style="padding:30px 36px 32px">
       ${blocks.map(blockHtml).join('\n')}
       </div>

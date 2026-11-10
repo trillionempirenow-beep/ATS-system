@@ -12,7 +12,7 @@ import s from './Careers.module.css';
 
 const STEPS: Array<[IconName, string, string]> = [
   ['edit', '1. Apply in minutes', 'Submit your details and resume. No account required to get started.'],
-  ['video', '2. Meet the team, built-in', 'Interviews run right inside Acme, with no external links or extra apps to install.'],
+  ['video', '2. Meet the team, built-in', 'Interviews run right inside Strtm, with no external links or extra apps to install.'],
   ['checkcircle', '3. Fast, transparent decisions', 'Track your application status and hear back quickly at every stage.'],
 ];
 
@@ -23,7 +23,7 @@ function CardsSkeleton({ count = 3 }: { count?: number }) {
 export function HomePage() {
   const home = usePublicHome();
   const config = usePublicConfig();
-  const company = config.data?.companyName ?? 'Acme';
+  const company = config.data?.companyName ?? 'Strtm';
   useEffect(() => { document.title = `Careers · ${company}`; }, [company]);
   const stats = home.data?.stats;
 

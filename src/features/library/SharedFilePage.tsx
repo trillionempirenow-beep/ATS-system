@@ -30,7 +30,7 @@ export function SharedFilePage() {
     retry: false,
     staleTime: 5 * 60_000,
   });
-  const company = file.data?.companyName ?? landing.data?.companyName ?? 'Acme';
+  const company = file.data?.companyName ?? landing.data?.companyName ?? 'Strtm';
   useEffect(() => { document.title = file.data ? `${file.data.file.name} · Shared by ${company}` : `Shared file · ${company}`; }, [file.data, company]);
   // The viewer session ended or the share changed: ask for a new code.
   useEffect(() => {

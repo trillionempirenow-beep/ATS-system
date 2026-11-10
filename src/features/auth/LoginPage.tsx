@@ -61,7 +61,7 @@ export function LoginPage() {
     <>
       <div className={s.head}>
         <h2 className={s.title}>Sign in</h2>
-        <p className={s.sub}>For authorised Acme recruiting and HR staff.</p>
+        <p className={s.sub}>For authorised Strtm recruiting and HR staff.</p>
       </div>
       {problem ? <Notice tone="danger" title={problem.title}>{problem.body}</Notice> : null}
       <form className={s.form} onSubmit={onSubmit} noValidate>

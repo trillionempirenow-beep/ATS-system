@@ -52,7 +52,7 @@ export function PasswordResetsPage() {
   const q = useQuery({ queryKey: adminKeys.resets, queryFn: () => api.get<PasswordResetsDto>('/password-resets') });
   const toast = useToast();
   const [issued, setIssued] = useState<{ name: string; result: ResetDecisionResultDto } | null>(null);
-  useEffect(() => { document.title = 'Password resets · Acme People'; }, []);
+  useEffect(() => { document.title = 'Password resets · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
 

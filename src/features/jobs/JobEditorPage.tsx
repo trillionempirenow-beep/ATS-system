@@ -58,7 +58,7 @@ export function JobEditorPage() {
   const params = useParams();
   const id = params.id ? Number(params.id) : null;
   const q = useJobEditor(id);
-  useEffect(() => { document.title = `${id ? 'Edit job posting' : 'Create job posting'} · Acme People`; }, [id]);
+  useEffect(() => { document.title = `${id ? 'Edit job posting' : 'Create job posting'} · Strtm People`; }, [id]);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   if (!q.data) return <div className={w.page}><Skeleton height={36} width={280} /><div className={w.aside340}><Skeleton height={640} /><Skeleton height={320} /></div></div>;
   return <Editor key={id ?? 'new'} id={id} data={q.data} />;

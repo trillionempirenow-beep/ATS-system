@@ -25,7 +25,7 @@ export function AttendancePage() {
   const [params, setParams] = useSearchParams();
   const reviewer = can.roles('admin', 'hiring_manager');
   const view = reviewer && params.get('view') === 'review' ? 'review' : 'mine';
-  useEffect(() => { document.title = `${view === 'review' ? 'Attendance review' : 'Attendance'} · Acme People`; }, [view]);
+  useEffect(() => { document.title = `${view === 'review' ? 'Attendance review' : 'Attendance'} · Strtm People`; }, [view]);
   const tabs = reviewer ? (
     <PillTabs label="Attendance view" value={view} onChange={(k) => setParams(k === 'review' ? { view: 'review' } : {}, { replace: true })}
       items={[{ key: 'mine', label: 'My attendance' }, { key: 'review', label: 'Team review' }]} />

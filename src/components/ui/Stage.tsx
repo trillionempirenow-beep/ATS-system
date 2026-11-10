@@ -7,7 +7,7 @@ import s from './Stage.module.css';
 
 /**
  * The stage rail: how far someone has come through hiring, drawn the same way
- * everywhere in Acme People. Six steps from Applied to Hired on one ordered colour
+ * everywhere in Strtm People. Six steps from Applied to Hired on one ordered colour
  * scale (slate to deep jade); Rejected sits outside the order, in Ember.
  */
 

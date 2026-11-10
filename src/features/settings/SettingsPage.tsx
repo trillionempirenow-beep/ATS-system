@@ -14,7 +14,7 @@ export function SettingsPage({ initialTab = 'preferences' }: { initialTab?: TabK
   const [params, setParams] = useSearchParams();
   const requested = (params.get('tab') as TabKey | null) ?? initialTab;
   const tab: TabKey = requested === 'workspace' && can.adminLevel ? 'workspace' : 'preferences';
-  useEffect(() => { document.title = 'Settings · Acme People'; }, []);
+  useEffect(() => { document.title = 'Settings · Strtm People'; }, []);
 
   return (
     <div className={w.page}>

@@ -20,7 +20,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { can } = useAuth();
   const q = useQuery({ queryKey: ['dashboard'], queryFn: () => api.get<DashboardDto>('/dashboard'), refetchInterval: 60_000 });
-  useEffect(() => { document.title = 'Overview · Acme People'; }, []);
+  useEffect(() => { document.title = 'Overview · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
   const trendEmpty = d ? d.trend.every((t) => t.count === 0) : false;

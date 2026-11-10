@@ -61,7 +61,7 @@ export function calendarInvite(e: CalendarEvent, method: CalendarInvite['method'
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Acme People//ATS//EN',
+    'PRODID:-//Strtm People//ATS//EN',
     'CALSCALE:GREGORIAN',
     `METHOD:${method}`,
     'BEGIN:VEVENT',

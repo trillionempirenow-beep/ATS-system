@@ -88,7 +88,7 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
         insert into interviews (application_id, interviewer_id, meeting_type, starts_at, ends_at, timezone, interview_type, meeting_url,
                                 meeting_provider, room_code, candidate_token, is_final, guest_token, record_meeting, location, notes, status, created_by)
         values (${input.applicationId}, ${interviewerId}, ${input.meetingType}, ${input.startsAt}, ${input.endsAt ?? null}, ${env.APP_TIMEZONE},
-                ${input.interviewType}, ${builtIn ? null : input.meetingUrl || null}, ${builtIn ? 'Acme Room' : input.meetingProvider || 'External'},
+                ${input.interviewType}, ${builtIn ? null : input.meetingUrl || null}, ${builtIn ? 'Strtm Room' : input.meetingProvider || 'External'},
                 ${builtIn ? roomCode() : null}, ${builtIn ? randomHex(16) : null}, ${final}, ${builtIn ? randomHex(16) : null}, ${builtIn && input.recordMeeting}, ${input.location || null}, ${input.notes || null}, 'scheduled', ${ctx.user.id})
         returning id`;
       await tx`update applications set assigned_to = ${interviewerId} where id = ${input.applicationId} and assigned_to is null`;
@@ -103,7 +103,7 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
           details: { from: prev.stage, to: target, via: 'interview scheduled' }, ip: ctx.ip }, tx);
       }
       await audit({ userId: ctx.user.id, action: 'interview_create', entityType: 'interview', entityId: created!.id,
-        details: { meeting: input.meetingType, type: input.interviewType, room: builtIn ? 'Acme Room' : 'external', final, recorded: builtIn && input.recordMeeting }, ip: ctx.ip }, tx);
+        details: { meeting: input.meetingType, type: input.interviewType, room: builtIn ? 'Strtm Room' : 'external', final, recorded: builtIn && input.recordMeeting }, ip: ctx.ip }, tx);
       return created!.id;
     });
   } catch (e) {

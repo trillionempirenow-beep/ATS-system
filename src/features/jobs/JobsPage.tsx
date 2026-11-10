@@ -107,7 +107,7 @@ export function JobsPage() {
   const [editing, setEditing] = useState<JobRowDto | null>(null);
   const [addDept, setAddDept] = useState(false);
   const navigate = useNavigate();
-  useEffect(() => { document.title = 'Job management · Acme People'; }, []);
+  useEffect(() => { document.title = 'Job management · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
 

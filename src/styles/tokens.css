@@ -1,5 +1,5 @@
-/* Casefile design tokens.
-   Ink on paper, one action colour (Jade), one urgency colour (Ember), and a single
+/* Casefile design tokens, in the Strtm palette.
+   Navy ink on paper, one action colour (petrol, still named --jade), one urgency colour (--ember, a red), and a single
    ordered scale for the hiring stages: the stage is the one memorable thing in the
    product, everything else stays quiet. Components read only these variables. */
 
@@ -7,46 +7,46 @@
   color-scheme: light;
 
   /* Base palette */
-  --ink: #17233A;
-  --paper: #F7F8FA;
+  --ink: #0B1D2B;
+  --paper: #F4F7F9;
   --sheet: #FFFFFF;
-  --rule: #DDE2EA;
-  --jade: #0E7C66;
-  --ember: #C2410C;
+  --rule: #DFE6EB;
+  --jade: #0A6580;
+  --ember: #D12B40;
 
   /* Surfaces and text */
   --bg: var(--paper);
   --surface: var(--sheet);
-  --surface2: #F1F3F6;
-  --sunken: #ECEFF3;
+  --surface2: #F0F4F6;
+  --sunken: #E9EFF2;
   --border: var(--rule);
-  --border-strong: #C7CFDA;
-  --border-input: #8A94A6;
+  --border-strong: #C6D2DA;
+  --border-input: #7F909C;
   --text: var(--ink);
-  --text2: #46526A;
-  --text3: #5D6880;
-  --placeholder: #6E7890;
+  --text2: #435866;
+  --text3: #56697A;
+  --placeholder: #5F7383;
 
-  /* Action: Jade */
+  /* Action: petrol */
   --primary: var(--jade);
-  --primary-hover: #0A6855;
+  --primary-hover: #08526A;
   --primary-fg: #FFFFFF;
-  --primary-subtle: #E4F2EE;
-  --primary-subtle-fg: #0A5A49;
-  --primary-ring: rgba(14, 124, 102, .30);
+  --primary-subtle: #E2F1F5;
+  --primary-subtle-fg: #064B60;
+  --primary-ring: rgba(10, 101, 128, .30);
 
-  /* System messages. Success shares Jade; danger is Ember. */
-  --success-bg: #E4F2EE;
-  --success-fg: #0A5A49;
-  --success-border: #A9D6CA;
-  --success-solid: #0E7C66;
+  /* System messages. Success is green; danger is Ember (red). */
+  --success-bg: #E7F8F0;
+  --success-fg: #046C4E;
+  --success-border: #9BE3C4;
+  --success-solid: #059669;
   --warning-bg: #FBF1DC;
   --warning-fg: #8A4B06;
   --warning-border: #EDCB86;
   --warning-solid: #B7791F;
-  --danger-bg: #FBEDE6;
-  --danger-fg: #9A330A;
-  --danger-border: #F0B79E;
+  --danger-bg: #FDECEE;
+  --danger-fg: #B3192F;
+  --danger-border: #F5B3BC;
   --danger-solid: var(--ember);
   --danger-solid-fg: #FFFFFF;
   --info-bg: #E9EEF6;
@@ -66,27 +66,27 @@
   --neutral-border: #CED5E0;
   --neutral-solid: #6B7689;
 
-  /* The stage scale: one ordered ramp from slate (just applied) to deep jade (hired).
+  /* The stage scale: one ordered ramp from slate (just applied) to deep petrol, then green (hired).
      How far along someone is reads from the colour itself. Rejected is Ember. */
-  --stage-new: #8792A6;
-  --stage-screening: #6A979A;
-  --stage-interview: #3F9483;
-  --stage-final: #1F8670;
-  --stage-offer: #0E7C66;
-  --stage-hired: #0A5A49;
+  --stage-new: #8FA3AF;
+  --stage-screening: #5E98AC;
+  --stage-interview: #3F8AA3;
+  --stage-final: #1A7190;
+  --stage-offer: #0A5874;
+  --stage-hired: #059669;
   --stage-rejected: var(--ember);
 
-  --scrim: rgba(17, 25, 41, .48);
+  --scrim: rgba(5, 16, 24, .48);
   /* Shadows only for things that float above the page. */
-  --sh-xs: 0 1px 2px rgba(23, 35, 58, .05);
-  --sh-sm: 0 1px 2px rgba(23, 35, 58, .07);
-  --sh-md: 0 6px 16px -6px rgba(23, 35, 58, .16), 0 2px 4px -2px rgba(23, 35, 58, .08);
-  --sh-lg: 0 20px 44px -12px rgba(23, 35, 58, .26), 0 6px 14px -6px rgba(23, 35, 58, .12);
+  --sh-xs: 0 1px 2px rgba(11, 29, 43, .05);
+  --sh-sm: 0 1px 2px rgba(11, 29, 43, .07);
+  --sh-md: 0 6px 16px -6px rgba(11, 29, 43, .16), 0 2px 4px -2px rgba(11, 29, 43, .08);
+  --sh-lg: 0 20px 44px -12px rgba(11, 29, 43, .26), 0 6px 14px -6px rgba(11, 29, 43, .12);
   --tooltip-bg: var(--ink);
   --tooltip-fg: #FFFFFF;
-  --video: #141C2B;
-  --video-tile: #1E2839;
-  --call-bar: #0D1320;
+  --video: #0B1720;
+  --video-tile: #15242F;
+  --call-bar: #061017;
   /* The interview room is a dark stage in both themes: its own text, lines and accents on ink. */
   --call-text: #FFFFFF;
   --call-text-2: rgba(255, 255, 255, 0.78);
@@ -94,14 +94,14 @@
   --call-fill: rgba(255, 255, 255, 0.06);
   --call-fill-2: rgba(255, 255, 255, 0.1);
   --call-line: rgba(255, 255, 255, 0.16);
-  --call-accent: #3DBB9B;
-  --call-accent-fg: #06221B;
-  --call-danger: #C2410C;
-  --call-danger-hover: #A8380A;
-  --call-danger-text: #F0804F;
+  --call-accent: #35C3DE;
+  --call-accent-fg: #04161D;
+  --call-danger: #D12B40;
+  --call-danger-hover: #B3192F;
+  --call-danger-text: #FF8A98;
   --call-ai: #C4B5FD;
   --call-warn: #FCD34D;
-  --call-ink: #05080F;
+  --call-ink: #030A0F;
   --call-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 
   /* Type: IBM Plex Sans throughout; Plex Mono only for codes and IDs. */
@@ -152,31 +152,31 @@
   --content-max: 1120px;
   --page-pad: 32px;
 
-  /* Charts: Jade first, then colours that sit with it. Stages use the stage scale. */
-  --chart-1: #0E7C66;
-  --chart-2: #B7791F;
+  /* Charts: petrol first, the logo orange second, then colours that sit with them. Stages use the stage scale. */
+  --chart-1: #0A6580;
+  --chart-2: #E07800;
   --chart-3: #3D5A8C;
   --chart-4: #7A5A9E;
   --chart-5: #3E8F8C;
-  --chart-6: #C2410C;
-  --chart-grid: #E4E8EE;
-  --chart-axis: #5D6880;
+  --chart-6: #D12B40;
+  --chart-grid: #E3EAEE;
+  --chart-axis: #56697A;
 
-  /* Brand panel on the sign-in screens: ink in both themes. */
-  --brand-panel: #17233A;
+  /* Brand panel on the sign-in screens: Strtm navy in both themes, amber accent. */
+  --brand-panel: #071A26;
   --brand-panel-text: #FFFFFF;
-  --brand-panel-muted: #C3CCDA;
-  --brand-panel-soft: #DDE3EC;
-  --brand-panel-faint: #A7B2C4;
-  --brand-panel-accent: #7FD3BD;
+  --brand-panel-muted: #C3D6E0;
+  --brand-panel-soft: #DAE7EE;
+  --brand-panel-faint: #A5BCC8;
+  --brand-panel-accent: #FFB400;
   --brand-panel-chip: rgba(255, 255, 255, 0.10);
   /* The stage scale as it reads on ink (the dark-theme values, in both themes). */
-  --brand-panel-stage-1: #7E8AA0;
-  --brand-panel-stage-2: #6FA4A6;
-  --brand-panel-stage-3: #4FAE98;
-  --brand-panel-stage-4: #3DBB9B;
-  --brand-panel-stage-5: #5CCBAE;
-  --brand-panel-stage-6: #8FDCC6;
+  --brand-panel-stage-1: #5F7F8F;
+  --brand-panel-stage-2: #3F8FA8;
+  --brand-panel-stage-3: #2CA5C2;
+  --brand-panel-stage-4: #4CBCD6;
+  --brand-panel-stage-5: #8AD7E8;
+  --brand-panel-stage-6: #34D399;
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 
@@ -206,39 +206,39 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --ink: #E7ECF3;
-  --paper: #0E1420;
-  --sheet: #151D2B;
-  --rule: #263247;
-  --jade: #3DBB9B;
-  --ember: #F0804F;
+  --ink: #E8EEF2;
+  --paper: #071219;
+  --sheet: #0D1B25;
+  --rule: #1F3240;
+  --jade: #35C3DE;
+  --ember: #FB7185;
 
-  --surface2: #1B2536;
-  --sunken: #111927;
-  --border-strong: #35435C;
-  --border-input: #5A6882;
-  --text2: #AAB4C5;
-  --text3: #8B96AA;
-  --placeholder: #75819A;
+  --surface2: #13242F;
+  --sunken: #091620;
+  --border-strong: #2F4655;
+  --border-input: #567080;
+  --text2: #A9BBC6;
+  --text3: #8AA0AD;
+  --placeholder: #78909E;
 
-  --primary-hover: #5CCBAE;
-  --primary-fg: #07130F;
-  --primary-subtle: #133129;
-  --primary-subtle-fg: #8FDCC6;
-  --primary-ring: rgba(61, 187, 155, .40);
+  --primary-hover: #5CD3EA;
+  --primary-fg: #04161D;
+  --primary-subtle: #0E2D38;
+  --primary-subtle-fg: #9BE3F1;
+  --primary-ring: rgba(53, 195, 222, .40);
 
-  --success-bg: #133129;
-  --success-fg: #8FDCC6;
-  --success-border: #22594B;
-  --success-solid: #3DBB9B;
+  --success-bg: #0F2E24;
+  --success-fg: #7BE0B5;
+  --success-border: #1F5A45;
+  --success-solid: #34D399;
   --warning-bg: #33280F;
   --warning-fg: #F2C46D;
   --warning-border: #6A531C;
   --warning-solid: #E2A93E;
-  --danger-bg: #3A1D14;
-  --danger-fg: #F7A47F;
-  --danger-border: #74351F;
-  --danger-solid-fg: #1A0B05;
+  --danger-bg: #3A1520;
+  --danger-fg: #FF9DAB;
+  --danger-border: #74293D;
+  --danger-solid-fg: #1A0610;
   --info-bg: #17243A;
   --info-fg: #A9BEE2;
   --info-border: #2F4569;
@@ -251,36 +251,36 @@
   --purple-fg: #C9B6E6;
   --purple-border: #463863;
   --purple-solid: #A88ACF;
-  --neutral-bg: #1C2637;
-  --neutral-fg: #AAB4C5;
-  --neutral-border: #35435C;
-  --neutral-solid: #8B96AA;
+  --neutral-bg: #142631;
+  --neutral-fg: #A9BBC6;
+  --neutral-border: #2F4655;
+  --neutral-solid: #8AA0AD;
 
-  --stage-new: #7E8AA0;
-  --stage-screening: #6FA4A6;
-  --stage-interview: #4FAE98;
-  --stage-final: #3DBB9B;
-  --stage-offer: #5CCBAE;
-  --stage-hired: #8FDCC6;
+  --stage-new: #5F7F8F;
+  --stage-screening: #3F8FA8;
+  --stage-interview: #2CA5C2;
+  --stage-final: #4CBCD6;
+  --stage-offer: #8AD7E8;
+  --stage-hired: #34D399;
 
   --scrim: rgba(3, 6, 12, .70);
   --sh-sm: 0 1px 2px rgba(0, 0, 0, .40);
   --sh-md: 0 8px 18px -6px rgba(0, 0, 0, .55), 0 2px 4px -2px rgba(0, 0, 0, .40);
   --sh-lg: 0 22px 50px -12px rgba(0, 0, 0, .70), 0 8px 16px -8px rgba(0, 0, 0, .50);
-  --tooltip-bg: #E7ECF3;
-  --tooltip-fg: #17233A;
-  --video: #0A0F18;
-  --video-tile: #172131;
-  --call-bar: #070B12;
+  --tooltip-bg: #E8EEF2;
+  --tooltip-fg: #0B1D2B;
+  --video: #050D13;
+  --video-tile: #12212B;
+  --call-bar: #03090D;
 
-  --chart-1: #3DBB9B;
-  --chart-2: #E2A93E;
+  --chart-1: #2FB3D0;
+  --chart-2: #E8870F;
   --chart-3: #8DA8D8;
   --chart-4: #A88ACF;
   --chart-5: #5FB3AE;
-  --chart-6: #F0804F;
-  --chart-grid: #263247;
-  --chart-axis: #8B96AA;
+  --chart-6: #FB7185;
+  --chart-grid: #1F3240;
+  --chart-axis: #8AA0AD;
 }
 
 @media (max-width: 1023px) {

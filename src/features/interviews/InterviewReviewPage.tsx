@@ -50,7 +50,7 @@ export function InterviewReviewPage() {
   const [prefill, setPrefill] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
 
-  useEffect(() => { document.title = 'Interview review · Acme People'; }, []);
+  useEffect(() => { document.title = 'Interview review · Strtm People'; }, []);
   // The AI summary is written in the background right after the meeting: check back for a few minutes.
   const d = room.data;
   const summaryPending = Boolean(d && !d.aiSummary && d.assistant.notes.length && d.interview.endedAt && Date.now() - Date.parse(d.interview.endedAt) < 180_000);
@@ -122,7 +122,7 @@ export function InterviewReviewPage() {
 
           {assistNotes.length ? (
             <Card>
-              <CardHeader title="Notes from Acme Assist" subtitle="Written during the meeting" actions={<Badge tone="purple" icon="sparkle" size="sm">AI-generated</Badge>} />
+              <CardHeader title="Notes from Strtm Assist" subtitle="Written during the meeting" actions={<Badge tone="purple" icon="sparkle" size="sm">AI-generated</Badge>} />
               <div className={s.assist}>
                 {assistNotes.map((n, i) => (
                   <div key={i} className={s.assistNote}><small>{mmss(n.atSecond)}{n.topic ? ` · ${n.topic}` : ''}</small>{n.text}</div>

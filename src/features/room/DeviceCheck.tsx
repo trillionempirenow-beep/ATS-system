@@ -104,7 +104,7 @@ export function DeviceCheck({ name, media, context, assistNotice, joinLabel, joi
         {assistNotice ? (
           <div className={s.assistNotice}>
             <Icon name="sparkle" size={18} />
-            <div><strong>Acme Assist takes notes</strong><span>The hiring team uses it in this interview. A notice stays in the room while it is on.</span></div>
+            <div><strong>Strtm Assist takes notes</strong><span>The hiring team uses it in this interview. A notice stays in the room while it is on.</span></div>
           </div>
         ) : null}
         <div className={s.checkActions}>

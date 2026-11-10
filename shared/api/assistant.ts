@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-/** Acme assistant: one turn of the conversation, typed or spoken. */
+/** Strtm assistant: one turn of the conversation, typed or spoken. */
 export const assistantMessageSchema = z
   .object({
     text: z.string().trim().max(2000).optional().default(''),

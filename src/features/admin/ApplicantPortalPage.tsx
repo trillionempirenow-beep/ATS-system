@@ -84,7 +84,7 @@ function AppStatus({ app }: { app: PortalApp }) {
 
 export function ApplicantPortalPage() {
   const q = useQuery({ queryKey: adminKeys.portal, queryFn: () => api.get<PortalOverviewDto>('/portal/overview') });
-  useEffect(() => { document.title = 'Applicant portal · Acme People'; }, []);
+  useEffect(() => { document.title = 'Applicant portal · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
 

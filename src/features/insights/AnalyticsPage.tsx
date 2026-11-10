@@ -27,7 +27,7 @@ export function AnalyticsPage() {
     queryFn: () => api.get<AnalyticsDto>(`/analytics${qs({ range: params.range, from: params.from, to: params.to, user: params.user, view: params.view })}`),
     placeholderData: (prev) => prev,
   });
-  useEffect(() => { document.title = 'Analytics · Acme People'; }, []);
+  useEffect(() => { document.title = 'Analytics · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
   const exportBtn = can.adminLevel ? <ButtonLink variant="secondary" icon="download" to={exportHref(params)} reloadDocument>Export report</ButtonLink> : null;

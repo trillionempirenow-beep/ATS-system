@@ -12,7 +12,7 @@ import { ActionPreview } from './ActionPreview';
 import s from './AssistantDock.module.css';
 
 /**
- * Acme assistant: the recruiting helper docked bottom-right of the staff app.
+ * Strtm assistant: the recruiting helper docked bottom-right of the staff app.
  * Each turn goes to the "ats-assistant" n8n workflow through the API. Changes
  * it prepares come back as cards; nothing happens until the person confirms.
  * Hold the mic to talk; letting go sends the recording, and the reply is spoken.
@@ -403,11 +403,11 @@ export function AssistantDock() {
 
   return (
     <div className={cx(s.dock, open && s.dockOpen)}>
-      <section ref={panelRef} id={panelId} className={s.panel} role="dialog" aria-label="Acme assistant" aria-hidden={!open}>
+      <section ref={panelRef} id={panelId} className={s.panel} role="dialog" aria-label="Strtm assistant" aria-hidden={!open}>
         <header className={s.top}>
           <img className={s.topHead} src={HEAD_SRC} alt="" />
           <div className={s.topText}>
-            <div className={s.topTitle}>Acme assistant <Badge tone="neutral" size="sm">Beta</Badge></div>
+            <div className={s.topTitle}>Strtm assistant <Badge tone="neutral" size="sm">Beta</Badge></div>
             <div className={s.topSub}>Jobs, candidates and interviews</div>
           </div>
           <IconButton icon="refresh" label="New conversation" size={32} variant="ghost" onClick={reset} disabled={!messages.length && !thinking} />
@@ -419,7 +419,7 @@ export function AssistantDock() {
             <li className={s.entry}>
               {botHead}
               <div className={s.entryMain}>
-                <div className={s.meta}><strong>Acme assistant</strong></div>
+                <div className={s.meta}><strong>Strtm assistant</strong></div>
                 <p className={s.text}>Hi {firstName || 'there'}. Ask me about your jobs, candidates and interviews, or tell me what to do, like moving an applicant or scheduling an interview. Hold the mic to talk.</p>
               </div>
             </li>
@@ -428,7 +428,7 @@ export function AssistantDock() {
               <li key={m.id} className={cx(s.entry, m.from === 'me' && s.entryMe)}>
                 {m.from === 'bot' ? botHead : <Avatar name={me.name} src={me.avatarUrl} size={28} />}
                 <div className={s.entryMain}>
-                  <div className={s.meta}><strong>{m.from === 'bot' ? 'Acme assistant' : 'You'}</strong><span>{clock(m.at)}</span>{m.voice ? <Icon name="mic" size={12} className={s.metaIcon} /> : null}</div>
+                  <div className={s.meta}><strong>{m.from === 'bot' ? 'Strtm assistant' : 'You'}</strong><span>{clock(m.at)}</span>{m.voice ? <Icon name="mic" size={12} className={s.metaIcon} /> : null}</div>
                   {m.text ? <p className={cx(s.text, m.error && s.textError)}>{m.text}</p> : <p className={cx(s.text, s.textPending)}>Listening back…</p>}
                   {m.actions?.map((a) => (
                     <ActionCard
@@ -448,8 +448,8 @@ export function AssistantDock() {
               <li className={s.entry}>
                 {botHead}
                 <div className={s.entryMain}>
-                  <div className={s.meta}><strong>Acme assistant</strong></div>
-                  <span className={s.typing} aria-label="Acme assistant is working on it"><i /><i /><i /></span>
+                  <div className={s.meta}><strong>Strtm assistant</strong></div>
+                  <span className={s.typing} aria-label="Strtm assistant is working on it"><i /><i /><i /></span>
                 </div>
               </li>
             ) : null}
@@ -526,7 +526,7 @@ export function AssistantDock() {
         onPointerLeave={stopWave}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label="Open Acme assistant"
+        aria-label="Open Strtm assistant"
         tabIndex={open ? -1 : 0}
       >
         <img className={s.robot} src={BOT_SRC} alt="" draggable={false} />

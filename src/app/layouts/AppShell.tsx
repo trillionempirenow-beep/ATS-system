@@ -264,7 +264,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
         <div className={s.brandLogo} aria-hidden={rail || undefined}>
           <BrandMark size={36} />
           <span className={s.brandText}>
-            <span className={s.brandName}>Acme<em>/</em>people</span>
+            <span className={s.brandName}>Strtm<em>/</em>people</span>
             <span className={s.brandRole}>{me.roleLabel}</span>
           </span>
         </div>

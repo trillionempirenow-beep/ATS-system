@@ -31,9 +31,9 @@ insert into jobs (id, department_id, title, slug, location, employment_type, tag
   (3, (select id from departments where name='Engineering'), 'DevOps Engineer', 'devops-engineer', 'Manila', 'full_time', 'AWS,Kubernetes,Terraform', 5,
    'Keep our platform fast, observable and boring in the best way.', E'Experience running Kubernetes in production\nInfrastructure as code with Terraform', null, true, 'open', 'approved', 2, 2, null, null, 2, now() - interval '10 days', null, null, now() - interval '10 days', now() - interval '10 days'),
   (4, (select id from departments where name='Customer Support'), 'Customer Success Lead', 'customer-success-lead', 'Cebu', 'full_time', 'SaaS,Onboarding', null,
-   'Lead a team that helps customers get value from Acme in their first 90 days.', E'Team leadership experience\nSaaS onboarding background', null, false, 'draft', 'pending', 3, 3, 3, now() - interval '2 hours', null, null, null, null, null, now() - interval '1 day'),
+   'Lead a team that helps customers get value from Strtm in their first 90 days.', E'Team leadership experience\nSaaS onboarding background', null, false, 'draft', 'pending', 3, 3, 3, now() - interval '2 hours', null, null, null, null, null, now() - interval '1 day'),
   (5, (select id from departments where name='Marketing'), 'Content Marketer', 'content-marketer', 'Remote', 'contract', 'Writing,SEO', null,
-   'Tell the Acme story through long-form content.', E'Portfolio of published writing', null, false, 'draft', 'changes_requested', 3, 3, 3, now() - interval '3 days', 2, now() - interval '2 days', 'Please add the salary range and clarify the contract length.', null, null, now() - interval '4 days'),
+   'Tell the Strtm story through long-form content.', E'Portfolio of published writing', null, false, 'draft', 'changes_requested', 3, 3, 3, now() - interval '3 days', 2, now() - interval '2 days', 'Please add the salary range and clarify the contract length.', null, null, now() - interval '4 days'),
   (6, (select id from departments where name='Finance'), 'Financial Analyst', 'financial-analyst', 'Manila', 'full_time', 'Excel,Modelling', null,
    'Own monthly reporting and planning models.', E'CPA or equivalent\n2+ years in FP&A', null, false, 'closed', 'approved', 2, 2, null, null, 2, now() - interval '60 days', null, null, now() - interval '60 days', now() - interval '61 days'),
   (7, (select id from departments where name='Operations'), 'Operations Analyst', 'operations-analyst', 'Manila', 'part_time', 'SQL,Reporting', null,
@@ -62,12 +62,12 @@ insert into candidates (id, first_name, last_name, email, phone, current_title, 
 select setval(pg_get_serial_sequence('candidates','id'), 50);
 
 insert into applications (id, candidate_id, job_id, stage, status, cover_letter, why_us, assigned_to, applied_at, updated_at) values
-  (1,1,1,'screening','active','I have led the migration of a large React codebase to TypeScript and care about performance.','Acme builds tools I would use myself.',3, now() - interval '12 days', now() - interval '2 days'),
+  (1,1,1,'screening','active','I have led the migration of a large React codebase to TypeScript and care about performance.','Strtm builds tools I would use myself.',3, now() - interval '12 days', now() - interval '2 days'),
   (2,2,2,'interview','active','I redesigned a checkout flow that cut drop-off by a third.','Your hiring product is humane.',3, now() - interval '9 days', now() - interval '1 day'),
   (3,3,3,'interview','active','I run Kubernetes clusters for a fintech with 99.99% uptime.','I like boring infrastructure.',4, now() - interval '8 days', now() - interval '1 day'),
   (4,4,1,'hired','active','Staff engineer with a decade of React and Node.js.','Mission and team.',3, now() - interval '30 days', now() - interval '3 days'),
   (5,5,4,'new','active','I have onboarded 200+ SaaS customers.','Customer success matters here.',null, now() - interval '2 days', now() - interval '2 days'),
-  (6,6,2,'new','active','Designer who loves research.','I use Acme at work.',null, now() - interval '20 minutes', now() - interval '20 minutes'),
+  (6,6,2,'new','active','Designer who loves research.','I use Strtm at work.',null, now() - interval '20 minutes', now() - interval '20 minutes'),
   (7,7,1,'screening','active','Full-stack developer, PHP to TypeScript.','Growth.',3, now() - interval '6 days', now() - interval '4 days'),
   (8,8,3,'screening','active','Platform engineer, Go and Kubernetes.','Scale.',4, now() - interval '4 days', now() - interval '3 days'),
   (9,9,1,'new','active','Recent graduate with internship experience in React.','Learning culture.',null, now() - interval '1 day', now() - interval '1 day'),
@@ -92,10 +92,10 @@ insert into stage_reviews (application_id, stage_type, rating, feedback, notes, 
   (4,'interview',92,'Outstanding technical leadership.',null,3);
 
 insert into interviews (id, application_id, interviewer_id, meeting_type, starts_at, ends_at, interview_type, meeting_provider, room_code, candidate_token, status, meeting_state, live_notes, score, feedback, recommendation, started_at, ended_at, reviewed_at, reviewer_id, created_by, created_at) values
-  (1,2,3,'interview', now() + interval '10 minutes', now() + interval '55 minutes', 'video','Acme Room','ACM4F7K2','3f9a1c2e7b8d4e5f6a7b8c9d0e1f2a3b','scheduled','scheduled',null,null,null,null,null,null,null,null,3, now() - interval '1 day'),
-  (2,3,4,'interview', now() + interval '1 day 2 hours', now() + interval '1 day 3 hours', 'panel','Acme Room','ACM9Q2LX','8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e','scheduled','scheduled',null,null,null,null,null,null,null,null,4, now() - interval '1 day'),
-  (3,1,3,'screening', now() + interval '2 days', now() + interval '2 days 30 minutes', 'video','Acme Room','ACM7H3RD','a1b2c3d4e5f60718293a4b5c6d7e8f90','scheduled','scheduled',null,null,null,null,null,null,null,null,3, now() - interval '2 days'),
-  (4,10,3,'interview', now() - interval '3 days', now() - interval '3 days' + interval '45 minutes', 'video','Acme Room','ACM2KD8P','0f1e2d3c4b5a69788796a5b4c3d2e1f0','completed','reviewed','Deep React knowledge. Asked about design tokens.',88,'Excellent system design discussion.','offer', now() - interval '3 days', now() - interval '3 days' + interval '44 minutes', now() - interval '3 days' + interval '2 hours',3,3, now() - interval '6 days'),
+  (1,2,3,'interview', now() + interval '10 minutes', now() + interval '55 minutes', 'video','Strtm Room','ACM4F7K2','3f9a1c2e7b8d4e5f6a7b8c9d0e1f2a3b','scheduled','scheduled',null,null,null,null,null,null,null,null,3, now() - interval '1 day'),
+  (2,3,4,'interview', now() + interval '1 day 2 hours', now() + interval '1 day 3 hours', 'panel','Strtm Room','ACM9Q2LX','8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e','scheduled','scheduled',null,null,null,null,null,null,null,null,4, now() - interval '1 day'),
+  (3,1,3,'screening', now() + interval '2 days', now() + interval '2 days 30 minutes', 'video','Strtm Room','ACM7H3RD','a1b2c3d4e5f60718293a4b5c6d7e8f90','scheduled','scheduled',null,null,null,null,null,null,null,null,3, now() - interval '2 days'),
+  (4,10,3,'interview', now() - interval '3 days', now() - interval '3 days' + interval '45 minutes', 'video','Strtm Room','ACM2KD8P','0f1e2d3c4b5a69788796a5b4c3d2e1f0','completed','reviewed','Deep React knowledge. Asked about design tokens.',88,'Excellent system design discussion.','offer', now() - interval '3 days', now() - interval '3 days' + interval '44 minutes', now() - interval '3 days' + interval '2 hours',3,3, now() - interval '6 days'),
   (5,7,3,'screening', now() - interval '1 day', now() - interval '1 day' + interval '30 minutes', 'phone','Phone',null,null,'completed','review_pending','Good background; confirm notice period.',null,null,null, now() - interval '1 day', now() - interval '1 day' + interval '28 minutes', null,null,3, now() - interval '3 days');
 select setval(pg_get_serial_sequence('interviews','id'), 50);
 

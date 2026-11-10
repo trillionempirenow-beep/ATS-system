@@ -51,7 +51,7 @@ const schema = z.object({
   // EMAIL_PROVIDER=n8n: the "ATS - Send email via Gmail" workflow sends from the connected Gmail.
   EMAIL_N8N_WEBHOOK_URL: optionalUrl,
   EMAIL_N8N_SECRET: optionalString,
-  EMAIL_FROM: z.string().default('Acme People <no-reply@example.com>'),
+  EMAIL_FROM: z.string().default('Strtm People <no-reply@example.com>'),
   EMAIL_REPLY_TO: optionalString,
   RESEND_API_KEY: optionalString,
   SMTP_HOST: optionalString,
@@ -76,7 +76,7 @@ const schema = z.object({
   // Create job posting > upload a job description: the ATS-system workflow's JD reader.
   JD_N8N_WEBHOOK_URL: optionalUrl,
   CV_N8N_SECRET: optionalString,
-  // Acme assistant: the "ats-assistant" n8n workflow's webhook (same shared secret as the other flows).
+  // Strtm assistant: the "ats-assistant" n8n workflow's webhook (same shared secret as the other flows).
   ASSISTANT_N8N_WEBHOOK_URL: optionalUrl,
   // Interview AI notes; defaults to /webhook/ats-interview-notes on the CV reader's n8n.
   NOTES_N8N_WEBHOOK_URL: optionalUrl,

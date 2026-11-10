@@ -32,7 +32,7 @@ export function AuditPage() {
   const [draft, setDraft] = useState<Filters>(applied);
   const key = { ...applied, page };
   const q = useQuery({ queryKey: adminKeys.audit(key), queryFn: () => api.get<AuditLogDto>(`/audit-logs${qs(key)}`), placeholderData: (prev) => prev });
-  useEffect(() => { document.title = 'Audit trail · Acme People'; }, []);
+  useEffect(() => { document.title = 'Audit trail · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
   const filtered = FILTER_KEYS.some((k) => applied[k]);

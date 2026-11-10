@@ -64,7 +64,7 @@ afterAll(async () => {
 const say = (s: Awaited<ReturnType<typeof signIn>>, text: string) =>
   s.agent.post('/api/v1/assistant/message').set('X-CSRF-Token', s.csrf).send({ text, page: '/app' });
 
-describe('Acme assistant', () => {
+describe('Strtm assistant', () => {
   // One sign-in per role: the login rate limit is shared with the other test files.
   let hr: Awaited<ReturnType<typeof signIn>>;
   let admin: Awaited<ReturnType<typeof signIn>>;

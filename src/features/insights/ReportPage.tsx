@@ -17,7 +17,7 @@ export function ReportPage() {
   const [params, update] = useRangeParams();
   const query = qs({ range: params.range, from: params.from, to: params.to, user: params.user });
   const q = useQuery({ queryKey: ['analytics-report', params], queryFn: () => api.get<ReportDto>(`/analytics/report${query}`), placeholderData: (prev) => prev });
-  useEffect(() => { document.title = 'HR / Recruiter report · Acme People'; }, []);
+  useEffect(() => { document.title = 'HR / Recruiter report · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
   const csv = <ButtonLink variant="secondary" icon="download" to={`/api/v1/analytics/report.csv${query}`} reloadDocument>Export CSV</ButtonLink>;

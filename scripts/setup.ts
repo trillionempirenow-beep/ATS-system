@@ -54,7 +54,7 @@ async function ask(question: string, where: string, check: (v: string) => string
 const secret = () => randomBytes(32).toString('hex');
 
 console.log(`
-${bold('Acme People ATS: production setup')}
+${bold('Strtm People ATS: production setup')}
 You need your Supabase project open in the browser (see SETUP.md, part 3).
 Paste each value and press Enter.`);
 
@@ -151,7 +151,7 @@ const vars: Array<[string, string]> = [
   ['STORAGE_DRIVER', 'supabase'],
   ['REALTIME_DRIVER', 'supabase'],
   ['EMAIL_PROVIDER', resendKey ? 'resend' : 'log'],
-  ['EMAIL_FROM', `Acme People <${emailFrom}>`],
+  ['EMAIL_FROM', `Strtm People <${emailFrom}>`],
   ...(resendKey ? [['RESEND_API_KEY', resendKey] as [string, string]] : []),
   ['N8N_ENABLED', 'false'],
 ];

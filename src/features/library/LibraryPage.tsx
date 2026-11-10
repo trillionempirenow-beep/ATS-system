@@ -39,7 +39,7 @@ export function LibraryPage() {
   };
   const [search, setSearch] = useDebouncedParam('q', 'page');
   const list = useLibrary(filters);
-  useEffect(() => { document.title = 'Library · Acme People'; }, []);
+  useEffect(() => { document.title = 'Library · Strtm People'; }, []);
   const anyFilter = Boolean(filters.q || filters.job || filters.stage || filters.has);
   const clear = () => { setSearch(''); set({ q: null, job: null, stage: null, has: null, page: null }); };
 

@@ -17,7 +17,7 @@ export function usePublicConfig() {
 
 const LINKS = [
   { to: '/jobs', label: 'Find roles' },
-  { to: '/#why', label: 'Why Acme' },
+  { to: '/#why', label: 'Why Strtm' },
   { to: '/status', label: 'Check status' },
   { to: '/refer', label: 'Refer someone' },
 ];
@@ -27,7 +27,7 @@ export function PublicLayout() {
   const { theme, toggle } = useTheme();
   const { user } = useAuth();
   const config = usePublicConfig();
-  const company = config.data?.companyName ?? 'Acme';
+  const company = config.data?.companyName ?? 'Strtm';
   const [open, setOpen] = useState(false);
   const location = useLocation();
   useEffect(() => { setOpen(false); }, [location.pathname, location.hash]);

@@ -42,8 +42,10 @@ Everything happens in one tool owned by the company: careers site, pipeline, the
 
 ## Brand Commitments
 
-- "Acme" / "Acme People" is a **placeholder name**. The real company brand will come later, so names, logos and brand colours must be easy to swap. Do not build anything that depends on the word "Acme".
-- Existing placeholder assets: `public/logo.webp`, `public/logo-light.webp`, `public/logo-192.png`, `public/logo-512.png`, `public/logo-email.png`, favicons, and the Acme Assist mascot (`public/acme-assistant-*.webp|webm`). None of these is a final brand asset.
+- The company is **Strtm** (tagline "The Adaptive Business OS"); the ATS is **Strtm People**, with "Strtm/people" and "Strtm/careers" as the in-app wordmarks. It replaced the placeholder "Acme" on 2026-11-11. Internal identifiers still say `acme` (cookies, storage keys, `X-Acme-*` webhook headers, `acme.test` demo logins) and stay that way so sessions and integrations keep working.
+- Logo: a cube of interlocking puzzle pieces with circuit traces, in deep petrol/teal and amber-to-orange, plus a "Strtm" wordmark in navy with an orange accent. The cube mark is what the app shows (`public/logo.webp`, `logo-light.webp`, `logo-email.png`, `logo-192.png`, `logo-512.png`, favicons, `apple-touch-icon.png`). Admins can still set their own logo in Settings.
+- Brand colours come from the logo: navy ink, petrol as the action colour (cyan in dark mode), amber-to-orange as the brand accent. Orange is never used to signal errors; danger is red.
+- The Strtm Assist mascot (`public/acme-assistant-*.webp|webm`) is an existing asset, not part of the new logo.
 
 ## Evidence on Hand
 
@@ -56,7 +58,7 @@ Everything happens in one tool owned by the company: careers site, pipeline, the
 2. **Accessible and translatable by default.** Every screen meets WCAG 2.2 AA and can be translated. Neither is added later.
 3. **One place for the hiring decision.** Candidate data, interview evidence and reviews stay together, so decisions rest on what actually happened.
 4. **Honest about limits.** If a feature is unavailable (for example, no transcription provider), the UI says so plainly and never fakes it.
-5. **Brand-neutral underneath.** The company identity is a swappable layer, because the real brand has not arrived yet.
+5. **Brand as a layer.** The Strtm identity lives in tokens, logo files and the company-name setting, not in individual screens, so it can change again without touching features.
 
 ## Accessibility & Inclusion
 

@@ -9,10 +9,10 @@ import s from './Careers.module.css';
 
 export function JobCard({ job }: { job: PublicJobCardDto }) {
   return (
-    <Link to={`/jobs/${job.slug}`} className={cx(s.card, job.full && s.cardFull)} aria-label={`${job.title}, ${job.department ?? 'Acme'}, ${job.location ?? 'Location flexible'}`}>
+    <Link to={`/jobs/${job.slug}`} className={cx(s.card, job.full && s.cardFull)} aria-label={`${job.title}, ${job.department ?? 'Strtm'}, ${job.location ?? 'Location flexible'}`}>
       <div className={s.cardTop}>
         <div className={s.cardBadges}>
-          <Badge tone="neutral">{job.department ?? 'Acme'}</Badge>
+          <Badge tone="neutral">{job.department ?? 'Strtm'}</Badge>
           {job.isUrgent ? <Badge tone="warning" icon="flag">Urgent hiring</Badge> : null}
           {job.full ? <Badge tone="danger" icon="limit">Full</Badge> : job.spotsRemaining !== null && job.spotsRemaining <= 5 ? <Badge tone="warning">{job.spotsRemaining} spots left</Badge> : null}
         </div>

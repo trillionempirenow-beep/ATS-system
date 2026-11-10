@@ -1,4 +1,4 @@
-# Acme People ATS: setup guide
+# Strtm People ATS: setup guide
 
 This guide takes you from the zip to a live website, one step at a time.
 
@@ -281,7 +281,7 @@ the interviewer types notes under My notes.
 Setup: run the migrations (they create the `recordings` storage bucket, 25 MB
 per part). Nothing to add in Vercel.
 
-## Acme assistant (n8n agent, voice)
+## Strtm assistant (n8n agent, voice)
 
 The robot in the bottom-right corner is an agent: ask it things ("sino nasa
 screening?") or tell it what to do ("move Maria to final interview", "schedule
@@ -340,7 +340,7 @@ Until this is set up, the app works fully but no emails are sent (interview invi
 4. In Vercel → Settings → Environment Variables, change or add:
    - `EMAIL_PROVIDER` = `resend`
    - `RESEND_API_KEY` = the key
-   - `EMAIL_FROM` = `Acme People <careers@yourcompany.com>`, using your verified domain
+   - `EMAIL_FROM` = `Strtm People <careers@yourcompany.com>`, using your verified domain
 5. **Redeploy.**
 
 You can also use your company mail server instead: set `EMAIL_PROVIDER=smtp` plus `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER` and `SMTP_PASSWORD`.

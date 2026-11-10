@@ -14,7 +14,7 @@ import s from './Jobs.module.css';
 export function MyJobsPage() {
   const q = useMyJobs();
   const navigate = useNavigate();
-  useEffect(() => { document.title = 'Job postings · Acme People'; }, []);
+  useEffect(() => { document.title = 'Job postings · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
 

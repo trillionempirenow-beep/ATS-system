@@ -163,7 +163,7 @@ export function AccountsPage() {
   const [creating, setCreating] = useState(false);
   const [managing, setManaging] = useState<AccountDto | null>(null);
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
-  useEffect(() => { document.title = 'HR / Recruiters · Acme People'; }, []);
+  useEffect(() => { document.title = 'HR / Recruiters · Strtm People'; }, []);
 
   const statusMutation = useAdminMutation((input: { id: number; status: string; note: string }) => api.patch(`/users/${input.id}/status`, { status: input.status, note: input.note }));
   const reactivation = useAdminMutation((input: { id: number; reason: string }) => api.post(`/users/${input.id}/reactivation`, { reason: input.reason }));

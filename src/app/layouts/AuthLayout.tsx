@@ -19,10 +19,10 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
   const { theme, toggle } = useTheme();
   return (
     <div className={s.split}>
-      <section className={s.brand} aria-label="Acme People">
+      <section className={s.brand} aria-label="Strtm People">
         <div className={s.logo}>
           <BrandMark size={44} src="/logo-light.webp" />
-          <span className={s.wordmark}>Acme<em>/</em>people</span>
+          <span className={s.wordmark}>Strtm<em>/</em>people</span>
         </div>
         <div className={s.stage}><AuthArt /></div>
         <div className={s.pitch}>

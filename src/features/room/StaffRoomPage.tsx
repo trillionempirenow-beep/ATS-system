@@ -38,7 +38,7 @@ export function StaffRoomPage() {
   // Owned here so the devices chosen in the check carry straight into the call.
   const media = useLocalMedia();
 
-  useEffect(() => { document.title = 'Interview room · Acme People'; }, []);
+  useEffect(() => { document.title = 'Interview room · Strtm People'; }, []);
 
   if (room.isError) return <QueryErrorPage error={room.error} onRetry={() => void room.refetch()} />;
   if (!room.data) return <div className={w.page}><Skeleton height={36} width={320} /><Skeleton height={320} /></div>;
@@ -111,7 +111,7 @@ function PreCall({ room, media, phase, onPhase }: { room: StaffRoomDto; media: M
             ['Type', `${iv.meetingType === 'screening' ? 'Screening' : 'Interview'} · ${FORMAT_LABELS[iv.interviewType]}`],
             ['When', `${formatWeekday(iv.startsAt)} · ${formatTime(iv.startsAt)}${iv.endsAt ? ` – ${formatTime(iv.endsAt)}` : ''}`],
             ['Interviewer', iv.interviewerName ?? '—'],
-            ['Room', 'Built-in Acme Room'],
+            ['Room', 'Built-in Strtm Room'],
             ['Room code', <span key="c" className="mono">{iv.roomCode}</span>],
             ['Notes', 'Your own notes, hiring team only. You score in the review after the meeting.'],
           ]} />

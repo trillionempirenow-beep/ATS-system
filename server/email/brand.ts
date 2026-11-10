@@ -7,7 +7,7 @@ export async function brand(): Promise<Brand> {
   const s = await getSettings();
   const logo = s.logo_path.trim();
   return {
-    company: s.company_name || 'Acme',
+    company: s.company_name || 'Strtm',
     appUrl: env.APP_URL.replace(/\/$/, ''),
     logoUrl: logo ? (/^https?:\/\//.test(logo) ? logo : `${env.APP_URL.replace(/\/$/, '')}/${logo.replace(/^\//, '')}`) : `${env.APP_URL.replace(/\/$/, '')}/logo-email.png`,
     logoIsDefault: !logo,

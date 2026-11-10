@@ -109,7 +109,7 @@ function WorkspaceForm({ data }: { data: SettingsDto }) {
         <Card>
           <CardHeader title="Company" subtitle="Shown on the careers site, in emails and on the sign-in page." />
           <div className={s.preview}>
-            {f.logoPath && logoOk ? <img src={f.logoPath} alt="" /> : <BrandMark size={44} label={`${f.companyName || 'Acme'} logo`} />}
+            {f.logoPath && logoOk ? <img src={f.logoPath} alt="" /> : <BrandMark size={44} label={`${f.companyName || 'Strtm'} logo`} />}
             <div>
               <strong>{f.companyName || 'Your company'}</strong>
               <span>{f.careersHeadline || 'Your careers headline appears here'}</span>

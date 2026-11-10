@@ -1,10 +1,10 @@
-# Acme People ATS
+# Strtm People ATS
 
-The Acme applicant tracking system, rebuilt from the PHP app as React + TypeScript on the front and a Node (Express) API on Supabase Postgres, deployable to Vercel.
+The Strtm applicant tracking system, rebuilt from the PHP app as React + TypeScript on the front and a Node (Express) API on Supabase Postgres, deployable to Vercel.
 
 - **Careers site**: open roles, apply with CV parsing, application status, withdraw, referrals.
 - **Recruiting**: overview, drag-and-drop pipeline with stage rules, candidates and profiles (resume versions, analysis, notes, stage reviews, and a Recordings section with each meeting's summary, flagged moments and transcript), add candidate with CV auto-fill.
-- **Interviews**: scheduling (built-in room or external link), reminders, the Acme Room (waiting room, admit, video, screen share, chat, live notes, private scorecard), final interviews with a guest link for outside stakeholders (name and position on entry, admit or deny by any host), and reviews.
+- **Interviews**: scheduling (built-in room or external link), reminders, the Strtm Room (waiting room, admit, video, screen share, chat, live notes, private scorecard), final interviews with a guest link for outside stakeholders (name and position on entry, admit or deny by any host), and reviews.
 - **Jobs**: postings with PDF import, the approval workflow, job management.
 - **People**: employees (including hired-candidate conversion) and attendance with review and CSV export.
 - **Administration**: Admins and seats (Super Admin), HR / Recruiter accounts, password reset approvals, applicant portal, audit trail.
@@ -155,5 +155,5 @@ tests/                     API integration tests
 
 ## Known limits
 
-- **Acme Assist** (AI notes during interviews) needs a transcription provider, and none is configured. The room says so, and interviewers use their own notes, flagged moments and the scorecard. The data model and review screen are ready for it.
+- **Strtm Assist** (AI notes during interviews) needs a transcription provider, and none is configured. The room says so, and interviewers use their own notes, flagged moments and the scorecard. The data model and review screen are ready for it.
 - The built-in room is a small mesh call, which suits interviews of up to about four people.

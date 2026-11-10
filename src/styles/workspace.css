@@ -3,39 +3,41 @@
    the signed-in app except the meeting itself (see app/layouts/useWorkspaceLook.ts).
    The careers site, sign-in screens and the meeting keep the tokens they already had.
 
-   Direction: cool paper, ink text, one electric-indigo action colour, soft layered depth,
-   generous radii, Figtree for type. Stage colours run one indigo ramp from slate (applied)
-   to deep indigo (offer), then green for hired: how far along someone is reads from colour.
-   Chart and stage ramps were run through the data-viz palette validator in both themes. */
+   Direction (Strtm): cool paper, deep navy ink, one petrol action colour taken from the
+   logo's cube (cyan from its circuits in dark), the logo's amber-to-orange as the brand
+   accent (--brand-grad), soft layered depth, generous radii, Figtree for type. Stage
+   colours run one petrol ramp from slate (applied) to deep petrol (offer), then green for
+   hired: how far along someone is reads from colour. Danger is red, so orange always reads
+   as brand, never as an error. */
 
 html.ws {
   color-scheme: light;
 
-  --ink: #12152B;
-  --paper: #F5F6FB;
+  --ink: #0B1D2B;
+  --paper: #F4F7F9;
   --sheet: #FFFFFF;
-  --rule: #E4E7F1;
+  --rule: #DFE6EB;
 
   --bg: var(--paper);
   --surface: var(--sheet);
-  --surface2: #F3F4FA;
-  --sunken: #ECEEF6;
+  --surface2: #F0F4F6;
+  --sunken: #E9EFF2;
   --border: var(--rule);
-  --border-strong: #CBD0E3;
-  --border-input: #858DA7;
+  --border-strong: #C6D2DA;
+  --border-input: #7F909C;
   --text: var(--ink);
-  --text2: #4A5070;
-  --text3: #5B6284;
-  --placeholder: #6B7290;
+  --text2: #435866;
+  --text3: #56697A;
+  --placeholder: #5F7383;
 
-  --primary: #4F46E5;
-  --primary-hover: #4338CA;
+  --primary: #0A6580;
+  --primary-hover: #08526A;
   --primary-fg: #FFFFFF;
-  --primary-subtle: #EEF0FF;
-  --primary-subtle-fg: #3730A3;
-  --primary-ring: rgba(79, 70, 229, .28);
-  --brand-grad: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-  --jade: #4F46E5;
+  --primary-subtle: #E2F1F5;
+  --primary-subtle-fg: #064B60;
+  --primary-ring: rgba(10, 101, 128, .30);
+  --brand-grad: linear-gradient(135deg, #FFB400 0%, #EF7D00 100%);
+  --jade: #0A6580;
 
   --success-bg: #E7F8F0;
   --success-fg: #046C4E;
@@ -45,10 +47,10 @@ html.ws {
   --warning-fg: #8A4B00;
   --warning-border: #F6CF7A;
   --warning-solid: #D97706;
-  --danger-bg: #FFECEF;
-  --danger-fg: #B4132F;
-  --danger-border: #F8B4C0;
-  --danger-solid: #E11D48;
+  --danger-bg: #FDECEE;
+  --danger-fg: #B3192F;
+  --danger-border: #F5B3BC;
+  --danger-solid: #D12B40;
   --danger-solid-fg: #FFFFFF;
   --info-bg: #E6F0FF;
   --info-fg: #1E429F;
@@ -62,25 +64,25 @@ html.ws {
   --purple-fg: #5B35B5;
   --purple-border: #D2C3F6;
   --purple-solid: #7C4DDB;
-  --neutral-bg: #EEF0F6;
-  --neutral-fg: #4A5070;
-  --neutral-border: #D3D8E6;
-  --neutral-solid: #68708E;
+  --neutral-bg: #EDF2F5;
+  --neutral-fg: #435866;
+  --neutral-border: #D0DAE0;
+  --neutral-solid: #637684;
 
-  --stage-new: #A7AED8;
-  --stage-screening: #8690E2;
-  --stage-interview: #6A73DD;
-  --stage-final: #5354D3;
-  --stage-offer: #4040AD;
+  --stage-new: #A3B4BF;
+  --stage-screening: #74A6B8;
+  --stage-interview: #3F8AA3;
+  --stage-final: #1A7190;
+  --stage-offer: #0A5874;
   --stage-hired: #059669;
-  --stage-rejected: #E11D48;
+  --stage-rejected: #D12B40;
 
-  --scrim: rgba(14, 16, 38, .46);
-  --sh-xs: 0 1px 2px rgba(18, 21, 43, .05);
-  --sh-sm: 0 1px 2px rgba(18, 21, 43, .06), 0 1px 3px rgba(18, 21, 43, .06);
-  --sh-md: 0 10px 24px -10px rgba(18, 21, 43, .20), 0 2px 6px -2px rgba(18, 21, 43, .08);
-  --sh-lg: 0 30px 64px -18px rgba(18, 21, 43, .34), 0 10px 22px -10px rgba(18, 21, 43, .16);
-  --tooltip-bg: #12152B;
+  --scrim: rgba(5, 16, 24, .46);
+  --sh-xs: 0 1px 2px rgba(11, 29, 43, .05);
+  --sh-sm: 0 1px 2px rgba(11, 29, 43, .06), 0 1px 3px rgba(11, 29, 43, .06);
+  --sh-md: 0 10px 24px -10px rgba(11, 29, 43, .20), 0 2px 6px -2px rgba(11, 29, 43, .08);
+  --sh-lg: 0 30px 64px -18px rgba(11, 29, 43, .34), 0 10px 22px -10px rgba(11, 29, 43, .16);
+  --tooltip-bg: #0B1D2B;
   --tooltip-fg: #FFFFFF;
 
   --font-sans: 'Figtree Variable', 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -97,14 +99,14 @@ html.ws {
   --header-h: 64px;
   --content-max: 1200px;
 
-  --chart-1: #4F46E5;
-  --chart-2: #EB6834;
+  --chart-1: #0A6580;
+  --chart-2: #E07800;
   --chart-3: #1BAF7A;
-  --chart-4: #EDA100;
+  --chart-4: #7C4DDB;
   --chart-5: #E87BA4;
-  --chart-6: #0284C7;
-  --chart-grid: #E8EAF3;
-  --chart-axis: #5B6284;
+  --chart-6: #1C93B3;
+  --chart-grid: #E3EAEE;
+  --chart-axis: #56697A;
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
   --ease: cubic-bezier(.2, .7, .2, 1);
@@ -117,7 +119,7 @@ html.ws {
   --card-shadow: var(--sh-xs);
   --btn-fw: var(--fw-semibold);
   --btn-shadow: var(--sh-xs);
-  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 1px 2px rgba(79, 70, 229, .35);
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 1px 2px rgba(10, 101, 128, .35);
   --ctrl-shadow: var(--sh-xs);
   --badge-radius: var(--radius-full);
   --chip-radius: var(--radius-full);
@@ -127,27 +129,27 @@ html.ws {
 html.ws[data-theme='dark'] {
   color-scheme: dark;
 
-  --ink: #ECEFFB;
-  --paper: #0A0C16;
-  --sheet: #121528;
-  --rule: #232842;
+  --ink: #E8EEF2;
+  --paper: #071219;
+  --sheet: #0D1B25;
+  --rule: #1F3240;
 
-  --surface2: #181C33;
-  --sunken: #0D1020;
-  --border-strong: #343B5C;
-  --border-input: #5C6489;
-  --text2: #AEB5D3;
-  --text3: #8E96B8;
-  --placeholder: #7B83A6;
+  --surface2: #13242F;
+  --sunken: #091620;
+  --border-strong: #2F4655;
+  --border-input: #567080;
+  --text2: #A9BBC6;
+  --text3: #8AA0AD;
+  --placeholder: #78909E;
 
-  --primary: #8F91F8;
-  --primary-hover: #A8AAFF;
-  --primary-fg: #0B0C24;
-  --primary-subtle: #1E2147;
-  --primary-subtle-fg: #C3C5FF;
-  --primary-ring: rgba(143, 145, 248, .40);
-  --brand-grad: linear-gradient(135deg, #7C7FF5 0%, #A78BFA 100%);
-  --jade: #8F91F8;
+  --primary: #35C3DE;
+  --primary-hover: #5CD3EA;
+  --primary-fg: #04161D;
+  --primary-subtle: #0E2D38;
+  --primary-subtle-fg: #9BE3F1;
+  --primary-ring: rgba(53, 195, 222, .40);
+  --brand-grad: linear-gradient(135deg, #FFB400 0%, #EF7D00 100%);
+  --jade: #35C3DE;
 
   --success-bg: #0F2E24;
   --success-fg: #7BE0B5;
@@ -174,35 +176,35 @@ html.ws[data-theme='dark'] {
   --purple-fg: #CDB8FF;
   --purple-border: #473577;
   --purple-solid: #A78BFA;
-  --neutral-bg: #1A1E34;
-  --neutral-fg: #AEB5D3;
-  --neutral-border: #343B5C;
-  --neutral-solid: #8E96B8;
+  --neutral-bg: #142631;
+  --neutral-fg: #A9BBC6;
+  --neutral-border: #2F4655;
+  --neutral-solid: #8AA0AD;
 
-  --stage-new: #4144A3;
-  --stage-screening: #5458C8;
-  --stage-interview: #6A73DD;
-  --stage-final: #8690E2;
-  --stage-offer: #A7AED8;
+  --stage-new: #355E70;
+  --stage-screening: #2E7E97;
+  --stage-interview: #2C9DB8;
+  --stage-final: #4CBCD6;
+  --stage-offer: #8AD7E8;
   --stage-hired: #34D399;
   --stage-rejected: #FB7185;
 
-  --scrim: rgba(3, 4, 12, .72);
+  --scrim: rgba(2, 8, 12, .72);
   --sh-xs: 0 1px 2px rgba(0, 0, 0, .40);
   --sh-sm: 0 1px 2px rgba(0, 0, 0, .45), 0 1px 3px rgba(0, 0, 0, .30);
   --sh-md: 0 12px 26px -10px rgba(0, 0, 0, .65), 0 2px 6px -2px rgba(0, 0, 0, .45);
   --sh-lg: 0 32px 70px -18px rgba(0, 0, 0, .80), 0 10px 22px -10px rgba(0, 0, 0, .55);
-  --tooltip-bg: #ECEFFB;
-  --tooltip-fg: #12152B;
+  --tooltip-bg: #E8EEF2;
+  --tooltip-fg: #0B1D2B;
 
-  --chart-1: #6B68EE;
-  --chart-2: #D95926;
+  --chart-1: #2FB3D0;
+  --chart-2: #E8870F;
   --chart-3: #199E70;
-  --chart-4: #C98500;
+  --chart-4: #9B7BEA;
   --chart-5: #D55181;
-  --chart-6: #2F8FD0;
-  --chart-grid: #232842;
-  --chart-axis: #8E96B8;
+  --chart-6: #7FA8C9;
+  --chart-grid: #1F3240;
+  --chart-axis: #8AA0AD;
 
   --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 2px rgba(0, 0, 0, .5);
 }

@@ -1,25 +1,25 @@
-/* The careers site and the sign-in screens keep their original look (blue accent,
+/* The careers site and the sign-in screens keep their original look (petrol accent,
    Figtree). These are the pre-redesign tokens, applied only while one of those pages
    is open: PublicLayout and AuthLayout add the legacy class to <html>. */
 html.legacy {
   color-scheme: light;
-  --bg:#F5F7FA;
+  --bg:#F4F7F9;
   --surface:#FFFFFF;
-  --surface2:#F0F3F8;
-  --sunken:#EEF1F6;
-  --border:#E2E7EF;
-  --border-strong:#CBD3DF;
-  --border-input:#8791A3;
-  --text:#0E1626;
-  --text2:#435068;
-  --text3:#596680;
-  --placeholder:#6A7489;
-  --primary:#2563EB;
-  --primary-hover:#1D4ED8;
+  --surface2:#F0F4F6;
+  --sunken:#E9EFF2;
+  --border:#DFE6EB;
+  --border-strong:#C6D2DA;
+  --border-input:#7F909C;
+  --text:#0B1D2B;
+  --text2:#435866;
+  --text3:#56697A;
+  --placeholder:#5F7383;
+  --primary:#0A6580;
+  --primary-hover:#08526A;
   --primary-fg:#FFFFFF;
-  --primary-subtle:#EAF1FF;
-  --primary-subtle-fg:#1E40AF;
-  --primary-ring:rgba(37,99,235,.32);
+  --primary-subtle:#E2F1F5;
+  --primary-subtle-fg:#064B60;
+  --primary-ring:rgba(10,101,128,.32);
   --success-bg:#DCFCE7;
   --success-fg:#166534;
   --success-border:#86EFAC;
@@ -45,11 +45,11 @@ html.legacy {
   --purple-fg:#6B21A8;
   --purple-border:#D8B4FE;
   --purple-solid:#9333EA;
-  --neutral-bg:#EEF1F6;
-  --neutral-fg:#3B465C;
-  --neutral-border:#CBD3DF;
-  --neutral-solid:#64748B;
-  --scrim:rgba(15,23,42,.46);
+  --neutral-bg:#EDF2F5;
+  --neutral-fg:#3B4E5C;
+  --neutral-border:#C6D2DA;
+  --neutral-solid:#637684;
+  --scrim:rgba(5,16,24,.46);
   --sh-sm:0 1px 2px rgba(16,24,40,.06);
   --sh-md:0 4px 12px -2px rgba(16,24,40,.08), 0 2px 4px -2px rgba(16,24,40,.06);
   --sh-lg:0 18px 44px -10px rgba(16,24,40,.20), 0 6px 14px -6px rgba(16,24,40,.10);
@@ -88,22 +88,22 @@ html.legacy {
 
   /* Chart marks: stage order Applied, Screening, Interview, Final interview (6), Offer, Hired.
      Validated for lightness, chroma, CVD separation and contrast (light + dark). */
-  --chart-1: #2563EB;
-  --chart-2: #D97706;
+  --chart-1: #0A6580;
+  --chart-2: #E07800;
   --chart-3: #0D9488;
   --chart-4: #9333EA;
   --chart-5: #16A34A;
   --chart-6: #DB2777;
-  --chart-grid: #E2E7EF;
-  --chart-axis: #596680;
+  --chart-grid: #E3EAEE;
+  --chart-axis: #56697A;
 
-  /* Brand panel on the sign-in screens: fixed navy in both themes. */
-  --brand-panel: #0F1E4A;
+  /* Brand panel on the sign-in screens: fixed Strtm navy in both themes, amber accent. */
+  --brand-panel: #071A26;
   --brand-panel-text: #FFFFFF;
-  --brand-panel-muted: #C7D5F5;
-  --brand-panel-soft: #DCE6FB;
-  --brand-panel-faint: #AFC1EA;
-  --brand-panel-accent: #9DB4E8;
+  --brand-panel-muted: #C3D6E0;
+  --brand-panel-soft: #DAE7EE;
+  --brand-panel-faint: #A5BCC8;
+  --brand-panel-accent: #FFB400;
   --brand-panel-chip: rgba(255, 255, 255, 0.12);
 
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
@@ -119,31 +119,31 @@ html.legacy {
 
 html.legacy[data-theme='dark'] {
   color-scheme: dark;
-  --chart-1: #3B82F6;
-  --chart-2: #D97706;
+  --chart-1: #2FB3D0;
+  --chart-2: #E8870F;
   --chart-3: #0D9488;
   --chart-4: #8B5CF6;
   --chart-5: #16A34A;
   --chart-6: #EC4899;
-  --chart-grid: #232F44;
-  --chart-axis: #8C98AD;
-  --bg:#0A0F18;
-  --surface:#111826;
-  --surface2:#172033;
-  --sunken:#0D131F;
-  --border:#232F44;
-  --border-strong:#36455F;
-  --border-input:#5B6B86;
-  --text:#EDF1F7;
-  --text2:#AEB9CB;
-  --text3:#8C98AD;
-  --placeholder:#7A879D;
-  --primary:#6F9BFF;
-  --primary-hover:#8DB0FF;
-  --primary-fg:#0A0F18;
-  --primary-subtle:#1B2A4A;
-  --primary-subtle-fg:#A9C4FF;
-  --primary-ring:rgba(111,155,255,.40);
+  --chart-grid: #1F3240;
+  --chart-axis: #8AA0AD;
+  --bg:#071219;
+  --surface:#0D1B25;
+  --surface2:#13242F;
+  --sunken:#091620;
+  --border:#1F3240;
+  --border-strong:#2F4655;
+  --border-input:#567080;
+  --text:#E8EEF2;
+  --text2:#A9BBC6;
+  --text3:#8AA0AD;
+  --placeholder:#78909E;
+  --primary:#35C3DE;
+  --primary-hover:#5CD3EA;
+  --primary-fg:#04161D;
+  --primary-subtle:#0E2D38;
+  --primary-subtle-fg:#9BE3F1;
+  --primary-ring:rgba(53,195,222,.40);
   --success-bg:#12301F;
   --success-fg:#4ADE80;
   --success-border:#1F5C38;
@@ -169,10 +169,10 @@ html.legacy[data-theme='dark'] {
   --purple-fg:#C4B5FD;
   --purple-border:#4B3D82;
   --purple-solid:#A78BFA;
-  --neutral-bg:#1E283A;
-  --neutral-fg:#AEB9CB;
-  --neutral-border:#36455F;
-  --neutral-solid:#8C98AD;
+  --neutral-bg:#142631;
+  --neutral-fg:#A9BBC6;
+  --neutral-border:#2F4655;
+  --neutral-solid:#8AA0AD;
   --scrim:rgba(3,6,12,.70);
   --sh-sm:0 1px 2px rgba(0,0,0,.40);
   --sh-md:0 6px 16px -4px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.35);

@@ -154,7 +154,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
             <Field label="Address" required error={errors.location?.message}><TextInput {...register('location')} placeholder="Office, floor and room" /></Field>
           ) : (
             <Controller control={control} name="meetingMode" render={({ field }) => (
-              <Field label="Meeting"><SegmentedControl label="Meeting" value={field.value} onChange={field.onChange} options={[{ value: 'builtin', label: 'Built-in Acme Room' }, { value: 'external', label: 'External link' }]} /></Field>
+              <Field label="Meeting"><SegmentedControl label="Meeting" value={field.value} onChange={field.onChange} options={[{ value: 'builtin', label: 'Built-in Strtm Room' }, { value: 'external', label: 'External link' }]} /></Field>
             )} />
           )}
           {format !== 'onsite' && mode === 'external' ? (
@@ -172,7 +172,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
             <Notice tone="info" title="Moves the candidate to Final interview">
               {guestLink
                 ? 'The interviewer gets a guest link for department heads or clients in the interview room. Guests give their name and position and wait until someone in the room admits them.'
-                : 'Guest links need the built-in Acme Room. With an external link or on-site, invite guests yourself.'}
+                : 'Guest links need the built-in Strtm Room. With an external link or on-site, invite guests yourself.'}
             </Notice>
           ) : null}
           {format !== 'onsite' && mode === 'builtin' ? (
@@ -180,7 +180,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
               description="Records everyone's camera and sound from the interviewer's browser, in the Library afterwards. Everyone is told before they join." />
           ) : null}
           <Field label="Notes" optional><Textarea rows={3} maxLength={2000} {...register('notes')} /></Field>
-          <Checkbox {...register('sendInvite')} label="Email the invitation to the candidate" description={mode === 'builtin' && format !== 'onsite' ? 'Includes their private link to the Acme Room.' : 'Includes the time, format and meeting details.'} />
+          <Checkbox {...register('sendInvite')} label="Email the invitation to the candidate" description={mode === 'builtin' && format !== 'onsite' ? 'Includes their private link to the Strtm Room.' : 'Includes the time, format and meeting details.'} />
         </form>
       )}
     </Drawer>

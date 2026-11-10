@@ -42,7 +42,7 @@ export function CandidatesPage() {
   };
   const [search, setSearch] = useDebouncedParam('q', 'page');
   const list = useCandidates(filters);
-  useEffect(() => { document.title = 'Candidates · Acme People'; }, []);
+  useEffect(() => { document.title = 'Candidates · Strtm People'; }, []);
   const clear = () => { setSearch(''); set(Object.fromEntries([...params.keys()].map((k) => [k, null]))); };
 
   if (list.isError) return <QueryErrorPage error={list.error} onRetry={() => void list.refetch()} />;

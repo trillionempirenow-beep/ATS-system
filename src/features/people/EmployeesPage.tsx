@@ -100,7 +100,7 @@ function EmployeeDrawer({ open, employee, data, onClose }: { open: boolean; empl
 export function EmployeesPage() {
   const q = useQuery({ queryKey: KEY, queryFn: () => api.get<EmployeesDto>('/employees') });
   const [drawer, setDrawer] = useState<{ open: boolean; employee: EmployeeDto | null }>({ open: false, employee: null });
-  useEffect(() => { document.title = 'Employees · Acme People'; }, []);
+  useEffect(() => { document.title = 'Employees · Strtm People'; }, []);
   if (q.isError) return <QueryErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
 

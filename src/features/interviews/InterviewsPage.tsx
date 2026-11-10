@@ -51,7 +51,7 @@ export function InterviewsPage() {
   const [rescheduling, setRescheduling] = useState<InterviewListItemDto | null>(null);
   const [reviewing, setReviewing] = useState<number | null>(null);
 
-  useEffect(() => { document.title = 'Interviews · Acme People'; }, []);
+  useEffect(() => { document.title = 'Interviews · Strtm People'; }, []);
 
   const scheduleParam = params.get('schedule');
   const scheduleOpen = scheduleParam !== null;

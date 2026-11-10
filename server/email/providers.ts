@@ -13,7 +13,7 @@ export interface OutgoingEmail {
 
 const ICS_TYPE = (c: CalendarInvite) => `text/calendar; charset=utf-8; method=${c.method}`;
 
-/** "Acme People <no-reply@x>" -> "Acme People" (the name recipients see). */
+/** "Strtm People <no-reply@x>" -> "Strtm People" (the name recipients see). */
 const senderName = () => /^\s*"?([^"<]*?)"?\s*</.exec(env.EMAIL_FROM)?.[1]?.trim() || '';
 
 export type ProviderResult = { ok: true; id?: string } | { ok: false; error: string };
