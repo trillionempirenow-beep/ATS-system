@@ -13,6 +13,11 @@ import { featureRouters } from './routes.js';
 const SLOW_ROUTES: Array<string | RegExp> = ['/api/v1/assistant/message', '/api/v1/candidates/parse-cv', '/api/v1/jobs/extract-pdf', '/api/v1/cron/',
   /^\/api\/v1\/interviews\/\d+\/assistant\/chunk$/];
 
+/** A request slower than this is written to the log, with the time it took. */
+const SLOW_LOG_MS = 1_000;
+/** Requests this instance has started; the first one pays for the cold start. */
+let requestsServed = 0;
+
 /** Methods that are safe to run twice. */
 const READ_METHODS = new Set(['GET', 'HEAD']);
 
@@ -33,6 +38,8 @@ export function createApp(options: AppOptions = {}): express.Express {
   app.set('trust proxy', env.TRUST_PROXY || env.NODE_ENV === 'production' ? 1 : false);
 
   app.use(async (req, res, next) => {
+    const started = Date.now();
+    const coldInstance = requestsServed++ === 0;
     await prepareDb();
     const done = beginDbRequest();
     // Answer a stuck request well before the platform's 60s limit, with a message the
@@ -57,7 +64,15 @@ export function createApp(options: AppOptions = {}): express.Express {
       }
       res.status(503).json({ error: { code: 'service_unavailable', message: 'The server took too long to answer. Please try again.' } });
     }, limit);
-    const finished = () => { clearTimeout(watchdog); done(); };
+    const finished = () => {
+      clearTimeout(watchdog);
+      done();
+      const ms = Date.now() - started;
+      if (ms >= SLOW_LOG_MS && !res.locals.slowLogged) {
+        res.locals.slowLogged = true;
+        console.warn(`[slow] ${req.method} ${req.originalUrl.split('?')[0]} took ${ms}ms${coldInstance ? ' (first request on a new instance)' : ''}${res.locals.dbRetried ? ' (retried)' : ''}`);
+      }
+    };
     res.on('finish', finished);
     res.on('close', finished);
     res.set('Cache-Control', 'no-store');
