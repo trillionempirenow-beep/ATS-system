@@ -29,13 +29,15 @@ const SCALE = [1, 2, 3, 4, 5];
 /**
  * One 1-5 radio group per criterion. Standard radio keyboard model: the group is one
  * tab stop (the chosen number, or 1), arrow keys move and choose, Home/End jump to 1/5.
- * Clicking the chosen number again clears it (ratings are optional).
+ * Clicking the chosen number again clears it (ratings are optional); from the keyboard, Delete or
+ * Backspace clears it, and Space only ever selects, as radios do.
  */
 export function ScorecardRatings({ criteria, ratings, onChange, readOnly }: {
   criteria: string[]; ratings: Record<string, number | null>; onChange?: (criterion: string, value: number | null) => void; readOnly?: boolean;
 }) {
   const onKey = (c: string, e: KeyboardEvent<HTMLButtonElement>) => {
     if (readOnly) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); onChange?.(c, null); return; }
     const cur = ratings[c] ?? 0;
     const next = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? Math.min(5, cur + 1)
       : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? Math.max(1, cur - 1)
@@ -56,7 +58,7 @@ export function ScorecardRatings({ criteria, ratings, onChange, readOnly }: {
                 tabIndex={(ratings[c] ?? 1) === n ? 0 : -1}
                 className={cx(s.scaleBtn, ratings[c] === n && s.scaleOn)}
                 onKeyDown={(e) => onKey(c, e)}
-                onClick={() => onChange?.(c, ratings[c] === n ? null : n)}>{n}</button>
+                onClick={(e) => onChange?.(c, ratings[c] === n && e.detail > 0 ? null : n)}>{n}</button>
             ))}
           </div>
         </div>

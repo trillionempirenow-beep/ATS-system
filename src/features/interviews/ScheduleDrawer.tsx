@@ -171,7 +171,7 @@ export function ScheduleDrawer({ open, applicationId, onClose }: { open: boolean
           ) : null}
           <div className={formStyles.grid2}>
             <Field label="Starts at" required error={errors.startsAt?.message}><TextInput type="datetime-local" {...register('startsAt')} /></Field>
-            <Field label="Ends at" required error={errors.endsAt?.message}><TextInput type="datetime-local" {...register('endsAt')} /></Field>
+            <Field label="Ends at" optional error={errors.endsAt?.message}><TextInput type="datetime-local" {...register('endsAt')} /></Field>
           </div>
           {clash ? <Notice tone="warning" title={`${clashName ?? 'This interviewer'} already has an interview at ${formatTime(clash)}.`}>You can still save. Check that the times do not overlap.</Notice> : null}
           {meetingType === 'final' ? (
