@@ -78,7 +78,7 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
   stream: MediaStream | null; name: string; role?: string; position?: string; mirrored?: boolean; muted?: boolean; hasVideo: boolean; micOn: boolean; hand?: boolean; small?: boolean; highlight?: boolean;
   /** Makes the whole tile clickable: it becomes the big spotlight. */
   onSpot?: () => void;
-  /** A screen share is never cropped; a camera fills its frame. */
+  /** Big tiles show the whole picture (camera or screen) like a video call app; small tiles fill their box. */
   fit?: 'cover' | 'contain';
 }) {
   // "John Doe - Tech Lead": the full text stays readable on hover when the pill truncates it.
@@ -323,11 +323,11 @@ export function CallStage(p: Props) {
 
   const peerTile = (o: RemotePeer, small: boolean, spot: boolean) => (
     <Tile key={o.meta.id} stream={o.stream} name={o.meta.name} {...tileRole(o.meta)} hasVideo={o.hasVideo} micOn={o.meta.mic} hand={o.meta.hand}
-      small={small} highlight={speaking.has(o.meta.id)} fit={o.meta.screen ? 'contain' : 'cover'} onSpot={spot ? undefined : () => setPinned(o.meta.id)} />
+      small={small} highlight={speaking.has(o.meta.id)} fit={small ? 'cover' : 'contain'} onSpot={spot ? undefined : () => setPinned(o.meta.id)} />
   );
   const selfTile = (small: boolean, spot: boolean) => (
     <Tile key="self" stream={selfStream} name="You" position={small && !selfLead ? p.self.position : undefined} muted mirrored={!media.screen}
-      hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small={small} fit={media.screen ? 'contain' : 'cover'} onSpot={spot ? undefined : () => setPinned(SELF)} />
+      hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small={small} fit={small ? 'cover' : 'contain'} onSpot={spot ? undefined : () => setPinned(SELF)} />
   );
   const spotPeer = spotId && spotId !== SELF ? call.peers.find((x) => x.meta.id === spotId) ?? null : null;
 
@@ -380,13 +380,15 @@ export function CallStage(p: Props) {
                     {leads.map((o) => peerTile(o, false, false))}
                     {selfLead ? selfTile(false, false) : null}
                   </div>
+                ) : audience.length === 0 ? (
+                  <div className={s.spotArea}><div className={s.spotFrame}>{selfTile(false, true)}</div></div>
                 ) : (
                   <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
                 )}
               </div>
               <div className={cx(s.strip, s.audience)} aria-label="Also in the room">
                 {audience.map((o) => peerTile(o, true, false))}
-                {!selfLead ? selfTile(true, false) : null}
+                {!selfLead && (leads.length || audience.length) ? selfTile(true, false) : null}
               </div>
             </>
           ) : (
@@ -395,7 +397,7 @@ export function CallStage(p: Props) {
                 {presenter ? (
                   <div className={s.spotArea}>
                     <div className={s.spotFrame}>
-                      <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)} fit="cover"
+                      <Tile stream={presenter.stream} name={presenter.meta.name} {...tileRole(presenter.meta)} fit="contain"
                         hasVideo={presenter.hasVideo} micOn={presenter.meta.mic} hand={presenter.meta.hand} highlight={speaking.has(presenter.meta.id)} />
                       <div className={s.pip}>
                         {selfTile(true, false)}
@@ -403,12 +405,11 @@ export function CallStage(p: Props) {
                     </div>
                   </div>
                 ) : (
-                  <>
-                    <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
-                    <div className={s.pip}>
-                      {selfTile(true, false)}
-                    </div>
-                  </>
+                  // Nobody else here yet: you fill the frame, as in Google Meet. The other person
+                  // takes it when they join, and you move to the corner.
+                  <div className={s.spotArea}>
+                    <div className={s.spotFrame}>{selfTile(false, true)}</div>
+                  </div>
                 )}
               </div>
               {others.length ? (
