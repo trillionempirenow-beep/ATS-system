@@ -27,7 +27,7 @@ export interface AssistantActionDto {
   preview?: AssistantPreview;
 }
 
-export type AssistantActionKind = 'move_stage' | 'schedule_interview' | 'send_email' | 'create_job' | 'approve_job' | 'reject_job' | 'add_candidate';
+export type AssistantActionKind = 'move_stage' | 'move_stage_bulk' | 'schedule_interview' | 'send_email' | 'create_job' | 'approve_job' | 'reject_job' | 'add_candidate';
 
 export type AssistantPreview =
   | {
@@ -75,14 +75,42 @@ export interface AssistantViewColumn {
   sub?: string;
 }
 
-/** A list the assistant looked up, drawn as a table the person can search and sort. */
+/** One figure of an overview, e.g. "Open jobs 4". */
+export interface AssistantTile {
+  label: string;
+  value: string | number;
+  hint?: string;
+  /** Draws attention: warning or danger for something that needs doing. */
+  tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info';
+}
+
+/** One candidate, as a card. */
+export interface AssistantProfile {
+  name: string;
+  subtitle: string;
+  email: string | null;
+  phone: string | null;
+  education: string | null;
+  skills: string[];
+  applications: Array<{ job: string; stage: string | null; applied: string; withdrawn: boolean; link: string }>;
+  interviews: string[];
+  notes: string[];
+}
+
+/**
+ * Something the assistant looked up, drawn for the person instead of written out:
+ * a table (the default), an overview of figures, or one candidate's profile.
+ */
 export interface AssistantView {
   id: string;
+  kind?: 'table' | 'stats' | 'profile';
   title: string;
   subtitle?: string;
   columns: AssistantViewColumn[];
   /** Field names starting with an underscore are not columns: `_link` is where the row opens. */
   rows: Array<Record<string, AssistantCell>>;
+  tiles?: AssistantTile[];
+  profile?: AssistantProfile;
 }
 
 export interface AssistantReplyDto {

@@ -1,4 +1,4 @@
-import type { AssistantCell, AssistantView } from '../../../shared/api/assistant.js';
+import type { AssistantCell, AssistantProfile, AssistantTile, AssistantView } from '../../../shared/api/assistant.js';
 import { STAGE_LABELS, type Stage } from '../../../shared/domain/pipeline.js';
 
 /**
@@ -25,7 +25,7 @@ const stageKey = (v: unknown): string | null => {
 };
 
 type Row = Record<string, AssistantCell>;
-interface Built { title: string; subtitle?: string; columns: AssistantView['columns']; rows: Row[] }
+interface Built { kind?: AssistantView['kind']; title: string; subtitle?: string; columns: AssistantView['columns']; rows: Row[]; tiles?: AssistantTile[]; profile?: AssistantProfile }
 
 function candidates(result: Record<string, unknown>): Built {
   const rows = list(result.candidates).map((c): Row => ({
@@ -34,7 +34,7 @@ function candidates(result: Record<string, unknown>): Built {
   }));
   return {
     title: 'Candidates',
-    subtitle: rows.length >= 15 ? 'The 15 most recently updated' : undefined,
+    subtitle: result.moreExist === true ? `The ${rows.length} most recently updated, there are more` : undefined,
     columns: [
       { key: 'name', label: 'Candidate', sub: 'email' }, { key: 'job', label: 'Applied for' }, { key: 'stage', label: 'Stage', kind: 'stage' },
       { key: 'title', label: 'Current role' }, { key: 'applied', label: 'Applied', kind: 'date' },
@@ -94,6 +94,52 @@ function pipeline(result: Record<string, unknown>): Built {
   return { title: 'Pipeline', columns: [{ key: 'stage', label: 'Stage', kind: 'stage' }, { key: 'count', label: 'Applicants', kind: 'count' }], rows };
 }
 
+/** How the pipeline is doing: the figures, and who has been left waiting. */
+function summary(result: Record<string, unknown>): Built {
+  const attention = obj(result.needsAttention);
+  const stuck = num(attention.count) ?? 0;
+  const waiting = num(result.jobPostingsWaitingForApproval) ?? 0;
+  const today = num(result.interviewsToday) ?? 0;
+  const tiles: AssistantTile[] = [
+    { label: 'Active applicants', value: num(result.activeApplicants) ?? 0, hint: `${num(result.newApplicationsThisWeek) ?? 0} new this week` },
+    { label: 'Open jobs', value: num(result.openJobs) ?? 0 },
+    { label: 'Interviews today', value: today, hint: `${num(result.interviewsThisWeek) ?? 0} this week`, tone: today > 0 ? 'info' : 'neutral' },
+    { label: 'Waiting for approval', value: waiting, hint: waiting ? 'Job postings' : undefined, tone: waiting > 0 ? 'warning' : 'neutral' },
+    { label: 'Need attention', value: stuck, hint: stuck ? 'No movement for 7+ days' : 'Nothing stuck', tone: stuck > 0 ? 'danger' : 'success' },
+  ];
+  const rows = list(attention.items).map((i): Row => ({
+    name: text(i.name), job: text(i.job), stage: stageKey(i.stage), idle: num(i.daysIdle) ?? 0,
+    _link: num(i.applicationId) ? `/app/candidates/${num(i.applicationId)}` : null,
+  }));
+  return {
+    kind: 'stats', title: 'Overview', tiles,
+    subtitle: stuck > rows.length ? `Showing ${rows.length} of ${stuck} that need attention` : undefined,
+    columns: [{ key: 'name', label: 'Needs attention', sub: 'job' }, { key: 'stage', label: 'Stage', kind: 'stage' }, { key: 'idle', label: 'Days idle', kind: 'count' }],
+    rows,
+  };
+}
+
+/** One candidate, with their applications and what is coming up. */
+function candidate(result: Record<string, unknown>): Built {
+  const apps = list(result.applications).map((a) => ({
+    job: text(a.job), stage: stageKey(a.stage), applied: text(a.applied), withdrawn: a.withdrawn === true,
+    link: num(a.applicationId) ? `/app/candidates/${num(a.applicationId)}` : '/app/candidates',
+  }));
+  const level = text(result.experienceLevel);
+  const profile: AssistantProfile = {
+    name: text(result.name),
+    subtitle: [text(result.currentTitle), level ? `${level} level` : ''].filter(Boolean).join(' · '),
+    email: text(result.email) || null,
+    phone: text(result.phone) || null,
+    education: text(result.education) || null,
+    skills: text(result.skills).split(/[,;\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 14),
+    applications: apps,
+    interviews: list(result.upcomingInterviews).map((i) => [text(i.when), text(i.type), text(i.status)].filter(Boolean).join(' · ')),
+    notes: (Array.isArray(result.latestNotes) ? result.latestNotes : []).map(text).filter(Boolean).slice(0, 3),
+  };
+  return { kind: 'profile', title: profile.name || 'Candidate', columns: [], rows: [], profile };
+}
+
 function names(title: string, label: string, result: unknown): Built {
   return { title, columns: [{ key: 'name', label }], rows: list(result).map((r): Row => ({ name: text(r.name) })).filter((r) => r.name) };
 }
@@ -105,6 +151,8 @@ const BUILDERS: Record<string, (result: unknown) => Built> = {
   jobs: (r) => jobs(obj(r)),
   approvals: (r) => approvals(obj(r)),
   pipeline: (r) => pipeline(obj(r)),
+  summary: (r) => summary(obj(r)),
+  candidate: (r) => candidate(obj(r)),
   departments: (r) => names('Departments', 'Department', r),
   interviewers: (r) => names('Interviewers', 'Interviewer', r),
 };
@@ -138,7 +186,8 @@ export function viewsFromSteps(steps: unknown): AssistantView[] {
     const result = resultOf(step.observation);
     if (!build || result === undefined) continue;
     const built = build(result);
-    if (!built.rows.length) continue;
+    const hasContent = built.kind === 'profile' ? Boolean(built.profile?.name) : built.kind === 'stats' ? Boolean(built.tiles?.length) : built.rows.length > 0;
+    if (!hasContent) continue;
     const key = `${what}:${text(obj(input).query)}:${text(obj(input).job)}:${text(obj(input).stage)}`;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -159,6 +159,9 @@ async function previewOf(a: SignedAction, senderName: string): Promise<Assistant
         from: STAGE_LABELS[app.stage], to: STAGE_LABELS[a.stage], stages: [...STAGE_ORDER.map((st) => STAGE_LABELS[st]), STAGE_LABELS.rejected], email,
       };
     }
+    case 'move_stage_bulk':
+      // The card itself names each person and where they move; there is no single email or posting to show.
+      return undefined;
     case 'schedule_interview': {
       const app = await applicationInfo(a.applicationId);
       const [iv] = await sql<{ name: string }[]>`select name from users where id = ${a.interviewerId}`;
@@ -217,6 +220,26 @@ async function run(a: SignedAction, token: string, ctx: Ctx): Promise<AssistantC
         link: `/app/candidates/${a.applicationId}`,
       };
     }
+    case 'move_stage_bulk': {
+      const moved: Array<{ applicationId: number; stage: Stage }> = [];
+      let failed = 0;
+      // One at a time, each with its own rules and audit entry; one that fails does not stop the rest.
+      for (const m of a.moves) {
+        try {
+          await pipeline.moveStage(m.applicationId, { stage: a.stage, override: m.override, notifyApplicant: a.notify }, user, ctx.ip);
+          moved.push({ applicationId: m.applicationId, stage: m.from });
+        } catch (e) {
+          failed++;
+          console.warn(`[assistant] bulk move of application ${m.applicationId} failed: ${describeError(e)}`);
+        }
+      }
+      if (!moved.length) throw new AppError(409, 'conflict', 'None of them could be moved. Their stages may have changed; ask again.');
+      return {
+        message: `Done. Moved ${moved.length} of ${a.moves.length} to ${STAGE_LABELS[a.stage]}.${failed ? ` ${failed} could not be moved.` : ''}`,
+        undoToken: signToken('undo', user.id, { moves: moved }),
+        link: '/app/candidates',
+      };
+    }
     case 'schedule_interview': {
       const input = scheduleInterviewSchema.parse({
         applicationId: a.applicationId, startsAt: a.startsAt, endsAt: a.endsAt, interviewType: a.interviewType, meetingType: a.meetingType,
@@ -266,9 +289,22 @@ async function run(a: SignedAction, token: string, ctx: Ctx): Promise<AssistantC
 
 /** Moves the candidate back to where they were before a confirmed move. */
 export async function undo(token: string, ctx: Ctx): Promise<AssistantConfirmDto> {
-  const a = readToken<{ applicationId: number; stage: Stage }>(token, 'undo', ctx.user.id);
+  const a = readToken<{ applicationId?: number; stage?: Stage; moves?: Array<{ applicationId: number; stage: Stage }> }>(token, 'undo', ctx.user.id);
   if (!a) throw new AppError(410, 'conflict', 'This can no longer be undone from here. Move the candidate on the board instead.');
-  const moved = await pipeline.moveStage(a.applicationId, { stage: a.stage, override: ctx.user.role === 'admin', notifyApplicant: false }, ctx.user, ctx.ip);
-  await auditQuietly({ userId: ctx.user.id, action: 'assistant_undo', entityType: 'application', entityId: a.applicationId, details: { to: moved.to }, ip: ctx.ip });
-  return { message: `Undone. Back in ${STAGE_LABELS[moved.to]}.`, undoToken: null, link: `/app/candidates/${a.applicationId}` };
+  const back = a.moves ?? (a.applicationId && a.stage ? [{ applicationId: a.applicationId, stage: a.stage }] : []);
+  let undone = 0;
+  let last: Stage | null = null;
+  for (const m of back) {
+    try {
+      const moved = await pipeline.moveStage(m.applicationId, { stage: m.stage, override: ctx.user.role === 'admin', notifyApplicant: false }, ctx.user, ctx.ip);
+      await auditQuietly({ userId: ctx.user.id, action: 'assistant_undo', entityType: 'application', entityId: m.applicationId, details: { to: moved.to }, ip: ctx.ip });
+      undone++;
+      last = moved.to;
+    } catch (e) {
+      console.warn(`[assistant] undo of application ${m.applicationId} failed: ${describeError(e)}`);
+    }
+  }
+  if (!undone) throw new AppError(409, 'conflict', 'Nothing could be undone from here. Move them on the board instead.');
+  if (back.length === 1 && a.applicationId) return { message: `Undone. Back in ${STAGE_LABELS[last!]}.`, undoToken: null, link: `/app/candidates/${a.applicationId}` };
+  return { message: `Undone. ${undone} of ${back.length} moved back.`, undoToken: null, link: '/app/candidates' };
 }

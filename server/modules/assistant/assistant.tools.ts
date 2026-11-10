@@ -54,10 +54,16 @@ export async function lookup(user: CurrentUser, args: Args): Promise<unknown> {
     case 'departments': return sql`select id, name from departments order by name`;
     case 'pipeline': return pipelineCounts(str(args.job));
     case 'approvals': return approvals(user);
+    case 'summary': return overview(user);
     default:
-      return refuse('Unknown lookup. Use what = candidates, candidate, interviews, interviewers, jobs, departments, pipeline or approvals.');
+      return refuse('Unknown lookup. Use what = summary, candidates, candidate, interviews, interviewers, jobs, departments, pipeline or approvals.');
   }
 }
+
+/** Candidates returned by one lookup. */
+export const CANDIDATE_LIMIT = 50;
+/** An application that has not moved for this many days is flagged as needing attention. */
+const IDLE_DAYS = 7;
 
 async function findCandidates(query: string, job: string, stage: Stage | null) {
   const like = query ? `%${query}%` : null;
@@ -69,10 +75,13 @@ async function findCandidates(query: string, job: string, stage: Stage | null) {
       ${like ? sql`and ((c.first_name || ' ' || c.last_name) ilike ${like} or c.email::text ilike ${like} or c.skills ilike ${like} or c.current_title ilike ${like})` : sql``}
       ${jobLike ? sql`and j.title ilike ${jobLike}` : sql``}
       ${stage ? sql`and a.stage = ${stage}` : sql``}
-    order by a.updated_at desc limit 15`;
+    order by a.updated_at desc limit ${CANDIDATE_LIMIT + 1}`;
+  const shown = rows.slice(0, CANDIDATE_LIMIT);
   return {
-    count: rows.length,
-    candidates: rows.map((r) => ({
+    count: shown.length,
+    /** True when there are more than were returned; say so, and narrow the search. */
+    moreExist: rows.length > CANDIDATE_LIMIT,
+    candidates: shown.map((r) => ({
       applicationId: r.application_id, candidateId: r.candidate_id, name: fullName(r.first_name, r.last_name), email: r.email,
       job: r.title, stage: STAGE_LABELS[r.stage], currentTitle: r.current_title, applied: when(r.applied_at),
     })),
@@ -136,6 +145,41 @@ async function pipelineCounts(job: string) {
   return Object.fromEntries(STAGES.map((st) => [STAGE_LABELS[st], rows.find((r) => r.stage === st)?.n ?? 0]));
 }
 
+/**
+ * The whole picture in one answer: what is open, what is moving, what is stuck.
+ * Run one query after another: this goes through the pooler, and a burst of
+ * parallel queries is what made pages hang.
+ */
+async function overview(user: CurrentUser) {
+  const byStage = await sql<{ stage: Stage; n: number }[]>`select stage, count(*)::int as n from applications where status = 'active' group by stage`;
+  const [{ openJobs = 0 } = {}] = await sql<{ openJobs: number }[]>`select count(*)::int as "openJobs" from jobs where status = 'open'`;
+  const [{ fresh = 0 } = {}] = await sql<{ fresh: number }[]>`select count(*)::int as fresh from applications where applied_at > now() - interval '7 days'`;
+  const stuck = await sql<{ id: number; first_name: string; last_name: string; title: string; stage: Stage; idle: number; total: number }[]>`
+    select a.id, c.first_name, c.last_name, j.title, a.stage, floor(extract(epoch from (now() - a.updated_at)) / 86400)::int as idle, count(*) over ()::int as total
+    from applications a join candidates c on c.id = a.candidate_id join jobs j on j.id = a.job_id
+    where a.status = 'active' and c.record_status = 'active' and a.stage in ('new','screening','interview','final_interview','offer')
+      and a.updated_at < now() - ${`${IDLE_DAYS} days`}::interval
+    order by a.updated_at limit 8`;
+  const list = await interviews.list();
+  const waiting = await approvals(user);
+  const stages = Object.fromEntries(STAGES.map((st) => [STAGE_LABELS[st], byStage.find((r) => r.stage === st)?.n ?? 0]));
+  return {
+    activeApplicants: byStage.filter((r) => r.stage !== 'hired' && r.stage !== 'rejected').reduce((n, r) => n + r.n, 0),
+    byStage: stages,
+    openJobs,
+    newApplicationsThisWeek: fresh,
+    interviewsToday: list.counts.today,
+    interviewsThisWeek: list.counts.thisWeek,
+    jobPostingsWaitingForApproval: waiting.jobPostings.length,
+    canApprovePostings: waiting.canApprove,
+    needsAttention: {
+      note: `Active applicants with no movement for ${IDLE_DAYS}+ days, oldest first.`,
+      count: stuck[0]?.total ?? 0,
+      items: stuck.map((r) => ({ applicationId: r.id, name: fullName(r.first_name, r.last_name), job: r.title, stage: STAGE_LABELS[r.stage], daysIdle: r.idle })),
+    },
+  };
+}
+
 async function approvals(user: CurrentUser) {
   const jobsWaiting = await sql<{ id: number; title: string; submitter: string | null; submitted_at: Date | null }[]>`
     select j.id, j.title, u.name as submitter, j.submitted_at from jobs j left join users u on u.id = j.submitted_by
@@ -152,6 +196,7 @@ async function approvals(user: CurrentUser) {
 /** What a confirmed action needs, signed into its token. */
 export type ActionData =
   | { kind: 'move_stage'; applicationId: number; stage: Stage; notify: boolean; override: boolean }
+  | { kind: 'move_stage_bulk'; moves: Array<{ applicationId: number; from: Stage; override: boolean }>; stage: Stage; notify: boolean }
   | { kind: 'schedule_interview'; applicationId: number; startsAt: string; endsAt: string; meetingType: 'screening' | 'interview'; interviewType: 'phone' | 'video' | 'onsite' | 'panel'; interviewerId: number; final: boolean; location: string }
   | { kind: 'send_email'; candidateId: number; to: string; name: string; subject: string; body: string }
   | { kind: 'create_job'; fields: Record<string, unknown>; publish: boolean; departmentName: string }
@@ -180,8 +225,55 @@ async function application(id: number | null) {
   return a;
 }
 
+/** "7, 8 9" or [7, 8, 9] as a list of distinct ids. */
+function idList(v: unknown): number[] {
+  const raw = Array.isArray(v) ? v : str(v).split(/[\s,;]+/);
+  return [...new Set(raw.map((x) => num(x)).filter((n): n is number => n !== null))].slice(0, 25);
+}
+
+/** Moves several applicants to one stage with a single confirmation. Anyone who cannot move is named, not silently dropped. */
+async function prepareBulkMove(user: CurrentUser, ids: number[], args: Args): Promise<Proposal> {
+  const stage = toStage(args.stage) ?? refuse('Give stage: screening, interview, final_interview, offer, hired or rejected.');
+  const rows = await sql<{ id: number; stage: Stage; status: string; first_name: string; last_name: string; title: string }[]>`
+    select a.id, a.stage, a.status, c.first_name, c.last_name, j.title
+    from applications a join candidates c on c.id = a.candidate_id join jobs j on j.id = a.job_id where a.id in ${sql(ids)}`;
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const moves: Array<{ applicationId: number; from: Stage; override: boolean; name: string; job: string }> = [];
+  const skipped: string[] = [];
+  for (const id of ids) {
+    const a = byId.get(id);
+    if (!a) { skipped.push(`#${id} was not found`); continue; }
+    const name = fullName(a.first_name, a.last_name);
+    if (a.status === 'withdrawn') { skipped.push(`${name} withdrew`); continue; }
+    if (a.stage === stage) { skipped.push(`${name} is already in ${STAGE_LABELS[stage]}`); continue; }
+    const skip = isStageSkip(a.stage, stage);
+    if (skip && user.role !== 'admin') { skipped.push(`${name} would skip a stage, which only an Admin can do`); continue; }
+    moves.push({ applicationId: a.id, from: a.stage, override: skip, name, job: a.title });
+  }
+  if (!moves.length) refuse(`Nobody can be moved: ${skipped.join('; ')}.`);
+  const notify = bool(args.notify);
+  const shown = moves.slice(0, 6).map((m) => `${m.name} · ${m.job}: ${STAGE_LABELS[m.from]} → ${STAGE_LABELS[stage]}`);
+  return {
+    kind: 'move_stage_bulk', confirmLabel: stage === 'rejected' ? `Reject ${moves.length}` : `Move ${moves.length}`,
+    title: `Move ${moves.length} applicants to ${STAGE_LABELS[stage]}`,
+    lines: [
+      ...shown,
+      ...(moves.length > shown.length ? [`and ${moves.length - shown.length} more`] : []),
+      notify ? 'Each applicant is emailed about it' : 'No emails to the applicants',
+      ...(skipped.length ? [`Left out: ${skipped.join('; ')}`] : []),
+    ],
+    data: { kind: 'move_stage_bulk', moves: moves.map(({ applicationId, from, override }) => ({ applicationId, from, override })), stage, notify },
+  };
+}
+
 async function prepare(user: CurrentUser, args: Args): Promise<Proposal> {
   const action = str(args.action).toLowerCase();
+
+  if (action === 'move_stage') {
+    const ids = idList(args.application_ids);
+    if (ids.length === 1 && !num(args.application_id)) args.application_id = ids[0];
+    if (ids.length > 1) return prepareBulkMove(user, ids, args);
+  }
 
   if (action === 'move_stage') {
     const a = await application(num(args.application_id));

@@ -27,6 +27,30 @@
 .cardMore { color: var(--text3); font-size: var(--fs-caption); justify-content: flex-start !important; }
 .cardBtn { margin: 4px 12px 12px; }
 
+/* ---------- Overview and profile cards ---------- */
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px 12px 4px; }
+.tile { display: flex; flex-direction: column; gap: 1px; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); border-left-width: 3px; }
+.tileLabel { color: var(--text3); font-size: var(--fs-caption); }
+.tileValue { font-size: var(--fs-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.tileHint { color: var(--text3); font-size: var(--fs-caption); }
+.tone_success { border-left-color: var(--success-fg); }
+.tone_warning { border-left-color: var(--warning-fg); }
+.tone_danger { border-left-color: var(--danger-fg); }
+.tone_info { border-left-color: var(--info-fg); }
+.sectionLabel { padding: 10px 12px 0; color: var(--text3); font-size: var(--fs-caption); font-weight: var(--fw-semibold); letter-spacing: .04em; text-transform: uppercase; }
+.rowLink { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; color: inherit; text-decoration: none; border-radius: var(--radius-sm); }
+.rowLink:hover .primaryText { color: var(--primary); }
+.rowLink:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.idle { color: var(--danger-fg); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; font-size: var(--fs-caption); }
+.cardMeta { display: inline-flex; align-items: center; gap: 8px; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; padding: 10px 12px 4px; }
+.facts dt { color: var(--text3); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.facts a { color: var(--primary); text-decoration: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 0; }
+.plain { margin: 0; padding: 6px 12px 12px 28px; display: grid; gap: 4px; color: var(--text2); }
+.card > :last-child:not(.cardBtn) { margin-bottom: 4px; }
+
 /* ---------- Window ---------- */
 .search {
   display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 0 12px; height: 40px;

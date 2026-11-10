@@ -50,6 +50,35 @@ describe('assistant result tables', () => {
     expect(views[2]?.rows.map((r) => r.stage)).toEqual(['new', 'screening', 'interview']);
   });
 
+  it('turns the overview into figures and a list of who needs attention', () => {
+    const [v] = viewsFromSteps([step('summary', {
+      activeApplicants: 12, byStage: { Applied: 5 }, openJobs: 4, newApplicationsThisWeek: 3, interviewsToday: 2, interviewsThisWeek: 6,
+      jobPostingsWaitingForApproval: 1, canApprovePostings: true,
+      needsAttention: { count: 9, items: [{ applicationId: 7, name: 'Dave', job: 'PM', stage: 'Screening', daysIdle: 12 }] },
+    })]);
+    expect(v?.kind).toBe('stats');
+    expect(v?.tiles?.map((x) => [x.label, x.value, x.tone])).toEqual([
+      ['Active applicants', 12, undefined], ['Open jobs', 4, undefined], ['Interviews today', 2, 'info'], ['Waiting for approval', 1, 'warning'], ['Need attention', 9, 'danger'],
+    ]);
+    expect(v?.subtitle).toBe('Showing 1 of 9 that need attention');
+    expect(v?.rows[0]).toMatchObject({ name: 'Dave', stage: 'screening', idle: 12, _link: '/app/candidates/7' });
+  });
+
+  it('turns one candidate into a profile with their applications', () => {
+    const [v] = viewsFromSteps([step('candidate', {
+      candidateId: 3, name: 'Dave Cabilangan', email: 'dave@example.com', phone: '0917', currentTitle: 'Engineer', experienceLevel: 'senior',
+      skills: 'React, SQL; Python', education: 'BSCS',
+      applications: [{ applicationId: 7, job: 'Product Manager', stage: 'Final interview', withdrawn: false, applied: 'Mon, Oct 5' }],
+      upcomingInterviews: [{ when: 'Wed, Nov 11, 2:00 PM', type: 'interview', status: 'scheduled' }], latestNotes: ['Strong portfolio'],
+    })]);
+    expect(v?.kind).toBe('profile');
+    expect(v?.profile).toMatchObject({
+      name: 'Dave Cabilangan', subtitle: 'Engineer · senior level', skills: ['React', 'SQL', 'Python'],
+      applications: [{ job: 'Product Manager', stage: 'final_interview', link: '/app/candidates/7' }],
+      interviews: ['Wed, Nov 11, 2:00 PM · interview · scheduled'], notes: ['Strong portfolio'],
+    });
+  });
+
   it('lists the postings waiting for approval', () => {
     const views = viewsFromSteps([step('approvals', { canApprove: true, jobPostings: [{ jobId: 9, title: 'Chef', submittedBy: 'Kai', submitted: 'Mon, Nov 9' }] })]);
     expect(views[0]?.title).toBe('Waiting for approval');
@@ -59,7 +88,7 @@ describe('assistant result tables', () => {
   it('shows no table for a failed, empty, single-record or unknown lookup', () => {
     expect(viewsFromSteps([{ action: { tool: 'lookup', toolInput: { what: 'candidates' } }, observation: JSON.stringify([{ error: 'Authorization failed' }]) }])).toEqual([]);
     expect(viewsFromSteps([step('candidates', { count: 0, candidates: [] })])).toEqual([]);
-    expect(viewsFromSteps([step('candidate', { candidateId: 1, name: 'Dave' })])).toEqual([]);
+    expect(viewsFromSteps([step('candidate', {})])).toEqual([]);
     expect(viewsFromSteps([{ action: { tool: 'propose', toolInput: { action: 'move_stage' } }, observation: JSON.stringify([{ ok: true, result: { status: 'Prepared' } }]) }])).toEqual([]);
     expect(viewsFromSteps(undefined)).toEqual([]);
     expect(viewsFromSteps('garbage')).toEqual([]);

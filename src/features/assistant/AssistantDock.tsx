@@ -9,7 +9,7 @@ import { api, errorMessage } from '@/lib/api';
 import { cx } from '@/lib/cx';
 import { useMe } from '@/app/providers/AuthProvider';
 import { ActionPreview } from './ActionPreview';
-import { ViewCard, ViewModal } from './AssistantViews';
+import { ViewCard, ViewModal, describeViews } from './AssistantViews';
 import s from './AssistantDock.module.css';
 
 /**
@@ -29,12 +29,35 @@ const MAX_RECORDING_MS = 60_000;
 /** Dragging this far off the mic while holding cancels the recording. */
 const CANCEL_DISTANCE = 64;
 
-const SUGGESTIONS: { icon: IconName; label: string }[] = [
-  { icon: 'interviews', label: "Show today's interviews" },
-  { icon: 'pipeline', label: 'Who is in screening right now?' },
-  { icon: 'mail', label: 'Draft a follow-up email to an applicant' },
-  { icon: 'checkcircle', label: "What's waiting for approval?" },
-];
+type Suggestion = { icon: IconName; label: string };
+
+/** Starting points that fit the page the person is on. */
+function suggestionsFor(path: string): Suggestion[] {
+  if (/\/interviews/.test(path)) return [
+    { icon: 'interviews', label: "Show this week's interviews" },
+    { icon: 'candidates', label: 'Who needs an interview scheduled?' },
+    { icon: 'gauge', label: 'How are we doing this week?' },
+    { icon: 'mail', label: 'Draft a follow-up email to an applicant' },
+  ];
+  if (/\/jobs/.test(path)) return [
+    { icon: 'briefcase', label: 'Which jobs have the most applicants?' },
+    { icon: 'checkcircle', label: "What's waiting for approval?" },
+    { icon: 'plus', label: 'Create a job posting' },
+    { icon: 'gauge', label: 'How are we doing this week?' },
+  ];
+  if (/\/(candidates|pipeline)/.test(path)) return [
+    { icon: 'gauge', label: 'Who needs attention?' },
+    { icon: 'pipeline', label: 'Who is in screening right now?' },
+    { icon: 'plus', label: 'Add a new applicant' },
+    { icon: 'mail', label: 'Draft a follow-up email to an applicant' },
+  ];
+  return [
+    { icon: 'gauge', label: 'How are we doing this week?' },
+    { icon: 'pipeline', label: 'Who is in screening right now?' },
+    { icon: 'interviews', label: "Show today's interviews" },
+    { icon: 'checkcircle', label: "What's waiting for approval?" },
+  ];
+}
 
 interface Message {
   id: number;
@@ -241,7 +264,8 @@ export function AssistantDock() {
     inputRef.current?.focus();
   }
 
-  const history = () => messages.filter((m) => !m.error && m.text).slice(-10).map((m) => ({ role: m.from === 'me' ? 'user' as const : 'assistant' as const, text: m.text.slice(0, 4000) }));
+  // What the assistant said, plus what it showed in tables and cards: the model never writes those rows out, so it needs this to know which one is "the second" and its id.
+  const history = () => messages.filter((m) => !m.error && m.text).slice(-10).map((m) => ({ role: m.from === 'me' ? 'user' as const : 'assistant' as const, text: [m.text, m.views?.length ? describeViews(m.views) : ''].filter(Boolean).join('\n').slice(0, 4000) }));
 
   async function ask(input: { text?: string; audio?: string; audioMime?: string }, placeholderId: number) {
     const myTurn = ++turn.current;
@@ -257,7 +281,8 @@ export function AssistantDock() {
         { id: botId, from: 'bot', text: res.reply, at: new Date(), actions: res.actions, views },
       ]);
       // A list opens in its own window right away; the card in the chat reopens it.
-      if (views[0]) setOpenView({ message: botId, view: views[0].id });
+      const table = views.find((v) => (v.kind ?? 'table') === 'table');
+      if (table) setOpenView({ message: botId, view: table.id });
       if (res.audio) {
         voiceRef.current?.pause();
         voiceRef.current = new Audio(`data:${res.audioMime ?? 'audio/mpeg'};base64,${res.audio}`);
@@ -476,7 +501,7 @@ export function AssistantDock() {
           {messages.length === 0 && !thinking ? (
             <div className={s.suggest}>
               <div className={s.suggestLabel}>Try asking</div>
-              {SUGGESTIONS.map((q) => (
+              {suggestionsFor(location.pathname).map((q) => (
                 <button key={q.label} type="button" className={s.suggestion} onClick={() => send(q.label)}>
                   <Icon name={q.icon} size={16} />
                   <span>{q.label}</span>

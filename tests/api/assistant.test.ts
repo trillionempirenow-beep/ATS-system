@@ -22,6 +22,12 @@ async function fakeAgent(body: { text: string; token: string }) {
     const found = await call('lookup', { what: 'candidates' });
     const pick = found.result.candidates.find((c: { stage: string }) => NEXT[c.stage]);
     steps.push({ observation: JSON.stringify(await call('propose', { action: 'move_stage', application_id: pick.applicationId, stage: NEXT[pick.stage] })) });
+  } else if (scenario === 'bulk') {
+    const found = await call('lookup', { what: 'candidates', stage: 'new' });
+    const ids = found.result.candidates.slice(0, 2).map((c: { applicationId: number }) => c.applicationId).join(',');
+    steps.push({ observation: JSON.stringify(await call('propose', { action: 'move_stage', application_ids: ids, stage: 'screening' })) });
+  } else if (scenario === 'summary') {
+    steps.push({ action: { tool: 'lookup', toolInput: { what: 'summary' } }, observation: JSON.stringify([await call('lookup', { what: 'summary' })]) });
   } else if (scenario === 'approve') {
     steps.push({ observation: JSON.stringify(await call('propose', { action: 'approve_job', job_id: Number(arg) })) });
   } else if (scenario === 'schedule' || scenario === 'email') {
@@ -90,6 +96,45 @@ describe('Strtm assistant', () => {
     const undone = await hr.agent.post('/api/v1/assistant/actions/undo').set('X-CSRF-Token', hr.csrf).send({ token: done.body.data.undoToken });
     expect(undone.status).toBe(200);
     expect(undone.body.data.message).toMatch(/^Undone\./);
+  });
+
+  it('moves several applicants on one confirmation, and undoes them together', async () => {
+    // Other test files move people around: put two in-progress applicants in Applied for this one, and put them back after.
+    const { sql } = await import('../../server/db/client.js');
+    const before = await sql<{ id: number; stage: string }[]>`
+      select id, stage from applications where status = 'active' and stage not in ('rejected', 'hired', 'new') order by id desc limit 2`;
+    expect(before).toHaveLength(2);
+    await sql`update applications set stage = 'new' where id in ${sql(before.map((r) => r.id))}`;
+    try {
+      const res = await say(hr, 'bulk');
+      expect(res.status).toBe(200);
+      expect(res.body.data.actions).toHaveLength(1);
+      const action = res.body.data.actions[0];
+      expect(action.kind).toBe('move_stage_bulk');
+      expect(action.title).toMatch(/^Move 2 applicants to Screening$/);
+      expect(action.confirmLabel).toBe('Move 2');
+      expect(action.lines.join('\n')).toMatch(/Applied → Screening/);
+
+      const done = await hr.agent.post('/api/v1/assistant/actions/confirm').set('X-CSRF-Token', hr.csrf).send({ token: action.token });
+      expect(done.status, JSON.stringify(done.body)).toBe(200);
+      expect(done.body.data.message).toBe('Done. Moved 2 of 2 to Screening.');
+      expect(done.body.data.undoToken).toBeTruthy();
+
+      const undone = await hr.agent.post('/api/v1/assistant/actions/undo').set('X-CSRF-Token', hr.csrf).send({ token: done.body.data.undoToken });
+      expect(undone.status, JSON.stringify(undone.body)).toBe(200);
+      expect(undone.body.data.message).toBe('Undone. 2 of 2 moved back.');
+    } finally {
+      for (const r of before) await sql`update applications set stage = ${r.stage} where id = ${r.id}`;
+    }
+  });
+
+  it('answers "how are we doing" in one lookup, as figures and who is stuck', async () => {
+    const res = await say(admin, 'summary');
+    expect(res.status).toBe(200);
+    const [view] = res.body.data.views;
+    expect(view.kind).toBe('stats');
+    expect(view.tiles.map((t: { label: string }) => t.label)).toEqual(['Active applicants', 'Open jobs', 'Interviews today', 'Waiting for approval', 'Need attention']);
+    expect(typeof view.tiles[0].value).toBe('number');
   });
 
   it('keeps HR from approving or publishing; a posting they ask for goes to approval', async () => {
