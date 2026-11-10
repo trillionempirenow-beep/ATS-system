@@ -39,7 +39,7 @@ export async function sendEmail(input: { key: string; template: string; to: stri
       ...(input.email.calendar ? { calendar: input.email.calendar } : {}),
     });
 
-    if (result.ok) {
+    if (result.ok === true) {
       const status = provider.delivers ? 'sent' : 'skipped';
       await sql`update email_outbox set status = ${status}, provider_id = ${result.id ?? null}, error = null, updated_at = now()
                 where id = ${claimed.id}`;
