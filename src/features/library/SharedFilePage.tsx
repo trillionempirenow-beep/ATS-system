@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BrandMark } from '@/components/icon/Icon';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Display';
 import { Field, TextInput } from '@/components/ui/Form';
@@ -40,7 +40,7 @@ export function SharedFilePage() {
 
   const bar = (
     <header className={s.sharedBar}>
-      <span className={s.brand}><BrandMark size={26} label={`${company} logo`} />{company}<em>/</em>shared file</span>
+      <span className={s.brand}><BrandLockup size={34} /></span>
       <IconButton icon={theme === 'dark' ? 'sun' : 'moon'} label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'} onClick={toggle} />
     </header>
   );

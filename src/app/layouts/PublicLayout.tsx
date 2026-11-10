@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { PublicConfigDto } from '@shared/api/public';
-import { BrandMark } from '@/components/icon/Icon';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { ButtonLink, IconButton } from '@/components/ui/Button';
 import { api } from '@/lib/api';
 import { cx } from '@/lib/cx';
@@ -46,8 +46,7 @@ export function PublicLayout() {
       <a href="#main" className="skip-link">Skip to content</a>
       <header className={s.header}>
         <Link to="/" className={s.logo} aria-label={`${company} careers home`}>
-          <BrandMark size={34} label={`${company} logo`} />
-          <span>{company}<em>/</em>careers</span>
+          <BrandLockup size={44} />
         </Link>
         <nav className={s.nav} aria-label="Careers">
           {links}
@@ -72,7 +71,7 @@ export function PublicLayout() {
       <footer className={s.footer}>
         <div className={s.footerInner}>
           <div className={s.footerBrand}>
-            <div className={s.logo}><BrandMark size={28} label={`${company} logo`} /><span>{company}<em>/</em>careers</span></div>
+            <div className={s.logo}><BrandLockup size={38} /></div>
             <p className={s.footerText}>Small teams, big ownership. Interviews run inside {company}, and you can track every application.</p>
           </div>
           <div className={s.footerCols}>

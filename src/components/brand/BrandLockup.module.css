@@ -1,0 +1,15 @@
+.lockup { display: inline-flex; align-items: center; flex: none; min-width: 0; }
+.text { display: flex; flex-direction: column; flex: none; }
+.word { display: block; width: 100%; height: auto; }
+.onDark { display: none !important; }
+:global(:root[data-theme='dark']) .onLight { display: none !important; }
+:global(:root[data-theme='dark']) .onDark { display: block !important; }
+/* Spaced to run the wordmark's full width, as in the logo lockup. Colour follows the surrounding text. */
+.tagline { line-height: 1.18; font-weight: 600; letter-spacing: 0.11em; color: inherit; opacity: 0.8; white-space: nowrap; }
+
+/* Both lines share one cell, so swapping them never shifts the layout. */
+.lines { display: grid; }
+.line { grid-area: 1 / 1; transition: opacity 0.18s ease, transform 0.18s ease; }
+.hoverLine { opacity: 0; transform: translateY(3px); }
+.swap:hover .line:not(.hoverLine) { opacity: 0; transform: translateY(-3px); }
+.swap:hover .hoverLine { opacity: 0.8; transform: none; }

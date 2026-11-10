@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { BrandMark, Icon, type IconName } from '@/components/icon/Icon';
+import { Icon, type IconName } from '@/components/icon/Icon';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { IconButton } from '@/components/ui/Button';
 import { useTheme } from '../providers/ThemeProvider';
 import { AuthArt } from './AuthArt';
@@ -21,8 +22,7 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
     <div className={s.split}>
       <section className={s.brand} aria-label="Strtm People">
         <div className={s.logo}>
-          <BrandMark size={44} src="/logo-light.webp" />
-          <span className={s.wordmark}>Strtm<em>/</em>people</span>
+          <BrandLockup size={52} tone="onDark" />
         </div>
         <div className={s.stage}><AuthArt /></div>
         <div className={s.pitch}>

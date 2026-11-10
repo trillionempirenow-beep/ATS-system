@@ -5,11 +5,10 @@
   background: var(--surface); border-right: 1px solid var(--border); transition: width 0.3s var(--ease); z-index: 40;
 }
 /* Logo left, toggle right. The toggle stays pinned to the right edge, so as the width animates it slides into
-   the rail and lands centred over the nav icons (15px + 40px + 16px = the 71px rail inside its border). */
-.brand { display: flex; align-items: center; justify-content: space-between; height: var(--header-h); padding: 0 16px 0 16px; border-bottom: 1px solid var(--border); flex: none; }
-.brand img { filter: drop-shadow(0 4px 10px color-mix(in srgb, #F5A100 28%, transparent)); }
-.brandLogo { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; overflow: hidden; transition: opacity 0.2s ease 0.1s; }
-.brandText { display: flex; flex-direction: column; min-width: 0; }
+   the rail. Its right padding is half of what is left of the rail beside the 40px toggle (inside the 1px border),
+   so it lands centred over the nav icons whatever --sidebar-w-collapsed is. */
+.brand { display: flex; align-items: center; justify-content: space-between; height: var(--header-h); padding: 0 calc((var(--sidebar-w-collapsed) - 1px - 40px) / 2) 0 16px; border-bottom: 1px solid var(--border); flex: none; }
+.brandLogo { display: flex; align-items: center; gap: 12px; color: var(--text2); flex: 1; min-width: 0; overflow: hidden; transition: opacity 0.2s ease 0.1s; }
 .toggleBtn {
   flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: var(--radius-full);
   background: transparent; color: var(--text2); cursor: pointer;
@@ -21,9 +20,6 @@
 .collapsed .toggleBtn:not(:hover, :focus-visible) { background: transparent; }
 .collapsed .toggleBtn:not(:hover, :focus-visible) .toggleIcon,
 .collapsed .toggleBtn:is(:hover, :focus-visible) .toggleLogo { opacity: 0; }
-.brandName { font-weight: 700; font-size: 16px; line-height: 20px; letter-spacing: -0.02em; white-space: nowrap; }
-.brandName em { font-style: normal; color: var(--text3); font-weight: var(--fw-medium); }
-.brandRole { font-size: var(--fs-caption); color: var(--text3); white-space: nowrap; font-weight: var(--fw-medium); }
 .nav {
   flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 4px;
   scrollbar-width: none; -ms-overflow-style: none; /* Scrollable, but no visible scrollbar */
@@ -66,6 +62,8 @@
 .collapsed .itemActive::before { left: -16px; }
 .collapsed .item { padding: 0; justify-content: center; gap: 0; }
 .collapsed .itemLabel { width: 0; flex: 0; }
+/* The hidden caret must not take space either, or group icons sit left of the others. */
+.collapsed .caret { position: absolute; width: 0; overflow: hidden; }
 .collapsed .count { position: absolute; top: 2px; right: 4px; min-width: 16px; height: 16px; line-height: 16px; font-size: var(--fs-micro); padding: 0 4px; }
 
 /* Rail popovers are portaled to <body>, so the sidebar's overflow never clips them. Below modals (60). */
@@ -97,6 +95,13 @@
   background: color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter: saturate(1.6) blur(14px); -webkit-backdrop-filter: saturate(1.6) blur(14px);
 }
 .headerLeft, .headerRight { display: flex; align-items: center; gap: 8px; }
+/* The role's panel name, led by a small mark in the logo's amber-to-orange. */
+.panelLabel {
+  display: inline-flex; align-items: center; gap: 10px; min-width: 0; white-space: nowrap;
+  font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-semibold); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text2);
+}
+.panelLabel::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--brand-grad, #F5A100); }
+@media (max-width: 479px) { .panelLabel { display: none; } }
 .mobileMenu { display: none; }
 .accountBtn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px 0 4px; border-radius: var(--radius-full); border: 1px solid var(--border); background: var(--surface); color: var(--text2); box-shadow: var(--sh-xs); transition: border-color .14s var(--ease), box-shadow .14s var(--ease); }
 .accountBtn:hover { border-color: var(--border-strong); box-shadow: var(--sh-sm); }

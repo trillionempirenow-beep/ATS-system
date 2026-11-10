@@ -1,7 +1,6 @@
 .page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
 .header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; height: 72px; padding: 0 max(40px, calc((100% - 1120px) / 2)); background: var(--surface); border-bottom: 1px solid var(--border); }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
-.logo em { font-style: normal; color: var(--text3); font-weight: 500; }
+.logo { display: flex; align-items: center; color: var(--text2); }
 .nav { display: flex; align-items: center; gap: 4px; }
 .link { display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; color: var(--text2); }
 .link:hover { color: var(--text); background: var(--surface2); }

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import type { ShellSummaryDto } from '@shared/api/me';
 import { BrandMark, Icon } from '@/components/icon/Icon';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { IconButton, ButtonLink } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Display';
 import { Menu } from '@/components/ui/Overlay';
@@ -262,11 +263,7 @@ function Sidebar({ collapsed, rail, mobile, drawerOpen, onToggle, onNavigate, su
     <aside id={SIDEBAR_ID} ref={asideRef} className={cx(s.sidebar, rail && s.collapsed, drawerOpen && s.drawerOpen)} aria-label="Main navigation">
       <div className={s.brand}>
         <div className={s.brandLogo} aria-hidden={rail || undefined}>
-          <BrandMark size={36} />
-          <span className={s.brandText}>
-            <span className={s.brandName}>Strtm<em>/</em>people</span>
-            <span className={s.brandRole}>{me.roleLabel}</span>
-          </span>
+          <BrandLockup size={38} hoverLine={`${me.roleLabel} Panel`} />
         </div>
         <button
           type="button"
@@ -453,6 +450,8 @@ export function AppShell({ wide }: { wide?: boolean }) {
         <header className={s.header}>
           <div className={s.headerLeft}>
             <IconButton className={s.mobileMenu} icon="menu" label="Open navigation" size={40} onClick={() => setDrawerOpen(true)} />
+            {/* Which panel this is. Written in normal case and uppercased in CSS, so screen readers say words, not letters. */}
+            <span className={s.panelLabel}>{me.roleLabel} Panel</span>
           </div>
           <div className={s.headerRight}>
             <IconButton icon={theme === 'dark' ? 'sun' : 'moon'} label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} size={40} onClick={toggle} />
