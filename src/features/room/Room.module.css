@@ -1599,3 +1599,57 @@ button.topLink {
 @media (max-width: 720px) {
   .spotBtn { height: 28px; padding: 0 8px; }
 }
+
+/* ---- Presenting: the shared screen large on the right, every camera in a column on the left ---- */
+.present {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+}
+
+.presentCams {
+  flex: none;
+  width: clamp(200px, 22vw, 320px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Camera tiles keep the camera's own shape and show the whole picture. */
+.presentCams > .tile {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.presentCams > .tile .tileEmpty > :last-child {
+  transform: scale(0.6);
+}
+
+/* The compact name pill of the small tiles: the role stays on one line, the name shortens first. */
+.presentCams .tileName {
+  left: 10px;
+  bottom: 10px;
+  height: 28px;
+  max-width: calc(100% - 20px);
+  font-size: var(--fs-caption);
+}
+.presentCams .tileName span { white-space: nowrap; }
+
+.presentScreen {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+/* Phones: the screen first, the cameras in a row underneath. */
+@media (max-width: 720px) {
+  .present { flex-direction: column; gap: 10px; }
+  .presentScreen { order: -1; flex: 1; min-height: 0; }
+  .presentCams { width: auto; flex-direction: row; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; }
+  .presentCams > .tile { width: 132px; }
+}

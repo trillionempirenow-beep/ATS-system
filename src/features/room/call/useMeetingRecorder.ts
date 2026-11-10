@@ -172,7 +172,7 @@ export function useMeetingRecorder(opts: {
     },
     ...opts.peers.map((p) => ({
       id: p.meta.id, name: p.meta.name, tag: p.meta.role === 'guest' ? p.meta.position ?? 'Guest' : TAGS[p.meta.role] ?? '',
-      video: p.stream, audio: p.stream, showVideo: p.hasVideo && (p.meta.cam || p.meta.screen), lead: lead(p.meta.role), presenting: p.meta.screen, self: false,
+      video: p.hasScreen ? p.screen : p.stream, audio: p.stream, showVideo: p.hasScreen || p.hasVideo, lead: lead(p.meta.role), presenting: p.meta.screen, self: false,
     })),
   ];
 

@@ -13,13 +13,24 @@ export interface ParticipantMeta {
   mic: boolean;
   cam: boolean;
   screen: boolean;
+  /**
+   * The id of the stream that carries their shared screen. The screen travels on its own
+   * video sender next to the camera, so others see both; this tells the two apart.
+   * Absent from older versions of the app, which sent the screen in place of the camera.
+   */
+  screenId?: string;
   hand: boolean;
 }
 
 export interface RemotePeer {
   meta: ParticipantMeta;
+  /** Their camera and microphone. */
   stream: MediaStream;
+  /** Camera pictures are arriving and their camera is on. */
   hasVideo: boolean;
+  /** Their shared screen, while they share one. */
+  screen: MediaStream | null;
+  hasScreen: boolean;
   state: RTCPeerConnectionState | 'new';
 }
 
@@ -42,8 +53,9 @@ interface PeerEntry {
   polite: boolean;
   makingOffer: boolean;
   ignoreOffer: boolean;
-  remote: MediaStream;
-  senders: { audio?: RTCRtpSender; video?: RTCRtpSender };
+  /** Incoming tracks grouped by the sender's stream: camera + mic in one, the shared screen in another. */
+  remote: Map<string, MediaStream>;
+  senders: { audio?: RTCRtpSender; video?: RTCRtpSender; screen?: RTCRtpSender };
   dropTimer?: number;
   /** Incoming-video watchdog: frames decoded so far, checks without progress, restarts asked for. */
   watch: { frames: number; stalls: number; kicks: number; lastKick: number };
@@ -109,7 +121,7 @@ async function logFailure(id: string, pc: RTCPeerConnection, servers: RTCIceServ
 }
 
 /** One console line per connection: bytes and frames each way, and what the other side says about its devices. */
-async function logMedia(id: string, pc: RTCPeerConnection, remote: MediaStream, meta: ParticipantMeta | undefined): Promise<void> {
+async function logMedia(id: string, pc: RTCPeerConnection, remote: Map<string, MediaStream>, meta: ParticipantMeta | undefined): Promise<void> {
   if (pc.connectionState === 'closed') return;
   try {
     const stats = await pc.getStats();
@@ -127,7 +139,7 @@ async function logMedia(id: string, pc: RTCPeerConnection, remote: MediaStream, 
         parts.push(`out ${String(r.kind)} ${kb(r.bytesSent)}${r.kind === 'video' ? ` ${Number(r.framesEncoded ?? 0)} frames${codec(r)}` : ''}`);
       }
     });
-    const tracks = remote.getTracks().map((t) => `${t.kind}:${t.readyState}${t.muted ? '/muted' : ''}`).join(' ') || 'none';
+    const tracks = [...remote.values()].flatMap((st) => st.getTracks()).map((t) => `${t.kind}:${t.readyState}${t.muted ? '/muted' : ''}`).join(' ') || 'none';
     const says = meta ? `mic ${meta.mic ? 'on' : 'off'}, cam ${meta.cam ? 'on' : 'off'}` : 'no hello yet';
     console.info(`[call] ${id} media: ${parts.join(' · ') || 'no rtp'} | remote tracks ${tracks} | they say ${says}`);
   } catch { /* stats are best effort */ }
@@ -137,15 +149,19 @@ async function logMedia(id: string, pc: RTCPeerConnection, remote: MediaStream, 
  * A camera at a modest bitrate keeps flowing on mobile data and relayed (TURN)
  * connections, where full HD often stalls while the voice gets through.
  */
-async function capVideo(sender: RTCRtpSender): Promise<void> {
+async function capVideo(sender: RTCRtpSender, maxBitrate = 900_000, preference: RTCDegradationPreference = 'balanced'): Promise<void> {
   try {
     const params = sender.getParameters();
     if (!params.encodings?.length) params.encodings = [{}];
-    params.encodings[0]!.maxBitrate = 900_000;
-    params.degradationPreference = 'balanced';
+    params.encodings[0]!.maxBitrate = maxBitrate;
+    params.degradationPreference = preference;
     await sender.setParameters(params);
   } catch { /* not supported here, or not negotiated yet: the browser's defaults apply */ }
 }
+
+/** One shared empty stream for someone whose media has not arrived yet (made on first use, browsers only). */
+let empty: MediaStream | null = null;
+const emptyStream = () => (empty ??= new MediaStream());
 
 const nonce = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/-/g, '').slice(0, 16);
 
@@ -167,6 +183,8 @@ export function useCall(opts: CallOptions): Call {
   const teamRef = useRef<Channel | null>(null);
   const peers = useRef(new Map<string, PeerEntry>());
   const outStream = useRef(new MediaStream());
+  /** The shared screen goes out under its own stream id, which others learn from our hello (screenId). */
+  const outScreen = useRef(new MediaStream());
   const media = useRef({ stream: opts.stream, screen: opts.screen });
   const callbacks = useRef({ onEnded: opts.onEnded, onFirstConnection: opts.onFirstConnection });
   const connectedOnce = useRef(false);
@@ -197,7 +215,8 @@ export function useCall(opts: CallOptions): Call {
 
   const syncTracks = useCallback((entry: PeerEntry) => {
     const audio = media.current.stream?.getAudioTracks()[0] ?? null;
-    const video = media.current.screen?.getVideoTracks()[0] ?? media.current.stream?.getVideoTracks()[0] ?? null;
+    // The camera keeps its own sender while we share, so people still see us.
+    const video = media.current.stream?.getVideoTracks()[0] ?? null;
     for (const [kind, track] of [['audio', audio], ['video', video]] as const) {
       const sender = entry.senders[kind];
       if (sender) {
@@ -206,6 +225,19 @@ export function useCall(opts: CallOptions): Call {
         entry.senders[kind] = entry.pc.addTrack(track, outStream.current);
         if (kind === 'video') void capVideo(entry.senders.video!);
       }
+    }
+    // The shared screen: a second video sender, added while sharing and removed after.
+    // Text on a screen matters more than smooth motion, so it keeps resolution first.
+    const screen = media.current.screen?.getVideoTracks()[0] ?? null;
+    const sender = entry.senders.screen;
+    if (screen) {
+      if (!sender) {
+        entry.senders.screen = entry.pc.addTrack(screen, outScreen.current);
+        void capVideo(entry.senders.screen, 1_500_000, 'maintain-resolution');
+      } else if (sender.track !== screen) void sender.replaceTrack(screen).catch(() => undefined);
+    } else if (sender) {
+      try { entry.pc.removeTrack(sender); } catch { /* connection closed meanwhile */ }
+      entry.senders.screen = undefined;
     }
   }, []);
 
@@ -216,7 +248,7 @@ export function useCall(opts: CallOptions): Call {
    */
   const restartVideo = useCallback((entry: PeerEntry, attempt: number) => {
     const sender = entry.senders.video;
-    const track = sender?.track ?? media.current.screen?.getVideoTracks()[0] ?? media.current.stream?.getVideoTracks()[0] ?? null;
+    const track = sender?.track ?? media.current.stream?.getVideoTracks()[0] ?? null;
     console.info(`[call] ${entry.id} gets no video from us: restarting it (attempt ${attempt})`);
     if (!sender || !track) { syncTracks(entry); return; }
     if (attempt <= 1) {
@@ -244,7 +276,7 @@ export function useCall(opts: CallOptions): Call {
 
   const createPeer = useCallback((id: string): PeerEntry => {
     const pc = new RTCPeerConnection({ iceServers: iceServers.current });
-    const entry: PeerEntry = { id, sid: nonce(), remoteSid: null, pc, polite: selfId > id, makingOffer: false, ignoreOffer: false, remote: new MediaStream(), senders: {},
+    const entry: PeerEntry = { id, sid: nonce(), remoteSid: null, pc, polite: selfId > id, makingOffer: false, ignoreOffer: false, remote: new Map(), senders: {},
       watch: { frames: 0, stalls: 0, kicks: 0, lastKick: 0 } };
     pc.onnegotiationneeded = async () => {
       try {
@@ -258,11 +290,13 @@ export function useCall(opts: CallOptions): Call {
       }
     };
     pc.onicecandidate = ({ candidate }) => signal(entry, { candidate: candidate ? candidate.toJSON() : null });
-    pc.ontrack = ({ track }) => {
+    pc.ontrack = ({ track, streams }) => {
+      // Grouped by the sender's stream, so the camera and a shared screen stay apart.
       // A new stream object (rather than adding to the old one) makes the <video>
       // element re-bind and start playing the new audio or video track.
-      const kept = entry.remote.getTracks().filter((t) => t.kind !== track.kind);
-      entry.remote = new MediaStream([...kept, track]);
+      const key = streams[0]?.id ?? 'main';
+      const kept = (entry.remote.get(key)?.getTracks() ?? []).filter((t) => t.kind !== track.kind);
+      entry.remote.set(key, new MediaStream([...kept, track]));
       track.onmute = bump;
       track.onunmute = bump;
       track.onended = bump;
@@ -473,7 +507,7 @@ export function useCall(opts: CallOptions): Call {
     id: selfId, name: opts.self.name, role: opts.self.role, ...(opts.self.position ? { position: opts.self.position } : {}),
     mic: opts.micOn && Boolean(opts.stream?.getAudioTracks().length),
     cam: opts.camOn && Boolean(opts.stream?.getVideoTracks().length),
-    screen: Boolean(opts.screen), hand: opts.hand,
+    screen: Boolean(opts.screen), ...(opts.screen ? { screenId: outScreen.current.id } : {}), hand: opts.hand,
   }), [selfId, opts.self.name, opts.self.role, opts.self.position, opts.micOn, opts.camOn, opts.stream, opts.screen, opts.hand]);
   selfMetaRef.current = selfMeta;
 
@@ -510,14 +544,23 @@ export function useCall(opts: CallOptions): Call {
 
   const remotePeers: RemotePeer[] = [...metas.values()].map((meta) => {
     const entry = peers.current.get(meta.id);
-    const stream = entry?.remote ?? new MediaStream();
-    const videoTrack = stream.getVideoTracks()[0];
+    const groups = entry ? [...entry.remote.entries()] : [];
+    const screenGroup = meta.screenId ? groups.find(([key]) => key === meta.screenId)?.[1] ?? null : null;
+    // The camera stream is the one that is not the screen; with several, the one with the microphone.
+    const camGroups = groups.filter(([key]) => key !== meta.screenId).map(([, st]) => st);
+    const stream = camGroups.find((st) => st.getAudioTracks().length) ?? camGroups[0] ?? emptyStream();
+    const live = (st: MediaStream | null) => { const t = st?.getVideoTracks()[0]; return Boolean(t && t.readyState === 'live'); };
+    // Older app versions send their screen in place of the camera, with no screenId:
+    // then the "camera" stream carries the screen and is shown as before.
+    const legacyScreen = meta.screen && !meta.screenId;
     return {
       meta,
       stream,
       // Not gated on track.muted: that flag can stick on poor connections while frames
       // flow. The tile itself checks that pictures are being drawn.
-      hasVideo: Boolean(videoTrack && videoTrack.readyState === 'live' && (meta.cam || meta.screen)),
+      hasVideo: live(stream) && (meta.cam || legacyScreen),
+      screen: meta.screen && screenGroup ? screenGroup : null,
+      hasScreen: meta.screen && live(screenGroup),
       state: entry?.pc.connectionState ?? 'new',
     };
   });

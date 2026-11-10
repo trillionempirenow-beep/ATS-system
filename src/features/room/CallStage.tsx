@@ -285,24 +285,31 @@ export function CallStage(p: Props) {
   }, []);
   useEffect(() => lockScroll(), []);
 
-  const sharing = call.peers.find((x) => x.meta.screen) ?? null;
   // The interview itself is between the interviewer and the candidate. Everyone else
   // (guests, other hiring team) watches from a row of small tiles, so they never look
-  // like a second candidate. Two people, or someone presenting: the classic layout.
+  // like a second candidate. Two people: the classic layout.
   const lead = (role: ParticipantRole) => role === 'interviewer' || role === 'candidate';
   const selfLead = lead(p.self.role);
   const leads = call.peers.filter((x) => lead(x.meta.role));
   const audience = call.peers.filter((x) => !lead(x.meta.role));
-  const panelMode = !sharing && (audience.length > 0 || !selfLead);
-  const presenter = sharing ?? call.peers[0] ?? null;
+  const panelMode = audience.length > 0 || !selfLead;
+  const presenter = call.peers[0] ?? null;
   const others = call.peers.filter((x) => x !== presenter);
   const speaking = useSpeaking(call.peers);
   // Spotlight (like Discord): click any tile to make it the big one, everyone else drops to a row.
-  // Someone presenting is spotlit automatically until you pick somebody else.
   const SELF = 'self';
   const [pinned, setPinned] = useState<string | null>(null);
   const pinnedValid = pinned !== null && (pinned === SELF || call.peers.some((x) => x.meta.id === pinned));
-  const spotId = pinnedValid ? pinned : sharing?.meta.id ?? null;
+  const spotId = pinnedValid ? pinned : null;
+  // Someone sharing a screen: it goes large on the right and every camera stays on, in a
+  // column on the left. A peer on an older version of the app sends their screen instead
+  // of their camera (no screenId): that one stream is their screen.
+  const legacySharer = (o: RemotePeer) => o.meta.screen && !o.meta.screenId;
+  const screens: Array<{ id: string; who: RemotePeer | null }> = [
+    ...(media.screen ? [{ id: 'screen:self', who: null }] : []),
+    ...call.peers.filter((o) => o.meta.screen).map((o) => ({ id: `screen:${o.meta.id}`, who: o })),
+  ];
+  const bigScreen = screens.find((x) => x.id === pinned) ?? screens[0] ?? null;
   const spotRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   useEffect(() => {
@@ -314,8 +321,9 @@ export function CallStage(p: Props) {
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
     else void spotRef.current?.requestFullscreen?.().catch(() => undefined);
   };
-  const selfHasVideo = Boolean(media.screen || (media.stream?.getVideoTracks().length && media.camOn));
-  const selfStream = media.screen ?? media.stream;
+  // Your tile is always your camera; a screen you share gets a tile of its own.
+  const selfHasVideo = Boolean(media.stream?.getVideoTracks().length && media.camOn);
+  const selfStream = media.stream;
   const hasMic = Boolean(media.stream?.getAudioTracks().length);
   const hasCam = Boolean(media.stream?.getVideoTracks().length);
   const selfMic = media.micOn && hasMic;
@@ -326,8 +334,17 @@ export function CallStage(p: Props) {
       small={small} highlight={speaking.has(o.meta.id)} fit={small ? 'cover' : 'contain'} onSpot={spot ? undefined : () => setPinned(o.meta.id)} />
   );
   const selfTile = (small: boolean, spot: boolean) => (
-    <Tile key="self" stream={selfStream} name="You" position={small && !selfLead ? p.self.position : undefined} muted mirrored={!media.screen}
+    <Tile key="self" stream={selfStream} name="You" position={small && !selfLead ? p.self.position : undefined} muted mirrored
       hasVideo={selfHasVideo} micOn={selfMic} hand={p.hand} small={small} fit={small ? 'cover' : 'contain'} onSpot={spot ? undefined : () => setPinned(SELF)} />
+  );
+  /** A shared screen, never cropped. `onSpot` swaps it into the big spot when several people share. */
+  const screenTile = (x: { id: string; who: RemotePeer | null }, big: boolean) => x.who ? (
+    <Tile key={x.id} stream={legacySharer(x.who) ? x.who.stream : x.who.screen} name={`${x.who.meta.name}’s screen`} role="Presenting"
+      hasVideo={legacySharer(x.who) ? x.who.hasVideo : x.who.hasScreen} micOn={x.who.meta.mic} fit="contain"
+      onSpot={big ? undefined : () => setPinned(x.id)} />
+  ) : (
+    <Tile key={x.id} stream={media.screen} name="Your screen" role="Presenting" muted hasVideo={Boolean(media.screen)} micOn={selfMic} fit="contain"
+      onSpot={big ? undefined : () => setPinned(x.id)} />
   );
   const spotPeer = spotId && spotId !== SELF ? call.peers.find((x) => x.meta.id === spotId) ?? null : null;
 
@@ -352,7 +369,25 @@ export function CallStage(p: Props) {
 
       <div className={s.body}>
         <div className={s.stage}>
-          {spotId ? (
+          {bigScreen ? (
+            <div className={s.present}>
+              <div className={s.presentCams} aria-label="Cameras">
+                {selfTile(false, true)}
+                {call.peers.filter((o) => !legacySharer(o)).map((o) => peerTile(o, false, true))}
+                {screens.filter((x) => x !== bigScreen).map((x) => screenTile(x, false))}
+              </div>
+              <div className={s.presentScreen}>
+                <div className={s.spotArea} ref={spotRef}>
+                  <div className={s.spotFrame}>
+                    {screenTile(bigScreen, true)}
+                    <div className={s.spotBar}>
+                      <button type="button" className={s.spotBtn} onClick={toggleFull} aria-pressed={full}><Icon name="expand" size={15} />{full ? 'Exit full screen' : 'Full screen'}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : spotId ? (
             <>
               <div className={s.main}>
                 <div className={s.spotArea} ref={spotRef}>
