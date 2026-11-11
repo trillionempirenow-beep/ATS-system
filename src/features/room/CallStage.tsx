@@ -370,12 +370,7 @@ export function CallStage(p: Props) {
       <div className={s.body}>
         <div className={s.stage}>
           {bigScreen ? (
-            <div className={s.present}>
-              <div className={s.presentCams} aria-label="Cameras">
-                {selfTile(false, true)}
-                {call.peers.filter((o) => !legacySharer(o)).map((o) => peerTile(o, false, true))}
-                {screens.filter((x) => x !== bigScreen).map((x) => screenTile(x, false))}
-              </div>
+            <div className={cx(s.present, p.panel && s.presentStacked)}>
               <div className={s.presentScreen}>
                 <div className={s.spotArea} ref={spotRef}>
                   <div className={s.spotFrame}>
@@ -385,6 +380,11 @@ export function CallStage(p: Props) {
                     </div>
                   </div>
                 </div>
+              </div>
+              <div className={s.presentCams} aria-label="Cameras">
+                {selfTile(false, true)}
+                {call.peers.filter((o) => !legacySharer(o)).map((o) => peerTile(o, false, true))}
+                {screens.filter((x) => x !== bigScreen).map((x) => screenTile(x, false))}
               </div>
             </div>
           ) : spotId ? (

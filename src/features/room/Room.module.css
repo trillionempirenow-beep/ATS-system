@@ -1600,7 +1600,7 @@ button.topLink {
   .spotBtn { height: 28px; padding: 0 8px; }
 }
 
-/* ---- Presenting: the shared screen large on the right, every camera in a column on the left ---- */
+/* ---- Presenting: the shared screen large on the left, every camera in a column on the right ---- */
 .present {
   flex: 1;
   min-height: 0;
@@ -1646,10 +1646,28 @@ button.topLink {
   position: relative;
 }
 
+/* With chat, participants or notes open, the stage is narrower: the screen on top, the cameras in a row underneath. */
+.presentStacked { flex-direction: column; gap: 12px; }
+.presentStacked .presentScreen { flex: 1; min-height: 0; }
+.presentStacked .presentCams {
+  width: auto;
+  flex-direction: row;
+  justify-content: safe center;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.presentStacked .presentCams > .tile { width: clamp(132px, 14vw, 200px); }
+
+/* Tablets: the panel floats over the room, so the screen and cameras make room beside it. */
+@media (min-width: 721px) and (max-width: 1100px) {
+  .presentStacked { margin-right: 416px; }
+  .presentStacked .presentCams { justify-content: flex-start; }
+}
+
 /* Phones: the screen first, the cameras in a row underneath. */
 @media (max-width: 720px) {
   .present { flex-direction: column; gap: 10px; }
-  .presentScreen { order: -1; flex: 1; min-height: 0; }
+  .presentScreen { flex: 1; min-height: 0; }
   .presentCams { width: auto; flex-direction: row; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; }
   .presentCams > .tile { width: 132px; }
 }
