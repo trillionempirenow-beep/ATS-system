@@ -1552,6 +1552,27 @@ button.topLink {
   max-height: 100cqh;
 }
 
+/* The interviewer and candidate while others watch: each tile 16:9, the pair as large as fits. */
+.leadFrame {
+  --ar: calc(16 * var(--cols, 1) / 9);
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+  gap: 12px;
+  width: min(100cqw, calc(100cqh * var(--ar)));
+  aspect-ratio: var(--ar);
+  max-height: 100cqh;
+}
+.leadFrame > .tile { min-height: 0; box-shadow: var(--call-shadow), inset 0 0 0 1px var(--call-line); }
+
+/* Upright screens: stack the two so both faces stay large. */
+@container (max-aspect-ratio: 1 / 1) {
+  .leadFrame {
+    --ar: calc(16 / (9 * var(--cols, 1)));
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: minmax(0, 1fr);
+  }
+}
+
 .spotFrame > .tile {
   position: absolute;
   inset: 0;
@@ -1592,82 +1613,70 @@ button.topLink {
   outline-offset: 2px;
 }
 
-.audience {
-  justify-content: safe center;
-}
-
 @media (max-width: 720px) {
   .spotBtn { height: 28px; padding: 0 8px; }
 }
 
-/* ---- Presenting: the shared screen large on the left, every camera in a column on the right ---- */
-.present {
+/* ---- The big area plus everyone else: a grid on the right, or one row underneath. Never scrolls. ---- */
+.withSide {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: 16px;
+  gap: 12px;
+}
+.withSideBottom { flex-direction: column; }
+.withSide > .main { min-width: 0; }
+
+.sideTiles {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 1), var(--tw));
+  grid-auto-rows: var(--th);
+  gap: 12px;
+  align-content: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.presentCams {
-  flex: none;
-  width: clamp(200px, 22vw, 320px);
+.sideTiles > .tile { width: 100%; height: 100%; container-type: inline-size; }
+/* Narrow tiles show the name only; the role is in the tooltip and the participants list. */
+@container (max-width: 210px) {
+  .sideTiles .tileName span { display: none; }
+  .sideTiles .tileName .tileLabel { max-width: none; flex-shrink: 1; }
+}
+.sideTiles > .tile .tileEmpty > :last-child { transform: scale(0.75); }
+
+/* Small tiles: one line; the name keeps a few letters, then the role shortens too. */
+.sideTiles .tileName { max-width: calc(100% - 20px); }
+.sideTiles .tileName span { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sideTiles .tileName .tileLabel { flex-shrink: 0; max-width: max(4.5em, 60%); }
+
+/* "+5": everyone who does not fit, as faces and a count. Opens the participants list. */
+.moreTile {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  gap: 8px;
+  border: 0;
+  color: var(--call-text);
+  font: inherit;
+  cursor: pointer;
 }
+.moreTile:hover { background: color-mix(in srgb, var(--video-tile) 80%, var(--call-text) 8%); }
+.moreTile:focus-visible { outline: 2px solid var(--call-accent); outline-offset: 2px; }
+.moreFaces { display: flex; }
+.moreFaces > * { box-shadow: 0 0 0 2px var(--video-tile); border-radius: 50%; }
+.moreFaces > * + * { margin-left: -10px; }
+.moreCount { font-size: var(--fs-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
 
-/* Camera tiles keep the camera's own shape and show the whole picture. */
-.presentCams > .tile {
-  flex: none;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-}
-
-.presentCams > .tile .tileEmpty > :last-child {
-  transform: scale(0.6);
-}
-
-/* The compact name pill of the small tiles: the role stays on one line, the name shortens first. */
-.presentCams .tileName {
-  left: 10px;
-  bottom: 10px;
-  height: 28px;
-  max-width: calc(100% - 20px);
-  font-size: var(--fs-caption);
-}
-.presentCams .tileName span { white-space: nowrap; }
-
-.presentScreen {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-}
-
-/* With chat, participants or notes open, the stage is narrower: the screen on top, the cameras in a row underneath. */
-.presentStacked { flex-direction: column; gap: 12px; }
-.presentStacked .presentScreen { flex: 1; min-height: 0; }
-.presentStacked .presentCams {
-  width: auto;
-  flex-direction: row;
-  justify-content: safe center;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-.presentStacked .presentCams > .tile { width: clamp(132px, 14vw, 200px); }
-
-/* Tablets: the panel floats over the room, so the screen and cameras make room beside it. */
+/* Tablets: the panel floats over the room, so the room makes space beside it. */
 @media (min-width: 721px) and (max-width: 1100px) {
-  .presentStacked { margin-right: 416px; }
-  .presentStacked .presentCams { justify-content: flex-start; }
+  .besidePanel { margin-right: 416px; }
 }
 
-/* Phones: the screen first, the cameras in a row underneath. */
 @media (max-width: 720px) {
-  .present { flex-direction: column; gap: 10px; }
-  .presentScreen { flex: 1; min-height: 0; }
-  .presentCams { width: auto; flex-direction: row; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; }
-  .presentCams > .tile { width: 132px; }
+  .withSide { gap: 8px; }
+  .sideTiles { gap: 8px; }
+  .moreFaces > *:nth-child(n + 3) { display: none; }
 }

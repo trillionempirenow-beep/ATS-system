@@ -139,6 +139,94 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
   );
 }
 
+/** The live size of an element, for layouts that depend on the room's real space. */
+function useBoxSize(el: HTMLElement | null): { w: number; h: number } {
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    if (!el) return undefined;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width);
+      const h = Math.round(entry.contentRect.height);
+      setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return size;
+}
+
+const GAP = 12;
+type SidePlan = { at: 'right' | 'bottom'; cols: number; cap: number; tileW: number; tileH: number };
+
+/**
+ * Where everyone outside the big area goes, and how many fit without scrolling:
+ * a grid on the right (one column, two when crowded) or one row underneath,
+ * whichever leaves the big area (shape `mainRatio`) larger. Whoever does not fit
+ * is folded into a "+N" tile.
+ */
+function planSide(w: number, h: number, n: number, forceBottom: boolean, mainRatio: number): SidePlan {
+  const bottomTileW = Math.round(Math.min(220, Math.max(104, w * 0.2)));
+  const bottomTileH = Math.max(72, Math.round(bottomTileW * 9 / 16));
+  const bottomCols = Math.max(1, Math.floor((w + GAP) / (bottomTileW + GAP)));
+  const bottom: SidePlan = { at: 'bottom', cols: bottomCols, cap: bottomCols, tileW: bottomTileW, tileH: bottomTileH };
+  if (forceBottom || w < 860 || w < h * 1.2) return bottom;
+
+  const sideW = Math.round(Math.min(380, Math.max(220, w * 0.25)));
+  const fit = (cols: number) => {
+    const tileW = Math.floor((sideW - GAP * (cols - 1)) / cols);
+    const tileH = Math.round(tileW * 9 / 16);
+    // At most four rows, so tiles stay big enough to recognise someone.
+    return { tileW, tileH, rows: Math.min(4, Math.max(1, Math.floor((h + GAP) / (tileH + GAP)))) };
+  };
+  let cols = 1;
+  let f = fit(1);
+  if (n > f.rows) { cols = 2; f = fit(2); }
+  const right: SidePlan = { at: 'right', cols, cap: cols * f.rows, tileW: f.tileW, tileH: f.tileH };
+
+  // How tall the big area's content can be with each choice; the grid on the right wins ties.
+  const usedW = Math.min(cols, n) * f.tileW + GAP * (Math.min(cols, n) - 1);
+  const rightH = Math.min((w - usedW - GAP) / mainRatio, h);
+  const bottomH = Math.min(w / mainRatio, h - bottomTileH - GAP);
+  return rightH >= bottomH * 0.9 ? right : bottom;
+}
+
+type SideItem = { key: string; name: string; node: ReactNode; audio?: MediaStream };
+
+/** Sound for someone folded into the "+N" tile: you still hear everyone. */
+function PeerAudio({ stream }: { stream: MediaStream }) {
+  const ref = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.srcObject !== stream) el.srcObject = stream;
+    void el.play().catch(() => undefined);
+  }, [stream]);
+  return <audio ref={ref} autoPlay />;
+}
+
+function SideTiles({ items, plan, onMore }: { items: SideItem[]; plan: SidePlan; onMore: () => void }) {
+  const over = items.length > plan.cap;
+  const shown = over ? items.slice(0, Math.max(0, plan.cap - 1)) : items;
+  const hidden = over ? items.slice(shown.length) : [];
+  const count = shown.length + (hidden.length ? 1 : 0);
+  const style = { '--cols': Math.min(plan.cols, count), '--tw': `${plan.tileW}px`, '--th': `${plan.tileH}px` } as CSSProperties;
+  return (
+    <div className={s.sideTiles} style={style} aria-label="Also in the room">
+      {shown.map((x) => x.node)}
+      {hidden.length ? (
+        <button type="button" className={cx(s.tile, s.tileSmall, s.moreTile)} onClick={onMore}
+          aria-label={`${hidden.length} more in the room: ${hidden.map((x) => x.name).join(', ')}. Show participants`}>
+          <span className={s.moreFaces} aria-hidden="true">
+            {hidden.slice(0, 3).map((x) => <Avatar key={x.key} name={x.name} size={36} />)}
+          </span>
+          <span className={s.moreCount} aria-hidden="true">+{hidden.length}</span>
+        </button>
+      ) : null}
+      {hidden.map((x) => (x.audio ? <PeerAudio key={`audio:${x.key}`} stream={x.audio} /> : null))}
+    </div>
+  );
+}
+
 function Control({ icon, label, onClick, off, active, disabled }: { icon: IconName; label: string; onClick: () => void; off?: boolean; active?: boolean; disabled?: boolean }) {
   return (
     <div className={s.ctrl}>
@@ -348,6 +436,27 @@ export function CallStage(p: Props) {
   );
   const spotPeer = spotId && spotId !== SELF ? call.peers.find((x) => x.meta.id === spotId) ?? null : null;
 
+  // Everyone outside the big area, most important first: the interviewer and candidate,
+  // you, then raised hands, then everyone else in the order they joined.
+  const ranked = (withSelf: boolean, peers: RemotePeer[], clickable = true): SideItem[] => {
+    const rank = (o: RemotePeer) => (lead(o.meta.role) ? 0 : o.meta.hand ? 2 : 3);
+    const items: Array<SideItem & { r: number }> = peers.map((o) => ({ key: o.meta.id, name: o.meta.name, node: peerTile(o, true, !clickable), audio: o.stream, r: rank(o) }));
+    if (withSelf) items.push({ key: SELF, name: 'You', node: selfTile(true, !clickable), r: 1 });
+    return items.sort((a, b) => a.r - b.r);
+  };
+  const [sideBox, setSideBox] = useState<HTMLDivElement | null>(null);
+  const box = useBoxSize(sideBox);
+  /** The big area plus everyone else in a grid beside it (or a row under it), never scrolling. */
+  const withSide = (main: ReactNode, items: SideItem[], forceBottom: boolean, mainRatio = 16 / 9) => {
+    const plan = planSide(box.w, box.h, items.length, forceBottom, mainRatio);
+    return (
+      <div ref={setSideBox} className={cx(s.withSide, plan.at === 'bottom' && s.withSideBottom, p.panel && s.besidePanel)}>
+        <div className={s.main}>{main}</div>
+        {items.length ? <SideTiles items={items} plan={plan} onMore={() => p.onPanel('participants')} /> : null}
+      </div>
+    );
+  };
+
   return createPortal(
     <div className={s.room} role="application" aria-label={p.title}>
       <header className={s.topbar}>
@@ -369,63 +478,52 @@ export function CallStage(p: Props) {
 
       <div className={s.body}>
         <div className={s.stage}>
-          {bigScreen ? (
-            <div className={cx(s.present, p.panel && s.presentStacked)}>
-              <div className={s.presentScreen}>
-                <div className={s.spotArea} ref={spotRef}>
-                  <div className={s.spotFrame}>
-                    {screenTile(bigScreen, true)}
-                    <div className={s.spotBar}>
-                      <button type="button" className={s.spotBtn} onClick={toggleFull} aria-pressed={full}><Icon name="expand" size={15} />{full ? 'Exit full screen' : 'Full screen'}</button>
-                    </div>
-                  </div>
+          {bigScreen ? withSide(
+            <div className={s.spotArea} ref={spotRef}>
+              <div className={s.spotFrame}>
+                {screenTile(bigScreen, true)}
+                <div className={s.spotBar}>
+                  <button type="button" className={s.spotBtn} onClick={toggleFull} aria-pressed={full}><Icon name="expand" size={15} />{full ? 'Exit full screen' : 'Full screen'}</button>
                 </div>
               </div>
-              <div className={s.presentCams} aria-label="Cameras">
-                {selfTile(false, true)}
-                {call.peers.filter((o) => !legacySharer(o)).map((o) => peerTile(o, false, true))}
-                {screens.filter((x) => x !== bigScreen).map((x) => screenTile(x, false))}
-              </div>
-            </div>
-          ) : spotId ? (
-            <>
-              <div className={s.main}>
-                <div className={s.spotArea} ref={spotRef}>
-                  <div className={s.spotFrame}>
-                    {spotId === SELF ? selfTile(false, true) : spotPeer ? peerTile(spotPeer, false, true) : null}
-                    <div className={s.spotBar}>
-                      {pinnedValid ? (
-                        <button type="button" className={s.spotBtn} onClick={() => setPinned(null)}><Icon name="close" size={15} />Exit spotlight</button>
-                      ) : null}
-                      <button type="button" className={s.spotBtn} onClick={toggleFull} aria-pressed={full}><Icon name="expand" size={15} />{full ? 'Exit full screen' : 'Full screen'}</button>
-                    </div>
-                  </div>
+            </div>,
+            // Every camera stays on while someone shares: interviewer and candidate first.
+            [
+              ...ranked(true, call.peers.filter((o) => !legacySharer(o)), false),
+              ...screens.filter((x) => x !== bigScreen).map((x) => ({ key: x.id, name: x.who ? `${x.who.meta.name}’s screen` : 'Your screen', node: screenTile(x, false) })),
+            ],
+            Boolean(p.panel),
+          ) : spotId ? withSide(
+            <div className={s.spotArea} ref={spotRef}>
+              <div className={s.spotFrame}>
+                {spotId === SELF ? selfTile(false, true) : spotPeer ? peerTile(spotPeer, false, true) : null}
+                <div className={s.spotBar}>
+                  {pinnedValid ? (
+                    <button type="button" className={s.spotBtn} onClick={() => setPinned(null)}><Icon name="close" size={15} />Exit spotlight</button>
+                  ) : null}
+                  <button type="button" className={s.spotBtn} onClick={toggleFull} aria-pressed={full}><Icon name="expand" size={15} />{full ? 'Exit full screen' : 'Full screen'}</button>
                 </div>
               </div>
-              <div className={cx(s.strip, s.audience)} aria-label="Everyone else in the room">
-                {call.peers.filter((x) => x.meta.id !== spotId).map((o) => peerTile(o, true, false))}
-                {spotId !== SELF ? selfTile(true, false) : null}
+            </div>,
+            ranked(spotId !== SELF, call.peers.filter((x) => x.meta.id !== spotId)),
+            false,
+          ) : panelMode ? withSide(
+            leads.length + (selfLead ? 1 : 0) ? (
+              // The interviewer and candidate keep their camera's shape, side by side (stacked on upright screens).
+              <div className={s.spotArea}>
+                <div className={s.leadFrame} style={{ '--cols': leads.length + (selfLead ? 1 : 0) } as CSSProperties}>
+                  {leads.map((o) => peerTile(o, false, false))}
+                  {selfLead ? selfTile(false, false) : null}
+                </div>
               </div>
-            </>
-          ) : panelMode ? (
-            <>
-              <div className={s.main}>
-                {leads.length + (selfLead ? 1 : 0) ? (
-                  <div className={s.grid} style={{ '--cols': leads.length + (selfLead ? 1 : 0) } as CSSProperties}>
-                    {leads.map((o) => peerTile(o, false, false))}
-                    {selfLead ? selfTile(false, false) : null}
-                  </div>
-                ) : audience.length === 0 ? (
-                  <div className={s.spotArea}><div className={s.spotFrame}>{selfTile(false, true)}</div></div>
-                ) : (
-                  <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
-                )}
-              </div>
-              <div className={cx(s.strip, s.audience)} aria-label="Also in the room">
-                {audience.map((o) => peerTile(o, true, false))}
-                {!selfLead && (leads.length || audience.length) ? selfTile(true, false) : null}
-              </div>
-            </>
+            ) : audience.length === 0 ? (
+              <div className={s.spotArea}><div className={s.spotFrame}>{selfTile(false, true)}</div></div>
+            ) : (
+              <div className={s.tile}><div className={s.tileEmpty}><span className={s.glow} />{p.emptyStage}</div></div>
+            ),
+            ranked(!selfLead && (leads.length > 0 || audience.length > 0), audience),
+            false,
+            (16 * Math.max(1, leads.length + (selfLead ? 1 : 0))) / 9,
           ) : (
             <>
               <div className={s.main}>
