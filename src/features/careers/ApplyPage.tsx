@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { FieldErrors, Resolver } from 'react-hook-form';
 import { Link, useBlocker, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { applyFieldsSchema, refineApply, type ApplyInput, type ApplyResultDto } from '@shared/api/public';
 import { APPLY_SOURCES } from '@shared/domain/pipeline';
-import { PHONE_COUNTRIES } from '@shared/domain/phone';
+import { limitPhoneInput } from '@shared/domain/phone';
 import { UPLOAD_RULES, formatBytes } from '@shared/api/uploads';
 import { Icon } from '@/components/icon/Icon';
+import { CountryPhoneSelect } from '@/components/ui/CountryPhoneSelect';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Display';
 import { Checkbox, Dropzone, Field, FilePickButton, FileRow, Select, TextInput, Textarea, formStyles } from '@/components/ui/Form';
@@ -26,6 +28,28 @@ import s from './Careers.module.css';
 
 const formSchema = applyFieldsSchema.omit({ resumeUploadId: true, photoUploadId: true, confirm: true }).extend({ confirm: z.boolean() }).superRefine(refineApply);
 type FormValues = z.input<typeof formSchema>;
+
+/**
+ * zod runs the cross-field rules (phone for the chosen country, the portfolio link, "Tell us
+ * where") only once every other field passes, so a bad phone number surfaced only after the
+ * name and email were fixed. This runs those rules on every check and adds what is missing,
+ * so all problems show at once.
+ */
+const zod = zodResolver(formSchema);
+const resolver: Resolver<FormValues> = async (values, context, options) => {
+  const result = await zod(values, context, options);
+  const errors = result.errors as FieldErrors<FormValues>;
+  const extra: FieldErrors<FormValues> = {};
+  refineApply(values as Parameters<typeof refineApply>[0], {
+    addIssue: (issue: { path?: Array<string | number>; message?: string }) => {
+      const field = issue.path?.[0] as keyof FormValues | undefined;
+      if (field && !errors[field] && !extra[field]) extra[field] = { type: 'custom', message: issue.message ?? 'Check this field.' };
+    },
+    path: [],
+  } as unknown as z.RefinementCtx);
+  if (!Object.keys(extra).length) return result;
+  return { values: {}, errors: { ...errors, ...extra } };
+};
 
 interface UploadState { name: string; size: number; progress: number | null; id: string | null; error: string | null }
 
@@ -54,8 +78,8 @@ export function ApplyPage() {
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplyResultDto | null>(null);
-  const { register, handleSubmit, control, setError, setFocus, formState: { errors, isSubmitting, isDirty } } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const { register, handleSubmit, control, setError, setFocus, setValue, getValues, trigger, formState: { errors, isSubmitting, isDirty, isSubmitted } } = useForm<FormValues>({
+    resolver,
     defaultValues: { name: '', email: '', phoneCountry: 'PH', phoneNumber: '', coverLetter: '', whyUs: '', source: undefined, sourceOther: '', portfolio: '', confirm: false },
   });
   const v = useWatch({ control });
@@ -159,8 +183,27 @@ export function ApplyPage() {
           </div>
           <Field label="Phone" optional error={errors.phoneNumber?.message}>
             <div className={s.phoneRow}>
-              <Select aria-label="Country code" {...register('phoneCountry')} options={PHONE_COUNTRIES.map(([iso, , dial]) => ({ value: iso, label: `${iso} (+${dial})` }))} />
-              <TextInput type="tel" autoComplete="tel-national" placeholder="917 555 0199…" {...register('phoneNumber')} aria-label="Phone number" />
+              <Controller control={control} name="phoneCountry" render={({ field }) => (
+                <CountryPhoneSelect value={field.value ?? 'PH'} invalid={Boolean(errors.phoneNumber)}
+                  onChange={(iso) => {
+                    field.onChange(iso);
+                    // The phone rules depend on the country: trim the number to the new country's
+                    // length, and re-check it once errors are showing.
+                    const trimmed = limitPhoneInput(iso, getValues('phoneNumber') ?? '');
+                    if (trimmed !== getValues('phoneNumber')) setValue('phoneNumber', trimmed, { shouldDirty: true });
+                    if (isSubmitted) void trigger('phoneNumber');
+                  }} />
+              )} />
+              {/* Digits and separators only, and never more digits than the chosen country's numbers have:
+                  letters and extra digits are not accepted as you type. */}
+              <TextInput type="tel" inputMode="tel" autoComplete="tel-national" aria-label="Phone number" aria-invalid={errors.phoneNumber ? true : undefined}
+                placeholder={(v.phoneCountry ?? 'PH') === 'PH' ? '917 555 0199…' : 'Phone number…'}
+                {...register('phoneNumber', {
+                  onChange: (e: { target: HTMLInputElement }) => {
+                    const clean = limitPhoneInput(getValues('phoneCountry') ?? 'PH', e.target.value);
+                    if (clean !== e.target.value) setValue('phoneNumber', clean, { shouldDirty: true });
+                  },
+                })} />
             </div>
           </Field>
           <div className={formStyles.grid2}>

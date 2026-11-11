@@ -73,3 +73,63 @@ export function dialCodeFor(iso: string): string {
 export function countryFlag(iso: string): string {
   return [...iso.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('');
 }
+
+/**
+ * How many digits a national number has (after the dialing code, without a leading trunk 0),
+ * for the countries applicants pick most. Others fall back to the international limit:
+ * at most 15 digits including the dialing code (E.164).
+ */
+const NATIONAL_DIGITS: Readonly<Record<string, readonly [number, number]>> = {
+  PH: [9, 10], US: [10, 10], CA: [10, 10], GB: [9, 10], SG: [8, 8], AU: [9, 9], NZ: [8, 10],
+  JP: [9, 10], KR: [9, 10], CN: [11, 11], HK: [8, 8], TW: [9, 9], IN: [10, 10], ID: [9, 12],
+  MY: [9, 10], TH: [9, 9], VN: [9, 10], AE: [9, 9], SA: [9, 9], DE: [7, 11], FR: [9, 9],
+};
+
+/** Characters a phone number may contain: digits and the usual separators. */
+export const PHONE_CHARS = /[\d\s().-]/;
+
+export function phoneDigitRange(iso: string): readonly [number, number] {
+  return NATIONAL_DIGITS[iso] ?? [6, 15 - dialCodeFor(iso).length];
+}
+
+/** Drops anything that is not a digit or a separator, as the applicant types. */
+export function cleanPhoneInput(raw: string): string {
+  return [...raw].filter((c) => PHONE_CHARS.test(c)).join('');
+}
+
+/** Null when the number is fine (or empty: the field is optional), otherwise what to fix. */
+export function phoneNumberError(iso: string, raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+  if (![...value].every((c) => PHONE_CHARS.test(c))) return 'Use numbers only. Spaces, dashes and brackets are fine.';
+  // A leading trunk 0 (0917… in the Philippines) is how people write it at home; it is dropped when dialing in.
+  const digits = value.replace(/\D/g, '').replace(/^0/, '');
+  const [min, max] = phoneDigitRange(iso);
+  if (digits.length >= min && digits.length <= max) return null;
+  const name = PHONE_COUNTRIES.find(([code]) => code === iso)?.[1];
+  // "the Philippines", "the United States", "the Netherlands"; plain "Singapore".
+  const country = !name ? 'this country' : /^(United |Philippines$|Netherlands$|Czech Republic$)/.test(name) ? `the ${name}` : name;
+  const count = min === max ? `${min} digits` : `${min} to ${max} digits`;
+  return `Numbers in ${country} have ${count} after +${dialCodeFor(iso)}.`;
+}
+
+/**
+ * What the phone field keeps as the applicant types: digits and separators only, and no more
+ * digits than the chosen country's longest number (one more when it starts with a 0, written
+ * the local way, e.g. 0917… in the Philippines). Extra digits are not accepted.
+ */
+export function limitPhoneInput(iso: string, raw: string): string {
+  const clean = cleanPhoneInput(raw);
+  const firstDigit = clean.match(/\d/)?.[0];
+  const allowed = phoneDigitRange(iso)[1] + (firstDigit === '0' ? 1 : 0);
+  let digits = 0;
+  let out = '';
+  for (const c of clean) {
+    if (/\d/.test(c)) {
+      if (digits >= allowed) continue;
+      digits++;
+    }
+    out += c;
+  }
+  return out;
+}

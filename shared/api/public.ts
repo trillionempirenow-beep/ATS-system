@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { APPLY_SOURCES, type Stage } from '../domain/pipeline.js';
 import type { EmploymentType } from '../domain/jobs.js';
+import { phoneNumberError } from '../domain/phone.js';
 import type { CandidateJoinState, DisplayInterviewState, InterviewType, MeetingType } from '../domain/interviews.js';
 
 export interface PublicConfigDto {
@@ -79,17 +80,15 @@ export const applyFieldsSchema = z.object({
   });
 
 /** Cross-field rules shared by the API and the form. */
-export function refineApply(v: { source?: string; sourceOther?: string; portfolio?: string; phoneNumber?: string }, ctx: z.RefinementCtx): void {
+export function refineApply(v: { source?: string; sourceOther?: string; portfolio?: string; phoneCountry?: string; phoneNumber?: string }, ctx: z.RefinementCtx): void {
     if (v.source === 'other' && !v.sourceOther) {
       ctx.addIssue({ code: 'custom', path: ['sourceOther'], message: 'Please tell us how you heard about us.' });
     }
     if (v.portfolio && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v.portfolio)) {
       ctx.addIssue({ code: 'custom', path: ['portfolio'], message: 'Please enter a valid portfolio URL, e.g. https://yourportfolio.com' });
     }
-    if (v.phoneNumber) {
-      const digits = v.phoneNumber.replace(/\D/g, '');
-      if (digits.length < 6 || digits.length > 14) ctx.addIssue({ code: 'custom', path: ['phoneNumber'], message: 'Please enter a valid phone number.' });
-    }
+    const phoneError = phoneNumberError(v.phoneCountry ?? 'PH', v.phoneNumber ?? '');
+    if (phoneError) ctx.addIssue({ code: 'custom', path: ['phoneNumber'], message: phoneError });
 }
 
 export const applySchema = applyFieldsSchema.superRefine(refineApply);
