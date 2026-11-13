@@ -287,15 +287,19 @@ export async function setHrStatus(id: number, input: z.infer<typeof accountStatu
     if (input.status === 'active' && ['suspended', 'disabled', 'pending_reactivation'].includes(target.account_status) && !iAmSuper) {
       throw forbidden('Reactivating an account needs Super Admin approval. Use "Request reactivation" instead.');
     }
-    if (input.status === 'active' && !['pending', 'active'].includes(target.account_status) && target.created_by && target.seat_released) {
+    // An account that holds no seat now (released, or rejected and never counted) needs a free one to take up again.
+    const holdsSeat = !target.seat_released && SEAT_HOLDING_STATUSES.includes(target.account_status);
+    if (input.status === 'active' && !holdsSeat && target.created_by) {
       const [owner] = await tx<{ role: Role }[]>`select role from users where id = ${target.created_by}`;
       if (owner?.role === 'admin' && (await seatLimit(target.created_by, tx)) - (await seatsUsed(target.created_by, tx)) < 1) {
         throw conflict('That Admin has no available seats. Increase their seat limit first.');
       }
-      await tx`update users set seat_released = false where id = ${id}`;
+      if (target.seat_released) await tx`update users set seat_released = false where id = ${id}`;
     }
     await applyStatus(tx, id, input.status, ctx.user.id, note);
-    await tx`update account_requests set status = 'approved', decided_by = ${ctx.user.id}, decided_at = now(), decision_note = ${note} where user_id = ${id} and status = 'pending'`;
+    // A pending reactivation request is settled by this change: approved only if the account is active again.
+    await tx`update account_requests set status = ${input.status === 'active' ? 'approved' : 'rejected'}, decided_by = ${ctx.user.id}, decided_at = now(), decision_note = ${note}
+             where user_id = ${id} and status = 'pending'`;
     await audit({ userId: ctx.user.id, action: 'hr_account_status', entityType: 'user', entityId: id, details: { account: target.name, email: target.email, status: ACCOUNT_STATUS_LABELS[input.status], reason: note ?? '' }, ip: ctx.ip }, tx);
     return target;
   });

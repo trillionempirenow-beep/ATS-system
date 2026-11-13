@@ -132,6 +132,14 @@ export async function schedule(input: z.infer<typeof scheduleInterviewSchema>, c
 export async function update(id: number, input: z.infer<typeof updateInterviewSchema>, ctx: Ctx): Promise<DeliveryReport> {
   const before = await load(id);
   const rescheduled = input.startsAt !== undefined && Date.parse(input.startsAt) !== before.starts_at.getTime();
+  // The same checks as scheduling, against the values the meeting will end up with.
+  const startMs = input.startsAt !== undefined ? Date.parse(input.startsAt) : before.starts_at.getTime();
+  const endsAt = input.endsAt === undefined ? before.ends_at : input.endsAt;
+  if (endsAt && new Date(endsAt).getTime() <= startMs) throw validationFailed({ endsAt: 'The end time must be after the start time.' });
+  if (input.interviewerId !== undefined && input.interviewerId !== before.interviewer_id) {
+    const [iv] = await sql<{ id: number }[]>`select id from users where id = ${input.interviewerId} and active and role in ('admin','recruiter','hiring_manager','super_admin')`;
+    if (!iv) throw validationFailed({ interviewerId: 'Choose an active interviewer.' });
+  }
   try {
     await transaction(async (tx) => {
       if (input.startsAt !== undefined || input.endsAt !== undefined || input.interviewerId !== undefined || input.interviewType !== undefined || input.location !== undefined) {

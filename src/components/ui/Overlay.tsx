@@ -199,5 +199,3 @@ export function Menu({ trigger, items, align = 'right', header }: { trigger: (pr
     </div>
   );
 }
-
-export const overlayStyles = s;

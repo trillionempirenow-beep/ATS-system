@@ -25,3 +25,16 @@ export function initials(name: string): string {
 
 /** Prefix for CSV downloads so Excel opens them as UTF-8. */
 export const UTF8_BOM = String.fromCharCode(0xfeff);
+
+/**
+ * One CSV cell. Text that a spreadsheet would run as a formula (=, +, -, @, tab, CR at the
+ * start) is prefixed with an apostrophe: exports carry names and text typed by applicants.
+ */
+export function csvCell(v: unknown): string {
+  let s = v === null || v === undefined ? '' : String(v);
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return /[",\r\n]/.test(s) || s.startsWith("'") ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** Rows of cells as a CSV document (CRLF line ends, as Excel expects). */
+export const toCsv = (lines: unknown[][]): string => lines.map((l) => l.map(csvCell).join(',')).join('\r\n');

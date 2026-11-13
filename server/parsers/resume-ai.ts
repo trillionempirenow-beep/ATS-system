@@ -79,8 +79,6 @@ async function getClient(): Promise<Anthropic | null> {
   return client;
 }
 
-export const resumeAiEnabled = (): boolean => Boolean(env.CV_N8N_WEBHOOK_URL || env.GEMINI_API_KEY || env.ANTHROPIC_API_KEY);
-
 /** Null when no AI provider is configured (or there is nothing to read). */
 export async function parseResumeWithAi(input: { pdf?: Buffer; text?: string }): Promise<AiResumeResult | null> {
   const text = input.text?.trim() ?? '';

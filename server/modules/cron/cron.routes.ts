@@ -13,6 +13,7 @@ import { candidateRoomLink, interviewCalendarEvent } from '../interviews/intervi
 import { googleCalendarLink } from '../../email/calendar.js';
 import * as interviews from '../interviews/interviews.repository.js';
 import { pruneExpiredUploads } from '../uploads/uploads.service.js';
+import { BUCKETS, storage } from '../../storage/storage.js';
 import { pruneExpiredSessions } from '../auth/session.repository.js';
 import { cleanup as pruneRecordings } from '../interviews/interview-recordings.service.js';
 
@@ -69,6 +70,14 @@ async function interviewReminders(withinMinutes: number) {
   return { due: due.length, sent };
 }
 
+/** CVs read on Add candidate that were never saved to a candidate: the file goes with the row. */
+async function pruneOrphanDocuments(): Promise<number> {
+  const rows = await sql<{ id: number; storage_path: string }[]>`
+    delete from candidate_documents where candidate_id is null and created_at < now() - interval '1 day' returning id, storage_path`;
+  if (rows.length) await storage.remove(BUCKETS.resumes, rows.map((r) => r.storage_path)).catch(() => undefined);
+  return rows.length;
+}
+
 cronRouter.all('/cron/interview-reminders', requireCronSecret, async (req, res) => {
   const s = await getSettings();
   const requested = Number(req.query.withinMinutes);
@@ -76,7 +85,7 @@ cronRouter.all('/cron/interview-reminders', requireCronSecret, async (req, res) 
   const reminders = await interviewReminders(window);
   const housekeeping = {
     uploadsPruned: await pruneExpiredUploads(),
-    orphanDocumentsPruned: (await sql`delete from candidate_documents where candidate_id is null and created_at < now() - interval '1 day'`).count,
+    orphanDocumentsPruned: await pruneOrphanDocuments(),
     rateLimitsPruned: (await sql`delete from rate_limits where window_start < now() - interval '1 day'`).count,
     recordingsPruned: await pruneRecordings(intSetting(s.recording_retention_days, 90, 1)),
   };

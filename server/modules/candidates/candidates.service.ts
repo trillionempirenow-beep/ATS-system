@@ -20,15 +20,15 @@ import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { extractDocumentText } from '../../parsers/text-extract.js';
 import { parseResumeText, type ParsedResumeFields } from '../../parsers/resume-parser.js';
 import { parseResumeWithAi } from '../../parsers/resume-ai.js';
-
-const pick = (f: ParsedResumeFields, keys: Array<keyof ParsedResumeFields>): ParsedResumeFields =>
-  Object.fromEntries(keys.filter((k) => f[k]).map((k) => [k, f[k]]));
 import { avatarUrlForCandidate } from '../media/media.urls.js';
 import { consumeUpload } from '../uploads/uploads.service.js';
 import { analyseApplication } from './application-analysis.js';
 import { analyseApplicationOnce, inBackground, matchingEnabled } from '../matching/matching.service.js';
 import * as repo from './candidates.repository.js';
 import * as interviewRepo from '../interviews/interviews.repository.js';
+
+const pick = (f: ParsedResumeFields, keys: Array<keyof ParsedResumeFields>): ParsedResumeFields =>
+  Object.fromEntries(keys.filter((k) => f[k]).map((k) => [k, f[k]]));
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -393,10 +393,13 @@ export async function addCandidate(input: z.infer<typeof addCandidateSchema>, ct
     let candidateId: number;
     if (existing) {
       candidateId = existing.id;
-      await tx`update candidates set first_name = ${first ?? ''}, last_name = ${rest.join(' ')}, phone = ${input.phone || null},
-                 current_title = ${input.currentTitle || null}, experience_level = ${input.experienceLevel || null}, skills = ${input.skills || null},
-                 education = ${input.education || null}, notes = ${input.notes || null}, source = ${input.source},
-                 record_status = ${isDraft ? 'draft' : 'active'} where id = ${candidateId}`;
+      // Fields left empty keep what the record already holds, and saving a draft never
+      // demotes a candidate who is already active.
+      await tx`update candidates set first_name = ${first ?? ''}, last_name = ${rest.join(' ')}, phone = coalesce(${input.phone || null}, phone),
+                 current_title = coalesce(${input.currentTitle || null}, current_title), experience_level = coalesce(${input.experienceLevel || null}, experience_level),
+                 skills = coalesce(${input.skills || null}, skills), education = coalesce(${input.education || null}, education),
+                 notes = coalesce(${input.notes || null}, notes), source = ${input.source},
+                 record_status = case when ${isDraft} then record_status else 'active' end where id = ${candidateId}`;
     } else {
       const [c] = await tx<{ id: number }[]>`
         insert into candidates (first_name, last_name, email, phone, current_title, experience_level, skills, education, notes, source, record_status, created_by)

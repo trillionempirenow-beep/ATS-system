@@ -149,6 +149,8 @@ export async function save(id: number | null, input: z.infer<typeof saveJobSchem
   const { user } = ctx;
   if (input.action === 'publish' && !canPublishJobs(user)) throw forbidden('Publishing a job requires Admin approval. Submit it for review instead.');
   if (id === null && !hasPermission(user, 'job_posting')) throw forbidden('Creating job postings requires the "Job posting" permission.');
+  // The same rule as submit() below: sending a posting for approval belongs to Job posting.
+  if (input.action === 'submit' && !hasPermission(user, 'job_posting')) throw forbidden('Submitting a posting for approval requires the "Job posting" permission.');
   const [dept] = await sql<{ id: number }[]>`select id from departments where id = ${input.departmentId}`;
   if (!dept) throw validationFailed({ departmentId: 'Please choose a department.' });
   const sourcePdf = await verifySourcePdf(input.sourcePdfPath, user);

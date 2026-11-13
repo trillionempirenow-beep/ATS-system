@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanPhoneInput, limitPhoneInput, phoneDigitRange, phoneNumberError } from '../../shared/domain/phone.js';
+import { cleanPhoneInput, internationalPhone, limitPhoneInput, phoneDigitRange, phoneNumberError } from '../../shared/domain/phone.js';
 import { applySchema } from '../../shared/api/public.js';
 
 describe('applicant phone numbers', () => {
@@ -9,6 +9,14 @@ describe('applicant phone numbers', () => {
 
   it('accepts Philippine mobiles with or without the leading 0, and with separators', () => {
     for (const n of ['9171234567', '0917 123 4567', '(0917) 123-4567', '917.123.4567']) expect(phoneNumberError('PH', n)).toBeNull();
+  });
+
+  it('stores the number with the country code and without the local trunk 0', () => {
+    expect(internationalPhone('PH', '0917 123 4567')).toBe('+63 917 123 4567');
+    expect(internationalPhone('PH', '(0917) 123-4567')).toBe('+63 (917) 123-4567');
+    expect(internationalPhone('PH', '917.123.4567')).toBe('+63 917.123.4567');
+    expect(internationalPhone('US', '415 555 0132')).toBe('+1 415 555 0132');
+    expect(internationalPhone('PH', '  ')).toBeNull();
   });
 
   it('checks the length for the chosen country', () => {

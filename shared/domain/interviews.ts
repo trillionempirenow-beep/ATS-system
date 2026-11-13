@@ -169,5 +169,3 @@ export type GuestState = (typeof GUEST_STATES)[number];
 export const MAX_WAITING_GUESTS = 10;
 export const MAX_GUESTS_PER_INTERVIEW = 40;
 
-/** "John Doe - Tech Lead": the label on a guest's video tile and in the participants list. */
-export const guestLabel = (name: string, position: string): string => `${name} - ${position}`;

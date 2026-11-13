@@ -31,11 +31,6 @@ export async function findUserByEmail(email: string): Promise<UserAuthRow | null
   return row ?? null;
 }
 
-export async function permissionsFor(userId: number, db: Db = sql): Promise<PermissionKey[]> {
-  const rows = await db<{ permission: PermissionKey }[]>`select permission from user_permissions where user_id = ${userId}`;
-  return rows.map((r) => r.permission);
-}
-
 /** Permissions are read fresh on every request, so a change applies on the next call. */
 export async function loadActiveUser(userId: number): Promise<CurrentUser | null> {
   const [row] = await sql<(UserAuthRow & { permissions: PermissionKey[] })[]>`

@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import { APPLY_SOURCES, STAGE_LABELS, STAGE_ORDER, sourceLabel, stageRank } from '../../../shared/domain/pipeline.js';
 import { jobTags, spotsRemaining, splitLines } from '../../../shared/domain/jobs.js';
 import { candidateJoinState, interviewDisplayState } from '../../../shared/domain/interviews.js';
-import { dialCodeFor } from '../../../shared/domain/phone.js';
+import { internationalPhone } from '../../../shared/domain/phone.js';
 import type {
   ApplicationStatusDto, ApplyResultDto, CandidateInterviewDto, PublicConfigDto, PublicHomeDto, PublicJobCardDto,
   PublicJobDetailDto, PublicJobsDto, StatusLookupDto, applySchema, publicJobsQuerySchema, referralSchema,
@@ -139,7 +139,7 @@ export async function apply(slug: string, input: z.infer<typeof applySchema>, ip
 
   const [first, ...rest] = input.name.split(/\s+/);
   const last = rest.join(' ');
-  const phone = input.phoneNumber ? `+${dialCodeFor(input.phoneCountry)} ${input.phoneNumber}` : null;
+  const phone = internationalPhone(input.phoneCountry, input.phoneNumber);
   const source = input.source === 'other' ? `Other: ${input.sourceOther}`.slice(0, 80) : input.source;
 
   let applicationId: number;

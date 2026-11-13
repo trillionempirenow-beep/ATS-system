@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { APPLY_SOURCES, type Stage } from '../domain/pipeline.js';
 import type { EmploymentType } from '../domain/jobs.js';
-import { phoneNumberError } from '../domain/phone.js';
+import { PHONE_COUNTRIES, phoneNumberError } from '../domain/phone.js';
 import type { CandidateJoinState, DisplayInterviewState, InterviewType, MeetingType } from '../domain/interviews.js';
 
 export interface PublicConfigDto {
@@ -67,7 +67,8 @@ const sourceKeys = Object.keys(APPLY_SOURCES) as [keyof typeof APPLY_SOURCES, ..
 export const applyFieldsSchema = z.object({
     name: z.string().trim().min(1, 'Please enter your full name.').max(160),
     email: z.string().trim().email('Please enter a valid email address.').transform((v) => v.toLowerCase()),
-    phoneCountry: z.string().length(2).default('PH'),
+    // Only countries the picker offers: any other code would silently be dialed as +63.
+    phoneCountry: z.string().refine((c) => PHONE_COUNTRIES.some(([code]) => code === c), 'Please choose a country from the list.').default('PH'),
     phoneNumber: z.string().trim().max(30).optional().default(''),
     coverLetter: z.string().trim().min(1, 'Please tell us about yourself.').max(8000),
     whyUs: z.string().trim().min(1, 'Please tell us why you want to work here.').max(4000),

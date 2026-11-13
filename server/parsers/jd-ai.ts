@@ -14,8 +14,6 @@ const TIMEOUT_MS = 40_000;
 
 export type AiJobResult = { fields: ParsedJobFields; error?: undefined } | { fields: null; error: string };
 
-export const jdAiEnabled = (): boolean => Boolean(env.JD_N8N_WEBHOOK_URL);
-
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 /** Lists arrive as arrays (or, from a loose model answer, as one string); the form wants one item per line. */
 const lines = (v: unknown): string => {

@@ -120,6 +120,27 @@ export type Sql = Pool;
 export type Tx = postgres.TransactionSql;
 export type Db = Sql | Tx;
 
+/**
+ * Runs fn in a transaction on a connection of its own.
+ *
+ * Not sql.begin: with max_pipeline 1 it fails ("Cannot set properties of undefined
+ * (setting 'onclose')") when BEGIN goes out on a connection whose previous query has
+ * answered but not yet signalled ReadyForQuery, i.e. whenever a transaction starts
+ * straight after another query. reserve() only hands out an idle connection.
+ */
 export async function transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
-  return sql.begin(fn) as Promise<T>;
+  const conn = await sql.reserve();
+  try {
+    await conn`begin`;
+    try {
+      const result = await fn(conn as unknown as Tx);
+      await conn`commit`;
+      return result;
+    } catch (e) {
+      await conn`rollback`.catch(() => undefined);
+      throw e;
+    }
+  } finally {
+    conn.release();
+  }
 }

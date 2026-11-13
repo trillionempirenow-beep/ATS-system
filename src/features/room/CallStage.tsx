@@ -145,6 +145,7 @@ function useBoxSize(el: HTMLElement | null): { w: number; h: number } {
   useEffect(() => {
     if (!el) return undefined;
     const ro = new ResizeObserver(([entry]) => {
+      if (!entry) return;
       const w = Math.round(entry.contentRect.width);
       const h = Math.round(entry.contentRect.height);
       setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));

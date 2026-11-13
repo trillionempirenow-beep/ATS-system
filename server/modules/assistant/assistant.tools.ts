@@ -1,5 +1,5 @@
 import { STAGES, STAGE_LABELS, isStageSkip, type Stage } from '../../../shared/domain/pipeline.js';
-import { canPublishJobs, hasPermission, isAdminLevel } from '../../../shared/domain/access.js';
+import { canPublishJobs, hasPermission } from '../../../shared/domain/access.js';
 import { EMPLOYMENT_TYPES } from '../../../shared/domain/jobs.js';
 import { EXPERIENCE_LEVELS, MANUAL_SOURCES } from '../../../shared/domain/pipeline.js';
 import type { AssistantActionKind } from '../../../shared/api/assistant.js';
@@ -424,4 +424,4 @@ async function prepare(user: CurrentUser, args: Args): Promise<Proposal> {
   return refuse('Unknown action. Use move_stage, schedule_interview, send_email, create_job, add_candidate, approve_job or reject_job.');
 }
 
-export const canUseAssistant = (user: CurrentUser) => ['admin', 'recruiter', 'hiring_manager', 'super_admin'].includes(user.role) || isAdminLevel(user);
+export const canUseAssistant = (user: CurrentUser) => ['admin', 'recruiter', 'hiring_manager', 'super_admin'].includes(user.role);

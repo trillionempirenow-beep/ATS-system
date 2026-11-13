@@ -114,6 +114,16 @@ export function phoneNumberError(iso: string, raw: string): string | null {
 }
 
 /**
+ * The number as stored and dialed: "+63 917 123 4567". A leading trunk 0, written the
+ * local way (0917…), is dropped, since it is never dialed after the country code.
+ */
+export function internationalPhone(iso: string, raw: string): string | null {
+  // "0917 123 4567" -> "917 123 4567"; "(0917) 123-4567" -> "(917) 123-4567".
+  const national = raw.trim().replace(/^([\s(]*)0/, '$1').replace(/^[\s.-]+/, '');
+  return national ? `+${dialCodeFor(iso)} ${national}` : null;
+}
+
+/**
  * What the phone field keeps as the applicant types: digits and separators only, and no more
  * digits than the chosen country's longest number (one more when it starts with a 0, written
  * the local way, e.g. 0917… in the Philippines). Extra digits are not accepted.

@@ -15,7 +15,7 @@ import { getSettings, intSetting, setSettings } from '../../core/settings.js';
 import type { CurrentUser } from '../../http/context.js';
 import { conflict, forbidden, notFound } from '../../http/errors.js';
 import { randomHex, sha256 } from '../../lib/crypto.js';
-import { fullName, iso, isoOrThrow } from '../../lib/format.js';
+import { fullName, iso, isoOrThrow, toCsv } from '../../lib/format.js';
 import { sendEmail } from '../../email/email.service.js';
 import { appLink, brand } from '../../email/brand.js';
 import { passwordResetApproved, passwordResetRejected } from '../../email/templates/index.js';
@@ -248,12 +248,11 @@ const AUDIT_EXPORT_LIMIT = 10_000;
 
 export async function auditCsv(q: AuditQuery, user: CurrentUser): Promise<string> {
   const rows = (await queryAudit(q, user, AUDIT_EXPORT_LIMIT, 0)).map(toAuditRow);
-  const cell = (v: unknown) => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const lines = [['Date/time', 'User', 'Role', 'Action', 'Related', 'Subject', 'Details', 'IP address']];
   for (const r of rows) {
     lines.push([r.createdAt, r.userName ?? '', r.userRole ?? '', r.action, r.entityType && r.entityId ? `${r.entityType} #${r.entityId}` : '', r.subject ?? '', r.detail, r.ip ?? '']);
   }
-  return lines.map((l) => l.map(cell).join(',')).join('\r\n');
+  return toCsv(lines);
 }
 
 // ---------------------------------------------------------------------------

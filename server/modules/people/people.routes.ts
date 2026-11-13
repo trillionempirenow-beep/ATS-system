@@ -29,7 +29,7 @@ peopleRouter.post('/attendance/clock-in', requireAuth, async (req, res) => { awa
 peopleRouter.post('/attendance/clock-out', requireAuth, async (req, res) => { await service.clockOut(ctx(req)); res.json(ok); });
 
 peopleRouter.get('/attendance/export', requireAuth, async (req, res) => {
-  const q = parse(z.object({ scope: z.enum(['me', 'team']).default('me'), from: z.string().optional(), to: z.string().optional() }), req.query);
+  const q = parse(attendanceReviewQuerySchema.extend({ scope: z.enum(['me', 'team']).default('me') }), req.query);
   if (q.scope === 'team' && !roleAllowed(req.auth!.user, ['admin', 'hiring_manager'])) throw forbidden('Team attendance is limited to Admins and Hiring Managers.');
   const csv = await service.exportCsv(q.scope, req.auth!.user, q.from, q.to);
   await audit({ userId: req.auth!.user.id, action: 'attendance_export', entityType: 'attendance', details: { scope: q.scope }, ip: req.ip ?? null });

@@ -52,7 +52,6 @@ const SELECT = sql`
   left join users su on su.id = j.submitted_by`;
 
 export const allJobs = () => sql<JobRow[]>`${SELECT} order by j.created_at desc`;
-export const jobsOwnedBy = (userId: number) => sql<JobRow[]>`${SELECT} where j.created_by = ${userId} or j.owner_id = ${userId} order by j.created_at desc`;
 export const pendingQueue = () => sql<JobRow[]>`${SELECT} where j.approval_status = 'pending' order by j.submitted_at asc nulls last, j.created_at asc`;
 export const recentlyDecided = () =>
   sql<JobRow[]>`${SELECT} where j.approval_status in ('approved','rejected','changes_requested') and j.reviewed_at is not null order by j.reviewed_at desc limit 12`;

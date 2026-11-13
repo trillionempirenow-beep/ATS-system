@@ -33,10 +33,6 @@ declare module 'express-serve-static-core' {
   }
 }
 
-export function clientIp(req: Request): string | null {
-  return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
 /** For handlers behind requireAuth. */
 export function currentUser(req: Request): CurrentUser {
   if (!req.auth) throw new Error('currentUser() used on a route without requireAuth');

@@ -11,7 +11,7 @@ import { audit } from '../../core/audit.js';
 import { getSettings, intSetting } from '../../core/settings.js';
 import type { CurrentUser } from '../../http/context.js';
 import { conflict, isUniqueViolation, notFound, validationFailed } from '../../http/errors.js';
-import { iso, todayInZone } from '../../lib/format.js';
+import { iso, todayInZone, toCsv } from '../../lib/format.js';
 
 type Ctx = { user: CurrentUser; ip: string | null };
 
@@ -165,7 +165,8 @@ export async function clockOut(ctx: Ctx): Promise<void> {
 }
 
 export async function review(from: string | undefined, to: string | undefined): Promise<AttendanceReviewDto> {
-  const today = todayInZone();
+  // The same calendar as clocking in and out uses.
+  const today = todayInZone((await getSettings()).attendance_timezone || env.APP_TIMEZONE);
   const f = from ?? `${today.slice(0, 8)}01`;
   const t = to ?? today;
   const [a, b] = f <= t ? [f, t] : [t, f];
@@ -190,11 +191,6 @@ export async function setAttendanceStatus(id: number, input: z.infer<typeof atte
   await audit({ userId: ctx.user.id, action: 'attendance_update', entityType: 'attendance', entityId: id, details: { status: input.status }, ip: ctx.ip });
 }
 
-const csvCell = (v: unknown) => {
-  const s = v === null || v === undefined ? '' : String(v);
-  return /[",\n]/.test(s) || /^[=+\-@]/.test(s) ? `"${s.replace(/"/g, '""').replace(/^([=+\-@])/, "'$1")}"` : s;
-};
-
 export async function exportCsv(scope: 'me' | 'team', user: CurrentUser, from?: string, to?: string): Promise<string> {
   const header = ['Employee', 'Employee number', 'Job title', 'Date', 'Clock in', 'Clock out', 'Worked minutes', 'Status'];
   const rows = scope === 'me'
@@ -204,7 +200,5 @@ export async function exportCsv(scope: 'me' | 'team', user: CurrentUser, from?: 
         where e.user_id = ${user.id} order by a.work_date desc`
     : (await review(from, to)).rows.map((r) => ({ name: r.employeeName, employee_number: r.employeeNumber, job_title: r.jobTitle, work_date: r.workDate, clock_in: r.clockIn, clock_out: r.clockOut, worked_minutes: r.workedMinutes, status: r.status }));
   const fmt = (d: unknown) => (d instanceof Date ? d.toISOString() : d);
-  return [header, ...rows.map((r) => [r.name, r.employee_number, r.job_title, r.work_date, fmt(r.clock_in), fmt(r.clock_out), r.worked_minutes, r.status])]
-    .map((line) => line.map(csvCell).join(','))
-    .join('\r\n');
+  return toCsv([header, ...rows.map((r) => [r.name, r.employee_number, r.job_title, r.work_date, fmt(r.clock_in), fmt(r.clock_out), r.worked_minutes, r.status])]);
 }

@@ -13,7 +13,6 @@ export class AppError extends Error {
   }
 }
 
-export const badRequest = (message: string, fields?: Record<string, string>) => new AppError(400, 'bad_request', message, fields);
 export const validationFailed = (fields: Record<string, string>, message = 'Please correct the highlighted fields.') =>
   new AppError(422, 'validation_failed', message, fields);
 export const unauthenticated = (message = 'Please sign in to continue.') => new AppError(401, 'unauthenticated', message);
