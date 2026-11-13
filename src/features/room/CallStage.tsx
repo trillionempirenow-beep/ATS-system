@@ -132,7 +132,7 @@ function Tile({ stream, name, role, position, mirrored, muted, hasVideo, micOn, 
       ) : null}
       <div className={s.tileName} title={role ? `${label} · ${role}` : label}>
         <Icon name={micOn ? 'mic' : 'micoff'} size={small ? 13 : 15} />
-        <b className={s.tileLabel}>{label}</b>{role ? <span>· {role}</span> : null}
+        <b className={s.tileLabel}><em className={s.nameFull}>{label}</em><em className={s.nameShort}>{name.split(/\s+/)[0]}</em></b>{role ? <span>· {role}</span> : null}
       </div>
       {hand ? <span className={s.handBadge} role="img" aria-label="Hand raised"><Icon name="hand" size={small ? 14 : 20} /></span> : null}
     </div>
@@ -165,12 +165,18 @@ type SidePlan = { at: 'right' | 'bottom'; cols: number; cap: number; tileW: numb
  * whichever leaves the big area (shape `mainRatio`) larger. Whoever does not fit
  * is folded into a "+N" tile.
  */
-function planSide(w: number, h: number, n: number, forceBottom: boolean, mainRatio: number): SidePlan {
+function planSide(w: number, h: number, n: number, forceBottom: boolean, mainRatio: number, screen: { phone: boolean; phoneOnItsSide: boolean }): SidePlan {
   const bottomTileW = Math.round(Math.min(220, Math.max(104, w * 0.2)));
   const bottomTileH = Math.max(72, Math.round(bottomTileW * 9 / 16));
   const bottomCols = Math.max(1, Math.floor((w + GAP) / (bottomTileW + GAP)));
-  const bottom: SidePlan = { at: 'bottom', cols: bottomCols, cap: bottomCols, tileW: bottomTileW, tileH: bottomTileH };
-  if (forceBottom || w < 860 || w < h * 1.2) return bottom;
+  let bottom: SidePlan = { at: 'bottom', cols: bottomCols, cap: bottomCols, tileW: bottomTileW, tileH: bottomTileH };
+  // Phones: when everyone fits in the row anyway, share the width so a name has room to be read.
+  if (screen.phone && n > 0 && n <= bottomCols) {
+    const tileW = Math.min(168, Math.floor((w - GAP * (n - 1)) / n));
+    bottom = { at: 'bottom', cols: n, cap: n, tileW, tileH: Math.max(72, Math.round(tileW * 9 / 16)) };
+  }
+  // A phone on its side is wide but short: there the grid on the right can still win.
+  if (forceBottom || (w < 860 && !screen.phoneOnItsSide) || w < h * 1.2) return bottom;
 
   const sideW = Math.round(Math.min(380, Math.max(220, w * 0.25)));
   const fit = (cols: number) => {
@@ -449,7 +455,10 @@ export function CallStage(p: Props) {
   const box = useBoxSize(sideBox);
   /** The big area plus everyone else in a grid beside it (or a row under it), never scrolling. */
   const withSide = (main: ReactNode, items: SideItem[], forceBottom: boolean, mainRatio = 16 / 9) => {
-    const plan = planSide(box.w, box.h, items.length, forceBottom, mainRatio);
+    const plan = planSide(box.w, box.h, items.length, forceBottom, mainRatio, {
+      phone: window.matchMedia('(max-width: 720px)').matches,
+      phoneOnItsSide: window.matchMedia('(max-height: 500px) and (orientation: landscape)').matches,
+    });
     return (
       <div ref={setSideBox} className={cx(s.withSide, plan.at === 'bottom' && s.withSideBottom, p.panel && s.besidePanel)}>
         <div className={s.main}>{main}</div>

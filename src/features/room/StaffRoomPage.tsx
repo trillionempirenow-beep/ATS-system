@@ -156,7 +156,8 @@ function LiveRoom({ room, media, onEnded }: { room: StaffRoomDto; media: Media; 
   const qc = useQueryClient();
   const iv = room.interview;
   const [hand, setHand] = useState(false);
-  const [panel, setPanel] = useState<SidePanel>('dock');
+  // On a phone the panel takes the whole screen, so the interviewer starts with the call; Notes is one tap away.
+  const [panel, setPanel] = useState<SidePanel>(() => (window.matchMedia('(max-width: 720px)').matches ? null : 'dock'));
   const [tab, setTab] = useState<DockTab>('notes');
   const [pending, setPending] = useState<PresenceResultDto['pendingRequest']>(null);
   const [dismissedAt, setDismissedAt] = useState<string | null>(null);

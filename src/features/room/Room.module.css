@@ -2,7 +2,7 @@
 .shell {
   max-width: 1040px;
   margin: 0 auto;
-  padding: 40px 16px 64px;
+  padding: 40px max(16px, env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -170,7 +170,16 @@
 }
 
 @media (max-width: 860px) {
-  .check { grid-template-columns: 1fr; gap: 20px; }
+  .check { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  /* The join button stays in reach while the form scrolls. */
+  .checkActions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0 -16px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, var(--bg) 78%, transparent);
+  }
 }
 
 .checkMedia {
@@ -315,12 +324,13 @@
 
 .topbar {
   flex: none;
-  height: 64px;
+  height: calc(64px + env(safe-area-inset-top, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 0 24px;
+  /* Clear of a notch or the rounded corners when the phone is on its side. */
+  padding: env(safe-area-inset-top, 0px) max(24px, env(safe-area-inset-right, 0px)) 0 max(24px, env(safe-area-inset-left, 0px));
   background: var(--call-bar);
   border-bottom: 1px solid var(--call-fill-2);
 }
@@ -412,7 +422,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 12px 24px;
+  padding: 12px max(24px, env(safe-area-inset-right, 0px)) 12px max(24px, env(safe-area-inset-left, 0px));
   font-size: var(--fs-body);
 }
 
@@ -485,7 +495,7 @@
 .stage {
   flex: 1;
   min-width: 0;
-  padding: 24px;
+  padding: 24px max(24px, env(safe-area-inset-right, 0px)) 24px max(24px, env(safe-area-inset-left, 0px));
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -699,6 +709,16 @@
   right: 20px;
   bottom: 20px;
   z-index: 2;
+}
+
+/* Phones: your own picture is smaller than the other person's, and upright it sits under their frame instead of on it. */
+@media (max-width: 720px) {
+  .pip { right: 8px; bottom: 8px; }
+  .pip .tileSmall { width: 84px; height: 112px; }
+}
+@container (max-aspect-ratio: 3 / 4) and (max-width: 720px) {
+  .pip { top: calc(100% + 8px); right: 0; bottom: auto; }
+  .pip .tileSmall { width: 96px; height: 128px; }
 }
 
 .strip {
@@ -1085,12 +1105,13 @@
 
 .controls {
   flex: none;
-  height: 96px;
+  height: calc(96px + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 0 24px;
+  /* Above the home bar, clear of the notch side when on its side. */
+  padding: 0 max(24px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(24px, env(safe-area-inset-left, 0px));
   background: var(--call-bar);
   border-top: 1px solid var(--call-fill-2);
 }
@@ -1247,20 +1268,20 @@
     right: 0;
     bottom: 0;
     width: min(440px, 100%);
-    padding: 12px;
+    padding: 12px max(12px, env(safe-area-inset-right, 0px)) 12px 12px;
     z-index: 3;
   }
 }
 
 @media (max-width: 720px) {
-  .topbar { padding: 0 12px; gap: 12px; }
+  .topbar { padding: env(safe-area-inset-top, 0px) max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px)); gap: 12px; }
   /* The recording notice stays: people must be able to see they are recorded. */
   .pills > :not(:last-child):not(.timer):not(.pillRec) { display: none; }
   .pillRec { padding: 0 10px; gap: 6px; }
-  .stage { padding: 12px; }
+  .stage { padding: 12px max(12px, env(safe-area-inset-right, 0px)) 12px max(12px, env(safe-area-inset-left, 0px)); }
   .pip { right: 10px; bottom: 10px; }
   .tileSmall { width: 120px; height: 160px; }
-  .controls { gap: 4px; padding: 0 8px; height: 76px; overflow-x: auto; justify-content: safe center; }
+  .controls { gap: 4px; padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px)); height: calc(76px + env(safe-area-inset-bottom, 0px)); overflow-x: auto; justify-content: safe center; }
   .ctrl { min-width: 40px; }
   .ctrlBtn { width: 40px; height: 40px; }
   .ctrlLabel, .ctrlSep { display: none; }
@@ -1353,8 +1374,8 @@ button.topLink {
 /* Host admission toasts: one card per guest at the door, newest at the bottom. */
 .admitStack {
   position: absolute;
-  top: 76px;
-  right: 24px;
+  top: calc(76px + env(safe-area-inset-top, 0px));
+  right: max(24px, env(safe-area-inset-right, 0px));
   z-index: 6;
   width: min(400px, calc(100vw - 32px));
   display: flex;
@@ -1428,7 +1449,7 @@ button.topLink {
 }
 
 @media (max-width: 720px) {
-  .admitStack { top: 72px; right: 16px; left: 16px; width: auto; }
+  .admitStack { top: calc(72px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); width: auto; }
 }
 
 /* Team chat: a faint tint so nobody mistakes it for the chat the candidate reads. */
@@ -1558,8 +1579,8 @@ button.topLink {
   display: grid;
   grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
   gap: 12px;
-  width: min(100cqw, calc(100cqh * var(--ar)));
-  aspect-ratio: var(--ar);
+  width: min(100cqw, calc(100cqh * var(--ar, 1.78)));
+  aspect-ratio: var(--ar, 1.78);
   max-height: 100cqh;
 }
 .leadFrame > .tile { min-height: 0; box-shadow: var(--call-shadow), inset 0 0 0 1px var(--call-line); }
@@ -1630,8 +1651,8 @@ button.topLink {
 .sideTiles {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(var(--cols, 1), var(--tw));
-  grid-auto-rows: var(--th);
+  grid-template-columns: repeat(var(--cols, 1), var(--tw, 104px));
+  grid-auto-rows: var(--th, 72px);
   gap: 12px;
   align-content: center;
   justify-content: center;
@@ -1679,4 +1700,72 @@ button.topLink {
   .withSide { gap: 8px; }
   .sideTiles { gap: 8px; }
   .moreFaces > *:nth-child(n + 3) { display: none; }
+}
+
+/* ---------- Small screens: names, tap targets, and a phone on its side ---------- */
+/* Narrow tiles (130px or less): the first name fits where "Priya Na…" did not. The full name stays in the tooltip and the participants list. */
+.nameFull,
+.nameShort { font-style: normal; }
+.nameShort { display: none; }
+@media (max-width: 720px), (max-height: 500px) and (orientation: landscape) {
+  /* Your own small tile and the side tiles: a tighter pill leaves the room a name needs. */
+  .pip .tileName { left: 6px; bottom: 6px; padding: 0 8px; gap: 6px; max-width: calc(100% - 12px); }
+  @container (max-width: 180px) {
+    .sideTiles .tileName { left: 6px; bottom: 6px; padding: 0 8px; gap: 6px; max-width: calc(100% - 12px); }
+  }
+  /* The name may use the whole pill (the role is already hidden here); the earlier rule for this sits before the base one and never applied. */
+  @container (max-width: 210px) {
+    .sideTiles .tileName .tileLabel { max-width: none; flex-shrink: 1; }
+  }
+  /* The interviewer and candidate side by side on a narrow screen: the same one-line pill, name only. */
+  .leadFrame > .tile { container-type: inline-size; }
+  @container (max-width: 230px) {
+    .leadFrame .tileName { left: 8px; bottom: 8px; height: 28px; padding: 0 8px; gap: 6px; max-width: calc(100% - 16px); }
+    .leadFrame .tileName span { display: none; }
+  }
+  @container (max-width: 130px) {
+    .leadFrame .nameFull { display: none; }
+    .leadFrame .nameShort { display: inline; }
+  }
+  @container (max-width: 130px) {
+    .sideTiles .nameFull { display: none; }
+    .sideTiles .nameShort { display: inline; }
+  }
+}
+
+/* A finger needs 40px: the panel's close button, its tabs, the spotlight buttons and the top-bar links. */
+@media (max-width: 720px) {
+  .sideClose { top: 8px; right: 8px; width: 40px; height: 40px; }
+  .sideHead { padding-right: 60px; }
+  .sideTabs { margin-right: 60px; }
+  .sideTab { height: 40px; }
+  .spotBtn { height: 40px; padding: 0 12px; }
+  .topLink { height: 40px; }
+  .darkBtn, .lightBtn { height: 40px; }
+  .back { display: inline-flex; align-items: center; min-height: 40px; }
+}
+
+/* 360px wide: eight controls need slimmer gaps to fit without scrolling. */
+@media (max-width: 400px) {
+  .controls { gap: 2px; padding-left: max(4px, env(safe-area-inset-left, 0px)); padding-right: max(4px, env(safe-area-inset-right, 0px)); }
+}
+
+/* A phone on its side is short and wide: slimmer bars give the video the height. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .topbar { height: calc(48px + env(safe-area-inset-top, 0px)); }
+  .stage { padding-top: 8px; padding-bottom: 8px; }
+  .controls { height: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 6px; }
+  .ctrl { min-width: 44px; }
+  .ctrlBtn { width: 44px; height: 44px; }
+  .ctrlLabel, .ctrlSep { display: none; }
+  .endBtn { height: 44px; padding: 0 14px; }
+  .endText { display: none; }
+  .pip { right: 8px; bottom: 8px; }
+  .pip .tileSmall { width: 112px; height: 72px; }
+  .withSide, .sideTiles { gap: 8px; }
+  .sideClose { top: 8px; right: 8px; width: 40px; height: 40px; }
+  .sideTab { height: 40px; }
+  .spotBtn { height: 40px; }
+  .topLink { height: 40px; }
+  .darkBtn, .lightBtn { height: 40px; }
 }
