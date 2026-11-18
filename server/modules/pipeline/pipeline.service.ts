@@ -8,7 +8,8 @@ import type { CurrentUser } from '../../http/context.js';
 import { AppError, notFound } from '../../http/errors.js';
 import { fullName, isoOrThrow } from '../../lib/format.js';
 import { sendEmail, toDeliveryReport } from '../../email/email.service.js';
-import { appLink, brand } from '../../email/brand.js';
+import { brand } from '../../email/brand.js';
+import { statusLink } from '../../lib/status-links.js';
 import { applicationStatus } from '../../email/templates/index.js';
 import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { avatarUrlForCandidate } from '../media/media.urls.js';
@@ -104,7 +105,7 @@ export async function moveStage(applicationId: number, input: z.infer<typeof sta
       to: moved.email,
       email: applicationStatus(b, {
         candidateName: moved.first_name, jobTitle: moved.title, stage: input.stage, stageLabel: STAGE_LABELS[input.stage],
-        statusUrl: appLink(`/status?email=${encodeURIComponent(moved.email)}&id=${applicationId}`), feedback: fb?.notes ?? null,
+        statusUrl: statusLink(applicationId, moved.email), feedback: fb?.notes ?? null,
       }),
     });
     emailSent = email.outcome === 'sent';

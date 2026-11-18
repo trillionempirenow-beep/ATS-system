@@ -72,10 +72,10 @@ export const applyFieldsSchema = z.object({
     phoneNumber: z.string().trim().max(30).optional().default(''),
     coverLetter: z.string().trim().min(1, 'Please tell us about yourself.').max(8000),
     whyUs: z.string().trim().min(1, 'Please tell us why you want to work here.').max(4000),
-    source: z.enum(sourceKeys, { errorMap: () => ({ message: 'Please tell us how you heard about us.' }) }),
+    source: z.enum(sourceKeys, { error: 'Please tell us how you heard about us.' }),
     sourceOther: z.string().trim().max(70).optional().default(''),
     portfolio: z.string().trim().max(255).optional().default(''),
-    confirm: z.literal(true, { errorMap: () => ({ message: 'Please confirm your details are accurate before submitting.' }) }),
+    confirm: z.literal(true, { error: 'Please confirm your details are accurate before submitting.' }),
     resumeUploadId: z.string().uuid({ message: 'Please attach your resume.' }),
     photoUploadId: z.string().uuid().optional().nullable(),
   });
@@ -100,17 +100,28 @@ export interface ApplyResultDto {
   email: string;
   jobTitle: string;
   confirmationEmail: 'sent' | 'skipped' | 'failed' | 'not_configured' | 'duplicate';
+  /** The applicant's own signed status page, to open straight after applying. */
+  statusPath: string;
 }
 
+const applicantEmail = z.string().trim().email('Please enter a valid email address.').transform((v) => v.toLowerCase());
+/** The signature from an emailed status link: the email and ID alone never open an application. */
+const statusKey = z.string().trim().min(1, 'Open the link from your latest email, or request a new one.').max(64);
+
 export const statusLookupSchema = z.object({
-  email: z.string().trim().email('Please enter a valid email address.').transform((v) => v.toLowerCase()),
-  applicationId: z.coerce.number().int().positive().optional(),
+  email: applicantEmail,
+  applicationId: z.coerce.number().int().positive(),
+  k: statusKey,
 });
 export type StatusLookupInput = z.input<typeof statusLookupSchema>;
 
+/** "Email me my links": the reply never says whether the address has applications. */
+export const statusLinksSchema = z.object({ email: applicantEmail });
+
 export const withdrawSchema = z.object({
-  email: z.string().trim().email().transform((v) => v.toLowerCase()),
+  email: applicantEmail,
   applicationId: z.number().int().positive(),
+  k: statusKey,
 });
 
 export interface CandidateInterviewDto {
@@ -150,9 +161,7 @@ export interface ApplicationStatusDto {
   events: Array<{ key: string; title: string; note: string | null; at: string }>;
 }
 
-export type StatusLookupDto =
-  | { kind: 'application'; application: ApplicationStatusDto }
-  | { kind: 'list'; applications: Array<{ id: number; stage: Stage; stageLabel: string; jobTitle: string; appliedAt: string; withdrawn: boolean }> };
+export type StatusLookupDto = { kind: 'application'; application: ApplicationStatusDto };
 
 export const referralSchema = z.object({
   referrerName: z.string().trim().min(1, 'Please enter your name.').max(120),

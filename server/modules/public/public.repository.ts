@@ -82,8 +82,8 @@ export async function applicationForEmail(id: number, email: string): Promise<St
 }
 
 export async function applicationsForEmail(email: string) {
-  return sql<{ id: number; stage: Stage; status: ApplicationStatus; applied_at: Date; title: string }[]>`
-    select a.id, a.stage, a.status, a.applied_at, j.title
+  return sql<{ id: number; stage: Stage; status: ApplicationStatus; applied_at: Date; title: string; first_name: string }[]>`
+    select a.id, a.stage, a.status, a.applied_at, j.title, c.first_name
     from applications a join candidates c on c.id = a.candidate_id join jobs j on j.id = a.job_id
     where c.email = ${email} order by a.applied_at desc`;
 }

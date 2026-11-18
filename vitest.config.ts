@@ -21,6 +21,8 @@ export default defineConfig({
       EMAIL_PROVIDER: 'log',
       N8N_ENABLED: 'false',
       CRON_SECRET: 'test-cron',
+      // Every test request comes from one address; the per-IP limit has its own test.
+      API_RATE_LIMIT_PER_MINUTE: '0',
     },
   },
 });

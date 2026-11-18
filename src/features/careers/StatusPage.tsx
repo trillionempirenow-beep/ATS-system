@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import type { ApplicationStatusDto, CandidateInterviewDto, StatusLookupDto } from '@shared/api/public';
@@ -20,11 +20,8 @@ import { formatDate, formatTime, formatWeekday } from '@/lib/format';
 import { cx } from '@/lib/cx';
 import s from './Careers.module.css';
 
-const lookupForm = z.object({
-  email: z.string().trim().email('Enter a valid email address.'),
-  applicationId: z.string().trim().regex(/^\d*$/, 'Application IDs are numbers.').optional(),
-});
-type LookupForm = z.infer<typeof lookupForm>;
+const linksForm = z.object({ email: z.string().trim().email('Enter a valid email address.') });
+type LinksForm = z.infer<typeof linksForm>;
 
 const TYPE_LABEL: Record<(typeof INTERVIEW_TYPES)[number], string> = { phone: 'Phone', video: 'Video', onsite: 'Onsite', panel: 'Panel' };
 
@@ -126,12 +123,12 @@ function SubmissionCard({ app }: { app: ApplicationStatusDto }) {
   );
 }
 
-function ApplicationView({ app, email }: { app: ApplicationStatusDto; email: string }) {
+function ApplicationView({ app, email, statusKey }: { app: ApplicationStatusDto; email: string; statusKey: string }) {
   const [confirm, setConfirm] = useState(false);
   const qc = useQueryClient();
   const toast = useToast();
   const withdraw = useMutation({
-    mutationFn: () => api.post('/public/status/withdraw', { email, applicationId: app.id }),
+    mutationFn: () => api.post('/public/status/withdraw', { email, applicationId: app.id, k: statusKey }),
     onSuccess: () => { setConfirm(false); toast.success('Your application was withdrawn.'); void qc.invalidateQueries({ queryKey: ['status'] }); },
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -199,66 +196,62 @@ function ApplicationView({ app, email }: { app: ApplicationStatusDto; email: str
   );
 }
 
+/**
+ * An application opens only from the signed link in the applicant's emails: an email
+ * address and an ID are easy to know or guess, the link's key is not. Without one, the
+ * applicant asks for their links by email, and the page never says whether that address applied.
+ */
 export function StatusPage() {
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const email = params.get('email') ?? '';
   const id = params.get('id') ?? '';
-  const { register, handleSubmit, formState: { errors } } = useForm<LookupForm>({ resolver: zodResolver(lookupForm), defaultValues: { email, applicationId: id } });
+  const key = params.get('k') ?? '';
+  const signed = Boolean(email && /^\d+$/.test(id) && key);
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm<LinksForm>({ resolver: zodResolver(linksForm), defaultValues: { email } });
   useEffect(() => { document.title = 'Application status · Careers'; }, []);
 
   const lookup = useQuery({
-    queryKey: ['status', email.toLowerCase(), id],
-    queryFn: () => api.post<StatusLookupDto>('/public/status', { email, applicationId: id ? Number(id) : undefined }),
-    enabled: Boolean(email),
+    queryKey: ['status', email.toLowerCase(), id, key],
+    queryFn: () => api.post<StatusLookupDto>('/public/status', { email, applicationId: Number(id), k: key }),
+    enabled: signed,
     retry: false,
     refetchInterval: (q) => (q.state.data?.kind === 'application' ? 20_000 : false),
   });
-  const notFound = lookup.error instanceof ApiError && lookup.error.status === 404;
+  const send = useMutation({ mutationFn: (v: LinksForm) => api.post('/public/status/links', { email: v.email.trim() }) });
+  const badLink = lookup.error instanceof ApiError && lookup.error.status === 404;
 
   if (lookup.data?.kind === 'application') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Link to={`/status?email=${encodeURIComponent(email)}`} className={s.back}><Icon name="arrowl" size={16} />All applications for this email</Link>
-        <ApplicationView app={lookup.data.application} email={email} />
-      </div>
-    );
+    return <ApplicationView app={lookup.data.application} email={email} statusKey={key} />;
   }
 
   return (
     <div className={s.narrow}>
       <header className={s.pageHead} style={{ alignItems: 'center', textAlign: 'center' }}>
         <h1 className={s.statusTitle} style={{ fontSize: 36, lineHeight: '44px' }}>Track your application.</h1>
-        <p className={s.lead}>Enter the email you applied with. Your application ID is optional and narrows the search.</p>
+        <p className={s.lead}>Open the link in any email we sent you about your application. Lost it? Enter the email you applied with and we will send you a link to each of your applications.</p>
       </header>
+      {badLink ? <Notice tone="warning" title="This link no longer opens your application">Enter your email below and we will send you a fresh link.</Notice> : null}
+      {!signed && email && id ? <Notice tone="info" title="Status links now come by email">To keep your application private, enter your email below and we will send you a personal link.</Notice> : null}
+      {lookup.isLoading && signed ? <Skeleton height={120} radius={12} /> : null}
+      {lookup.isError && !badLink ? <Notice tone="danger">{errorMessage(lookup.error)}</Notice> : null}
       <Card padding={24}>
-        <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} noValidate
-          onSubmit={handleSubmit((v) => setParams({ email: v.email.trim(), ...(v.applicationId ? { id: v.applicationId } : {}) }))}>
-          <Field label="Email" required error={errors.email?.message ?? (notFound ? (id ? 'We could not find an application for that email and ID.' : 'We could not find any applications under that email.') : undefined)}>
-            <TextInput type="email" icon="mail" autoComplete="email" spellCheck={false} {...register('email')} />
-          </Field>
-          <Field label="Application ID" optional error={errors.applicationId?.message}>
-            <TextInput inputMode="numeric" autoComplete="off" spellCheck={false} {...register('applicationId')} />
-          </Field>
-          <Button type="submit" fullWidth loading={lookup.isFetching}>Check application status</Button>
-        </form>
+        {send.isSuccess ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Notice tone="success" title="Check your inbox">
+              If {getValues('email')} has applied with us, we have sent a link to each application. It can take a minute to arrive; check your spam folder too.
+            </Notice>
+            <Button variant="secondary" onClick={() => send.reset()}>Use a different email</Button>
+          </div>
+        ) : (
+          <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} noValidate onSubmit={handleSubmit((v) => send.mutate(v))}>
+            <Field label="Email" required error={errors.email?.message}>
+              <TextInput type="email" icon="mail" autoComplete="email" spellCheck={false} {...register('email')} />
+            </Field>
+            <Button type="submit" fullWidth loading={send.isPending}>Email me my status links</Button>
+            {send.isError ? <Notice tone="danger">{errorMessage(send.error)}</Notice> : null}
+          </form>
+        )}
       </Card>
-      {notFound ? <Notice tone="info" title="Applied recently? It can take a minute to appear." action={<ButtonLink to="/jobs" size="sm" variant="secondary">Browse open positions</ButtonLink>} /> : null}
-      {lookup.isError && !notFound ? <Notice tone="danger">{errorMessage(lookup.error)}</Notice> : null}
-      {lookup.isLoading && email ? <Skeleton height={120} radius={12} /> : null}
-      {lookup.data?.kind === 'list' ? (
-        <Card padding={0}>
-          <CardHeader flush title="Your applications" subtitle={`${lookup.data.applications.length} under ${email}`} />
-          {lookup.data.applications.map((a) => (
-            <Link key={a.id} to={`/status?email=${encodeURIComponent(email)}&id=${a.id}`} className={s.listRow}>
-              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <strong>{a.jobTitle}</strong>
-                <span style={{ fontSize: 13, color: 'var(--text3)' }}>Applied {formatDate(a.appliedAt)} · ID <span className="mono">{a.id}</span></span>
-              </span>
-              {a.withdrawn ? <Badge tone="neutral">Withdrawn</Badge> : <StatusBadge kind="stage" value={a.stage} />}
-            </Link>
-          ))}
-        </Card>
-      ) : null}
     </div>
   );
 }

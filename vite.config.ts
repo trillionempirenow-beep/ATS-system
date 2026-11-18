@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import { securityHeaders } from './server/http/security-headers';
 
 const apiPort = process.env.API_PORT ?? '3001';
 
@@ -14,6 +15,15 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    proxy: {
+      '/api': { target: `http://localhost:${apiPort}`, changeOrigin: false },
+      '/dev-realtime': { target: `ws://localhost:${apiPort}`, ws: true },
+    },
+  },
+  // `vite preview` sends the same browser security headers as production (minus the https-only ones),
+  // so a policy that would break the built app shows up before it ships.
+  preview: {
+    headers: securityHeaders(false),
     proxy: {
       '/api': { target: `http://localhost:${apiPort}`, changeOrigin: false },
       '/dev-realtime': { target: `ws://localhost:${apiPort}`, ws: true },

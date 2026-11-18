@@ -7,6 +7,7 @@ import {
 import type { InterviewListItemDto, RtcConfigDto } from '../../../shared/api/interviews.js';
 import { formatTime, fullName, iso, isoOrThrow, todayInZone } from '../../lib/format.js';
 import { appLink, brand, whenInfo } from '../../email/brand.js';
+import { statusLink } from '../../lib/status-links.js';
 import { interviewInvitation } from '../../email/templates/index.js';
 import { calendarInvite, googleCalendarLink, type CalendarEvent } from '../../email/calendar.js';
 import { avatarUrlForCandidate } from '../media/media.urls.js';
@@ -115,7 +116,7 @@ export function interviewCalendarEvent(r: InterviewRow, company: string): Calend
     r.room_code ? `Room code: ${r.room_code}` : null,
     r.interviewer_name ? `Interviewer: ${r.interviewer_name}` : null,
     r.location ? `Location: ${r.location}` : null,
-    `Your application: ${appLink(`/status?email=${encodeURIComponent(r.email)}&id=${r.application_id}`)}`,
+    `Your application: ${statusLink(r.application_id, r.email)}`,
   ].filter(Boolean).join('\n');
   return {
     uid: `interview-${r.id}`,
@@ -148,7 +149,7 @@ export async function invitationEmail(r: InterviewRow) {
     roomCode: r.room_code,
     builtIn: Boolean(r.room_code),
     recorded: r.record_meeting,
-    statusUrl: appLink(`/status?email=${encodeURIComponent(r.email)}&id=${r.application_id}`),
+    statusUrl: statusLink(r.application_id, r.email),
     calendarUrl: googleCalendarLink(event),
   });
   return { ...email, calendar: calendarInvite(event, 'REQUEST') };

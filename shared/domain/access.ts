@@ -122,15 +122,39 @@ export function landingPathFor(role: Role): string {
   return '/app';
 }
 
-export const PASSWORD_RULES_HINT = 'At least 8 characters, with at least one letter and one number.';
+export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_RULES_HINT = `At least ${PASSWORD_MIN_LENGTH} characters, with a letter and a number. Not a common password.`;
+
+/** Words at the heart of the passwords people guess first ("Password2024!", "qwerty123456", "Welcome12345"). */
+const COMMON_WORDS = new Set([
+  'password', 'passw0rd', 'pass', 'qwerty', 'qwertyuiop', 'asdf', 'asdfgh', 'zxcvbn', 'letmein', 'welcome', 'admin', 'administrator',
+  'root', 'login', 'user', 'test', 'guest', 'changeme', 'secret', 'iloveyou', 'monkey', 'dragon', 'sunshine', 'princess', 'football',
+  'baseball', 'superman', 'batman', 'master', 'hello', 'freedom', 'whatever', 'abc', 'abcd', 'abcdef', 'abcdefg', 'qazwsx',
+  'summer', 'winter', 'spring', 'autumn', 'january', 'december', 'company', 'recruiter', 'interview', 'strtm', 'acme', 'manila',
+]);
+
+/** True for very common passwords and their obvious variants: a word above with digits or symbols around it, or one repeated character. */
+export function isCommonPassword(password: string): boolean {
+  const lower = password.toLowerCase();
+  if (/^(.)\1+$/.test(lower)) return true;
+  const core = lower.replace(/[^a-z0-9]/g, '').replace(/^\d+/, '').replace(/\d+$/, '');
+  return COMMON_WORDS.has(core) || COMMON_WORDS.has(core.replace(/(.+?)\1+$/, '$1'));
+}
 
 export function passwordProblems(password: string, confirm: string): string[] {
   const problems: string[] = [];
-  if (password.length < 8) problems.push('be at least 8 characters long');
+  if (password.length < PASSWORD_MIN_LENGTH) problems.push(`be at least ${PASSWORD_MIN_LENGTH} characters long`);
   if (!/[A-Za-z]/.test(password)) problems.push('contain at least one letter');
   if (!/\d/.test(password)) problems.push('contain at least one number');
+  if (password && isCommonPassword(password)) problems.push('not be a common password');
   if (password !== confirm) problems.push('match the confirmation field');
   return problems;
+}
+
+/** The same rules for a temporary password an admin sets on a new account. Null when it is fine. */
+export function temporaryPasswordProblem(password: string): string | null {
+  const problems = passwordProblems(password, password);
+  return problems.length ? `The temporary password must ${problems.join(', ')}.` : null;
 }
 
 export function passwordRulesSentence(problems: string[]): string {

@@ -14,8 +14,9 @@ import { getSettings, interviewTiming } from '../../core/settings.js';
 import { AppError, conflict, isUniqueViolation, notFound } from '../../http/errors.js';
 import { formatTime, iso, isoOrThrow } from '../../lib/format.js';
 import { sendEmail } from '../../email/email.service.js';
-import { appLink, brand } from '../../email/brand.js';
-import { applicationReceived } from '../../email/templates/index.js';
+import { brand } from '../../email/brand.js';
+import { applicationReceived, applicationStatusLinks } from '../../email/templates/index.js';
+import { statusKeyValid, statusLink, statusPath } from '../../lib/status-links.js';
 import { emitN8nEvent } from '../../integrations/n8n/n8n.client.js';
 import { extractDocumentText } from '../../parsers/text-extract.js';
 import { consumeUpload, type ConsumedUpload } from '../uploads/uploads.service.js';
@@ -205,7 +206,7 @@ export async function apply(slug: string, input: z.infer<typeof applySchema>, ip
       candidateName: first ?? input.name,
       jobTitle: job.title,
       applicationId,
-      statusUrl: appLink(`/status?email=${encodeURIComponent(input.email)}&id=${applicationId}`),
+      statusUrl: statusLink(applicationId, input.email),
     }),
   });
 
@@ -225,7 +226,7 @@ export async function apply(slug: string, input: z.infer<typeof applySchema>, ip
     source, emailSentByApp: emailResult.outcome === 'sent',
   });
 
-  return { applicationId, email: input.email, jobTitle: job.title, confirmationEmail: emailResult.outcome };
+  return { applicationId, email: input.email, jobTitle: job.title, confirmationEmail: emailResult.outcome, statusPath: statusPath(applicationId, input.email) };
 }
 
 async function candidateInterviews(applicationId: number): Promise<CandidateInterviewDto[]> {
@@ -285,19 +286,36 @@ async function statusEvents(applicationId: number, appliedAt: Date) {
   return events;
 }
 
-export async function statusLookup(email: string, applicationId?: number): Promise<StatusLookupDto> {
-  if (!applicationId) {
-    const rows = await repo.applicationsForEmail(email);
-    if (!rows.length) throw notFound('We could not find any applications under that email.');
-    return {
-      kind: 'list',
+const LINK_INVALID = 'This status link is not valid. Enter your email below and we will send you a new one.';
+
+/**
+ * Emails the applicant a signed link to each of their applications. Whether the address
+ * has any applications is never revealed: the reply is the same either way.
+ */
+export async function sendStatusLinks(email: string): Promise<void> {
+  const rows = await repo.applicationsForEmail(email);
+  if (!rows.length) return;
+  const b = await brand();
+  await sendEmail({
+    // One per address per ten minutes, on top of the route's rate limit.
+    key: `status-links:${email}:${Math.floor(Date.now() / 600_000)}`,
+    template: 'application-status-links',
+    to: email,
+    email: applicationStatusLinks(b, {
+      candidateName: rows[0]!.first_name,
       applications: rows.map((r) => ({
-        id: r.id, stage: r.stage, stageLabel: STAGE_LABELS[r.stage], jobTitle: r.title, appliedAt: isoOrThrow(r.applied_at), withdrawn: r.status === 'withdrawn',
+        jobTitle: r.title,
+        stageLabel: r.status === 'withdrawn' ? 'Withdrawn' : STAGE_LABELS[r.stage],
+        url: statusLink(r.id, email),
       })),
-    };
-  }
-  const row = await repo.applicationForEmail(applicationId, email);
-  if (!row) throw notFound('We could not find an application matching that ID and email.');
+    }),
+  });
+}
+
+export async function statusLookup(email: string, applicationId: number, key: string): Promise<StatusLookupDto> {
+  // The key is checked first and fails the same way as a missing application: nothing is learned by guessing.
+  const row = statusKeyValid(applicationId, email, key) ? await repo.applicationForEmail(applicationId, email) : null;
+  if (!row) throw notFound(LINK_INVALID);
   const current = stageRank(row.stage);
   const rejected = row.stage === 'rejected';
   const [feedback, suggestions, resumeName, finalRound] = await Promise.all([
@@ -339,9 +357,9 @@ export async function statusLookup(email: string, applicationId?: number): Promi
   return { kind: 'application', application };
 }
 
-export async function withdraw(email: string, applicationId: number, ip: string | null): Promise<void> {
-  const row = await repo.applicationForEmail(applicationId, email);
-  if (!row) throw notFound('We could not find an application matching that ID and email.');
+export async function withdraw(email: string, applicationId: number, key: string, ip: string | null): Promise<void> {
+  const row = statusKeyValid(applicationId, email, key) ? await repo.applicationForEmail(applicationId, email) : null;
+  if (!row) throw notFound(LINK_INVALID);
   if (row.status === 'withdrawn') return;
   await transaction(async (tx) => {
     await tx`update applications set status = 'withdrawn', updated_at = now() where id = ${applicationId}`;

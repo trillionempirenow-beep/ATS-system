@@ -91,7 +91,21 @@ export function applicationReceived(brand: Brand, v: {
     { kind: 'paragraph', text: `Hi ${v.candidateName}, we received your application for ${v.jobTitle}. Our recruiting team reviews every application, and you can follow its progress at any time.` },
     { kind: 'details', rows: [['Role', v.jobTitle], ['Application ID', String(v.applicationId), 'mono']] },
     { kind: 'button', label: 'Track your application', href: v.statusUrl },
-    { kind: 'note', text: 'Keep your application ID. You will need it, together with this email address, to check your status.' },
+    { kind: 'note', text: 'This link is personal to you; please do not forward it. If you lose it, enter your email on the status page and we will send it again.' },
+  ]);
+}
+
+/** Sent when someone asks for their status links on the status page. Only the inbox owner sees them. */
+export function applicationStatusLinks(brand: Brand, v: {
+  candidateName: string; applications: Array<{ jobTitle: string; stageLabel: string; url: string }>;
+}): RenderedEmail {
+  const [first, ...rest] = v.applications;
+  return renderEmail(brand, 'Your application status links', `${v.applications.length} application${v.applications.length === 1 ? '' : 's'}`, [
+    { kind: 'heading', text: 'Your applications' },
+    { kind: 'paragraph', text: `Hi ${v.candidateName}, here ${v.applications.length === 1 ? 'is the link' : 'are the links'} to follow your application${v.applications.length === 1 ? '' : 's'}. Each link is personal to you, so please do not forward it.` },
+    ...(first ? [{ kind: 'button' as const, label: `${first.jobTitle}: ${first.stageLabel}`, href: first.url }] : []),
+    ...rest.map((a) => ({ kind: 'link' as const, label: `${a.jobTitle}: ${a.stageLabel}`, href: a.url })),
+    { kind: 'note', text: 'If you did not ask for this email, you can ignore it. Nobody can see your applications without these links.' },
   ]);
 }
 

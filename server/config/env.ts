@@ -86,6 +86,9 @@ const schema = z.object({
   RESUME_AI_MODEL: optionalString,
 
   TRUST_PROXY: bool,
+  // Requests one IP address may make per minute to one server instance before it gets 429s.
+  // Set it well above what a busy office behind one address needs; 0 turns the limit off.
+  API_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(600),
 });
 
 export type Env = z.infer<typeof schema>;

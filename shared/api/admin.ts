@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ACCOUNT_STATUSES, PERMISSIONS, RECRUITER_PERMISSION_KEYS, type AccountStatus, type PermissionKey, type Role } from '../domain/access.js';
+import { ACCOUNT_STATUSES, PERMISSIONS, RECRUITER_PERMISSION_KEYS, temporaryPasswordProblem, type AccountStatus, type PermissionKey, type Role } from '../domain/access.js';
 import type { JobState } from '../domain/jobs.js';
 import type { ApplicationStatus, Stage } from '../domain/pipeline.js';
 
@@ -30,7 +30,10 @@ export interface AdminsOverviewDto {
 }
 
 const email = z.string().trim().email('That email address is not valid.').transform((v) => v.toLowerCase());
-const tempPassword = z.string().min(8, 'The temporary password must be at least 8 characters.');
+const tempPassword = z.string().superRefine((v, ctx) => {
+  const problem = temporaryPasswordProblem(v);
+  if (problem) ctx.addIssue({ code: 'custom', message: problem });
+});
 
 export const createAdminSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(120),

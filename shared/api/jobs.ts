@@ -96,7 +96,7 @@ const optionalLimit = z
 
 export const jobFieldsSchema = z.object({
   title: z.string().trim().min(1, 'A job title is required.').max(180),
-  departmentId: z.number({ invalid_type_error: 'Please choose a department.' }).int().positive('Please choose a department.'),
+  departmentId: z.number({ error: 'Please choose a department.' }).int().positive('Please choose a department.'),
   location: z.string().trim().max(160).default(''),
   employmentType: z.enum(EMPLOYMENT_TYPES).default('full_time'),
   description: z.string().trim().max(20000).default(''),

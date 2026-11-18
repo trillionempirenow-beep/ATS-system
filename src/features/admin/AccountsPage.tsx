@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { AccountDto, HrAccountsDto } from '@shared/api/admin';
 import {
-  ACCOUNT_STATUS_LABELS, ACCOUNT_STATUSES, ADMIN_PERMISSION_CATALOG, RECRUITER_PERMISSION_CATALOG, RECRUITER_PERMISSION_KEYS, isRecruiterPermission,
-  type AccountStatus, type PermissionKey, type RecruiterPermissionKey,
+  ACCOUNT_STATUS_LABELS, ACCOUNT_STATUSES, ADMIN_PERMISSION_CATALOG, PASSWORD_RULES_HINT, RECRUITER_PERMISSION_CATALOG, RECRUITER_PERMISSION_KEYS, isRecruiterPermission,
+  temporaryPasswordProblem, type AccountStatus, type PermissionKey, type RecruiterPermissionKey,
 } from '@shared/domain/access';
 import { Button } from '@/components/ui/Button';
 import { Avatar, Badge, StatusBadge } from '@/components/ui/Display';
@@ -59,7 +59,8 @@ function CreateDrawer({ onClose, iAmSuper }: { onClose: () => void; iAmSuper: bo
     const next: Record<string, string> = {};
     if (!name.trim()) next.name = 'Name is required.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = 'That email address is not valid.';
-    if (password.length < 8) next.password = 'The temporary password must be at least 8 characters.';
+    const passwordProblem = temporaryPasswordProblem(password);
+    if (passwordProblem) next.password = passwordProblem;
     setErrors(next);
     if (Object.keys(next).length) return;
     create.mutate(undefined, {
@@ -74,7 +75,7 @@ function CreateDrawer({ onClose, iAmSuper }: { onClose: () => void; iAmSuper: bo
         {errors.form ? <Notice tone="danger">{errors.form}</Notice> : null}
         <Field label="Full name" required error={errors.name}><TextInput value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></Field>
         <Field label="Email" required error={errors.email}><TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" /></Field>
-        <Field label="Temporary password" required hint="At least 8 characters" error={errors.password}><TextInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></Field>
+        <Field label="Temporary password" required hint={PASSWORD_RULES_HINT} error={errors.password}><TextInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></Field>
         <PermissionPicker value={perms} onChange={setPerms} grantable={grantable} />
         {!iAmSuper ? <Notice tone="info">The account is pending and can only sign in once a Super Admin approves it.</Notice> : null}
       </div>

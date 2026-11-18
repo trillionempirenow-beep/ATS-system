@@ -53,7 +53,7 @@ const isoDate = z.string().refine((v) => !Number.isNaN(Date.parse(v)), 'Choose a
 
 export const scheduleInterviewSchema = z
   .object({
-    applicationId: z.number({ invalid_type_error: 'Please select an application.' }).int().positive('Please select an application.'),
+    applicationId: z.number({ error: 'Please select an application.' }).int().positive('Please select an application.'),
     startsAt: isoDate,
     endsAt: isoDate.nullable().optional(),
     interviewType: z.enum(INTERVIEW_TYPES),

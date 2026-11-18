@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { USERS, anon, signIn, type Session } from '../helpers.js';
+import { USERS, anon, signIn, signedStatus, type Session } from '../helpers.js';
 
 describe('interview scheduling, waiting room and review', () => {
   // One recruiter session for the file: sign-ins count against the suite-wide login rate limit.
@@ -164,7 +164,7 @@ describe('interview scheduling, waiting room and review', () => {
 
     // Applicants only see the final round on their timeline when their process has one.
     const timeline = async (email: string, applicationId: number) =>
-      ((await (await anon()).post('/api/v1/public/status').send({ email, applicationId: String(applicationId) })).body.data.application.timeline as Array<{ key: string }>)
+      ((await (await anon()).post('/api/v1/public/status').send(await signedStatus(email, applicationId))).body.data.application.timeline as Array<{ key: string }>)
         .map((t) => t.key);
     expect(await timeline('luis.fernandez@example.com', 5)).toContain('final_interview');
     expect(await timeline('ravi.menon@example.com', 9)).not.toContain('final_interview');

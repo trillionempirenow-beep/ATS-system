@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { AccountDto, AdminsOverviewDto } from '@shared/api/admin';
-import { ADMIN_GRANTABLE_PERMISSIONS, ADMIN_PERMISSION_CATALOG, type PermissionKey } from '@shared/domain/access';
+import { ADMIN_GRANTABLE_PERMISSIONS, ADMIN_PERMISSION_CATALOG, PASSWORD_RULES_HINT, temporaryPasswordProblem, type PermissionKey } from '@shared/domain/access';
 import { JOB_APPROVAL_ACTION_LABELS, type JobApprovalAction } from '@shared/domain/jobs';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Avatar, StatusBadge } from '@/components/ui/Display';
@@ -115,7 +115,8 @@ function CreateAdmin() {
     const next: Record<string, string> = {};
     if (!name.trim()) next.name = 'Name is required.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = 'That email address is not valid.';
-    if (password.length < 8) next.password = 'The temporary password must be at least 8 characters.';
+    const passwordProblem = temporaryPasswordProblem(password);
+    if (passwordProblem) next.password = passwordProblem;
     if (!/^\d{1,3}$/.test(limit)) next.hrAccountLimit = 'Use a whole number from 0 to 999.';
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -131,7 +132,7 @@ function CreateAdmin() {
         {errors.form ? <Notice tone="danger">{errors.form}</Notice> : null}
         <Field label="Full name" required error={errors.name}><TextInput value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></Field>
         <Field label="Email" required error={errors.email}><TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" /></Field>
-        <Field label="Temporary password" required hint="At least 8 characters" error={errors.password}><TextInput type="text" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></Field>
+        <Field label="Temporary password" required hint={PASSWORD_RULES_HINT} error={errors.password}><TextInput type="text" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></Field>
         <Field label="HR / Recruiter seat limit" hint="How many HR / Recruiter accounts this Admin may hold at once." error={errors.hrAccountLimit}>
           <TextInput type="number" min={0} max={999} value={limit} onChange={(e) => setLimit(e.target.value)} />
         </Field>

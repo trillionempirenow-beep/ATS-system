@@ -48,7 +48,7 @@ describe('stuck database requests', () => {
     // A write is never retried: it waits out the long limit, so it is still waiting after the read window.
     const app = createApp({ readRetryAfterMs: 100, readRetryLimitMs: 100 });
 
-    const pending = request(app).post('/api/v1/public/status/withdraw').send({ email: 'someone@example.com', applicationId: 1 }).timeout({ deadline: 700 }).then(() => 'answered', () => 'waiting');
+    const pending = request(app).post('/api/v1/public/status/withdraw').send({ email: 'someone@example.com', applicationId: 1, k: 'x'.repeat(32) }).timeout({ deadline: 700 }).then(() => 'answered', () => 'waiting');
 
     expect(await pending).toBe('waiting');
     expect(spy).toHaveBeenCalledTimes(1);

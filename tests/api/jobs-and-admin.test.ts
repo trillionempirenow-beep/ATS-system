@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { USERS, anon, signIn } from '../helpers.js';
+import { USERS, anon, signIn, signedStatus } from '../helpers.js';
 
 describe('job posting approval workflow', () => {
   it('recruiter drafts and submits; recruiter cannot publish; admin requests changes, then approves and publishes', async () => {
@@ -46,7 +46,7 @@ describe('accounts and seats', () => {
     // Even an Admin who held the old grant no longer has it.
     expect(admin.me.permissions).not.toContain('manage_accounts');
     const denied = await admin.agent.post('/api/v1/users').set('X-CSRF-Token', admin.csrf)
-      .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'temporary1', permissions: ['job_posting'] });
+      .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'Onboard-river-42', permissions: ['job_posting'] });
     expect(denied.status).toBe(403);
 
     const sa = await signIn(USERS.superAdmin);
@@ -60,7 +60,7 @@ describe('accounts and seats', () => {
     expect(again.me.permissions).not.toContain('manage_accounts');
 
     const created = await sa.agent.post('/api/v1/users').set('X-CSRF-Token', sa.csrf)
-      .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'temporary1', permissions: ['job_posting'] });
+      .send({ name: 'Nina Park', email: 'nina.park@acme.test', password: 'Onboard-river-42', permissions: ['job_posting'] });
     expect(created.status, JSON.stringify(created.body)).toBeLessThan(300);
   });
 
@@ -74,10 +74,10 @@ describe('accounts and seats', () => {
     expect(check.body.data.valid).toBe(true);
     const weak = await (await anon()).post('/api/v1/auth/reset-password').send({ token, password: 'short', confirm: 'short' });
     expect(weak.status).toBe(422);
-    await (await anon()).post('/api/v1/auth/reset-password').send({ token, password: 'NewPassword9', confirm: 'NewPassword9' }).expect(200);
-    const again = await (await anon()).post('/api/v1/auth/reset-password').send({ token, password: 'NewPassword9', confirm: 'NewPassword9' });
+    await (await anon()).post('/api/v1/auth/reset-password').send({ token, password: 'Teal-harbor-2026', confirm: 'Teal-harbor-2026' }).expect(200);
+    const again = await (await anon()).post('/api/v1/auth/reset-password').send({ token, password: 'Teal-harbor-2026', confirm: 'Teal-harbor-2026' });
     expect(again.status).toBe(410);
-    await signIn(USERS.manager, 'NewPassword9');
+    await signIn(USERS.manager, 'Teal-harbor-2026');
   });
 
   it('keeps recruiters out of Super Admin and settings areas', async () => {
@@ -116,20 +116,32 @@ describe('careers site rules', () => {
     expect(res.body.data.full).toBe(false);
   });
 
-  it('status lookup lists applications by email and withdraw is final', async () => {
-    const list = await (await anon()).post('/api/v1/public/status').send({ email: 'maya.chen@example.com' });
-    expect(list.body.data.kind).toBe('list');
-    const one = await (await anon()).post('/api/v1/public/status').send({ email: 'maya.chen@example.com', applicationId: 1 });
+  it('an application opens only from its signed link, and withdrawing needs the link too', async () => {
+    const { sql } = await import('../../server/db/client.js');
+    const maya = await signedStatus('maya.chen@example.com', 1);
+    // Knowing the email and ID is not enough.
+    expect((await (await anon()).post('/api/v1/public/status').send({ email: maya.email, applicationId: 1 })).status).toBe(422);
+    expect((await (await anon()).post('/api/v1/public/status').send({ ...maya, k: 'x'.repeat(32) })).status).toBe(404);
+    // A key is bound to its email and application.
+    expect((await (await anon()).post('/api/v1/public/status').send({ ...maya, email: 'someone@example.com' })).status).toBe(404);
+    expect((await (await anon()).post('/api/v1/public/status').send({ ...maya, applicationId: 2 })).status).toBe(404);
+
+    const one = await (await anon()).post('/api/v1/public/status').send(maya);
     expect(one.body.data.application.stageLabel).toBe('Screening');
-    await (await anon()).post('/api/v1/public/status/withdraw').send({ email: 'maya.chen@example.com', applicationId: 1 }).expect(200);
-    const after = await (await anon()).post('/api/v1/public/status').send({ email: 'maya.chen@example.com', applicationId: 1 });
-    expect(after.body.data.application.withdrawn).toBe(true);
-    const wrong = await (await anon()).post('/api/v1/public/status').send({ email: 'someone@example.com', applicationId: 1 });
-    expect(wrong.status).toBe(404);
+    expect((await (await anon()).post('/api/v1/public/status/withdraw').send({ email: maya.email, applicationId: 1 })).status).toBe(422);
+    expect((await (await anon()).post('/api/v1/public/status/withdraw').send({ ...maya, k: 'x'.repeat(32) })).status).toBe(404);
+    await (await anon()).post('/api/v1/public/status/withdraw').send(maya).expect(200);
+    expect((await (await anon()).post('/api/v1/public/status').send(maya)).body.data.application.withdrawn).toBe(true);
+
+    // Asking for links answers the same whether or not the address applied; only a real applicant gets an email.
+    await (await anon()).post('/api/v1/public/status/links').send({ email: 'Maya.Chen@example.com' }).expect(202);
+    await (await anon()).post('/api/v1/public/status/links').send({ email: 'nobody@example.com' }).expect(202);
+    const sent = await sql<{ to_address: string }[]>`select to_address from email_outbox where template = 'application-status-links'`;
+    expect(sent.map((r) => r.to_address)).toEqual(['maya.chen@example.com']);
   });
 
   it('shows rejection feedback and a suggested role', async () => {
-    const res = await (await anon()).post('/api/v1/public/status').send({ email: 'pedro.alves@example.com', applicationId: 11 });
+    const res = await (await anon()).post('/api/v1/public/status').send(await signedStatus('pedro.alves@example.com', 11));
     expect(res.body.data.application.rejected).toBe(true);
     expect(res.body.data.application.feedback.fit).toBe('not-a-fit');
     expect(res.body.data.application.suggestions[0].title).toBe('Content Marketer');

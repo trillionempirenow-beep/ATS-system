@@ -22,6 +22,11 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
+    // Plain scripts the browser loads as they are (public/theme-init.js).
+    files: ['public/**/*.js'],
+    languageOptions: { globals: globals.browser, sourceType: 'script' },
+  },
+  {
     files: ['server/**/*.ts', 'api/**/*.ts', 'scripts/**/*.ts', 'tests/**/*.ts', '*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
   },

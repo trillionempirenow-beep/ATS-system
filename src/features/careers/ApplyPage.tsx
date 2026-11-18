@@ -122,7 +122,7 @@ export function ApplyPage() {
         </p>
         <div className={s.idBox}><span>Application ID</span><strong>{result.applicationId}</strong></div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <ButtonLink to={`/status?email=${encodeURIComponent(result.email)}&id=${result.applicationId}`}>View application status</ButtonLink>
+          <ButtonLink to={result.statusPath}>View application status</ButtonLink>
           <ButtonLink to="/jobs" variant="secondary">Browse other open roles</ButtonLink>
         </div>
       </div>

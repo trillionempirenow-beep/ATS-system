@@ -7,6 +7,12 @@ import { AppError, tooManyRequests } from '../http/errors.js';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const allowedOrigin = new URL(env.APP_URL).origin;
 
+/** A Referer that is not a URL counts as a foreign origin rather than crashing the request. */
+function refererOrigin(referer: string | undefined): string | null {
+  if (!referer) return null;
+  try { return new URL(referer).origin; } catch { return 'invalid'; }
+}
+
 /**
  * Two layers for every state-changing request:
  *  1. The Origin (or Referer) must be this app — stops cross-site form posts,
@@ -18,7 +24,7 @@ export function csrfProtection(req: Request, _res: Response, next: NextFunction)
   // Cron calls carry CRON_SECRET; local storage PUTs carry a signed grant.
   if (req.path.startsWith('/v1/cron/') || req.path.startsWith('/v1/uploads/local/')) return next();
 
-  const origin = req.get('origin') ?? (req.get('referer') ? new URL(req.get('referer') as string).origin : null);
+  const origin = req.get('origin') ?? refererOrigin(req.get('referer'));
   const selfOrigin = `${req.protocol}://${req.get('host')}`;
   if (origin && origin !== allowedOrigin && origin !== selfOrigin) {
     return next(new AppError(403, 'csrf_failed', 'This request came from another site and was blocked.'));

@@ -14,6 +14,7 @@ import { auditQuietly } from '../../core/audit.js';
 import type { CurrentUser } from '../../http/context.js';
 import { AppError, forbidden } from '../../http/errors.js';
 import { appLink, brand } from '../../email/brand.js';
+import { statusLink } from '../../lib/status-links.js';
 import { sendEmail } from '../../email/email.service.js';
 import { applicationStatus, interviewInvitation, recruiterMessage } from '../../email/templates/index.js';
 import { describeError } from '../../parsers/resume-ai.js';
@@ -150,7 +151,7 @@ async function previewOf(a: SignedAction, senderName: string): Promise<Assistant
     case 'move_stage': {
       const app = await applicationInfo(a.applicationId);
       if (!app) return undefined;
-      const statusUrl = appLink(`/status?email=${encodeURIComponent(app.email)}&id=${a.applicationId}`);
+      const statusUrl = statusLink(a.applicationId, app.email);
       const email = a.notify && a.stage !== 'new'
         ? asEmail(app.email, applicationStatus(await brand(), { candidateName: app.first_name, jobTitle: app.title, stage: a.stage, stageLabel: STAGE_LABELS[a.stage], statusUrl, feedback: null }))
         : null;

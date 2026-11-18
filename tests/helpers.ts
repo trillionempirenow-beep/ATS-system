@@ -35,3 +35,9 @@ export const USERS = {
 export async function anon() {
   return request(await getApp());
 }
+
+/** The body an applicant's emailed status link sends: email, application ID and the link's signature. */
+export async function signedStatus(email: string, applicationId: number) {
+  const { statusKey } = await import('../server/lib/status-links.js');
+  return { email, applicationId, k: statusKey(applicationId, email) };
+}

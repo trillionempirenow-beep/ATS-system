@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProfileDto } from '@shared/api/me';
 import { UPLOAD_RULES, uploadProblem } from '@shared/api/uploads';
 import {
-  ADMIN_PERMISSION_CATALOG, PERMISSIONS, RECRUITER_PERMISSION_CATALOG, RECRUITER_PERMISSION_KEYS, isRecruiterPermission, passwordProblems, type PermissionKey,
+  ADMIN_PERMISSION_CATALOG, PERMISSIONS, RECRUITER_PERMISSION_CATALOG, RECRUITER_PERMISSION_KEYS, isRecruiterPermission, PASSWORD_RULES_HINT, passwordProblems, type PermissionKey,
 } from '@shared/domain/access';
 import { Icon } from '@/components/icon/Icon';
 import { Button } from '@/components/ui/Button';
@@ -186,7 +186,7 @@ function ChangePassword() {
       <div className={formStyles.stack}>
         {errors.form ? <Notice tone="danger">{errors.form}</Notice> : null}
         <Field label="Current password" error={errors.current}><PasswordInput value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" /></Field>
-        <Field label="New password" hint={errors.password ? undefined : 'At least 8 characters, including a letter and a number.'} error={errors.password}>
+        <Field label="New password" hint={errors.password ? undefined : PASSWORD_RULES_HINT} error={errors.password}>
           <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
         </Field>
         <Field label="Confirm new password" error={errors.confirm}><PasswordInput value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" /></Field>

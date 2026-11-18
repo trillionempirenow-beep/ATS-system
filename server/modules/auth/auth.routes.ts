@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { forgotPasswordSchema, loginSchema, resetPasswordSchema, type ResetTokenCheckDto } from '../../../shared/api/auth.js';
 import { body } from '../../http/validate.js';
 import { requireAuth } from '../../middleware/guards.js';
@@ -10,10 +10,15 @@ import * as sessions from './session.repository.js';
 
 export const authRouter = Router();
 
+const loginEmail = (req: Request): string => String(req.body?.email ?? '').trim().toLowerCase().slice(0, 190);
+
 authRouter.post(
   '/login',
   rateLimit({ name: 'login-ip', max: 20, windowSeconds: 900 }),
-  rateLimit({ name: 'login-email', max: 8, windowSeconds: 900, key: (req) => String(req.body?.email ?? '').toLowerCase().slice(0, 190) }),
+  // Tight per account *and* address: a stranger guessing at someone's email cannot lock that person out
+  // from their own address. The loose per-account ceiling still slows guessing spread over many addresses.
+  rateLimit({ name: 'login-email-ip', max: 8, windowSeconds: 900, key: (req) => `${loginEmail(req)}|${req.ip ?? 'unknown'}` }),
+  rateLimit({ name: 'login-email', max: 100, windowSeconds: 3600, key: loginEmail }),
   async (req, res) => {
     const input = body(req, loginSchema);
     const user = await service.authenticate(input.email, input.password, req.ip ?? null);

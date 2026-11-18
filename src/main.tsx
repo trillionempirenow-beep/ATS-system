@@ -1,3 +1,5 @@
+// First, before any module defines a zod schema.
+import './lib/zodConfig';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';

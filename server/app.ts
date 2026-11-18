@@ -1,9 +1,11 @@
 import cookieParser from 'cookie-parser';
 import express, { Router, type Request, type Response } from 'express';
-import { env } from './config/env.js';
+import { env, isProduction } from './config/env.js';
 import { beginDbRequest, prepareDb, resetDbPool } from './db/client.js';
+import { securityHeaders } from './http/security-headers.js';
 import { startTiming, timed } from './http/timing.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
+import { floodGuard } from './middleware/flood.js';
 import { csrfProtection } from './middleware/security.js';
 import { loadSession } from './middleware/session.js';
 import { authRouter } from './modules/auth/auth.routes.js';
@@ -22,6 +24,8 @@ export interface AppOptions {
   readRetryAfterMs?: number;
   /** How long that retry may take before the request is answered with an error. */
   readRetryLimitMs?: number;
+  /** Requests per minute per IP address before 429s (API_RATE_LIMIT_PER_MINUTE by default; 0 = off). */
+  ipRequestsPerMinute?: number;
 }
 
 export function createApp(options: AppOptions = {}): express.Express {
@@ -32,6 +36,12 @@ export function createApp(options: AppOptions = {}): express.Express {
   const dispatch = (app as unknown as { handle: (req: Request, res: Response, done: (err?: unknown) => void) => void }).handle.bind(app);
   app.disable('x-powered-by');
   app.set('trust proxy', env.TRUST_PROXY || env.NODE_ENV === 'production' ? 1 : false);
+
+  // First: every response carries the browser security headers, and a flood from one
+  // address is turned away before any database work.
+  const headers = securityHeaders(isProduction);
+  app.use((_req, res, next) => { res.set(headers); next(); });
+  app.use(floodGuard(options.ipRequestsPerMinute ?? env.API_RATE_LIMIT_PER_MINUTE));
 
   app.use(async (req, res, next) => {
     const timing = startTiming(req, res);
@@ -64,7 +74,6 @@ export function createApp(options: AppOptions = {}): express.Express {
     res.on('finish', finished);
     res.on('close', finished);
     res.set('Cache-Control', 'no-store');
-    res.set('X-Content-Type-Options', 'nosniff');
     next();
   });
   // Hold-to-talk recordings for the assistant are larger than any form.
